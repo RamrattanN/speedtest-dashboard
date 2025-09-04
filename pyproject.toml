@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "speedtest-dashboard-nr"
+version = "0.1.0"
+description = "Self-hosted internet speed monitoring with Streamlit dashboard and CSV storage."
+readme = "README.md"
+authors = [{ name = "Nilesh Ramrattan" }]
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "plotly>=5.22",
+    "streamlit>=1.37",
+    "streamlit-autorefresh>=0.1.0",
+    "speedtest-cli>=2.1.3",
+    "tzdata>=2024.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/RamrattanN/speedtest-dashboard"
+Issues = "https://github.com/RamrattanN/speedtest-dashboard/issues"
+
+[project.scripts]
+speedtest-dashboard = "speedtest_dashboard.runner:main"
+speedtest-collector = "speedtest_dashboard.collector_app:main"
+speedtest-dashboard-ui = "speedtest_dashboard.dashboard_app:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
