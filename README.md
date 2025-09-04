@@ -43,6 +43,7 @@ speedtest-dashboard/
 │── RunSpeedTest.bat     # Batch launcher (legacy/simple)
 │── setup_venv.bat       # Creates local virtualenv + installs dependencies
 │── Tools/               # Helper scripts (ignored in repo)
+│── docs/wiki/           # Project Wiki (markdown files)
 │── .gitignore
 │── LICENSE
 │── README.md
@@ -98,6 +99,20 @@ speedtest-dashboard/
 ## 📊 Example
 Each point on the chart represents one sample.  
 The dashboard can overlay previous periods (e.g., last 24h vs. previous 24h).
+
+---
+
+## 📚 Documentation
+
+Full usage guides and advanced topics are available in the [Wiki](docs/wiki/SUMMARY.md):
+
+- [Getting Started](docs/wiki/Getting-Started.md)
+- [Configuration](docs/wiki/Configuration.md)
+- [Running the Dashboard](docs/wiki/Running-the-Dashboard.md)
+- [Customization](docs/wiki/Customization.md)
+- [Troubleshooting](docs/wiki/Troubleshooting.md)
+- [Roadmap](docs/wiki/Roadmap.md)
+- [Credits](docs/wiki/Credits.md)
 
 ---
 
