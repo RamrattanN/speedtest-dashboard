@@ -22,7 +22,14 @@ Data is stored in CSV format and visualized via a Streamlit dashboard.
   - Custom color selection (download, upload, ping)
   - Light/Dark/Auto theme
 - Multi-server support (test one or more Speedtest servers).
-- Windows automation via `RunSpeedTest.bat`.
+- Automation launchers: PowerShell (`RunSpeedTest.ps1`) and Batch (`RunSpeedTest.bat`).
+
+---
+
+## 📸 Preview
+Here’s what the dashboard looks like in action:
+
+![Speedtest Dashboard Screenshot](assets/dashboard_preview.png)
 
 ---
 
@@ -32,12 +39,13 @@ speedtest-dashboard/
 │── collector.py         # Collector script (runs speed tests and stores results)
 │── dashboard.py         # Streamlit dashboard UI
 │── requirements.txt     # Python dependencies
-│── RunSpeedTest.bat     # Windows launcher (collector + dashboard)
+│── RunSpeedTest.ps1     # PowerShell launcher (preferred)
+│── RunSpeedTest.bat     # Batch launcher (legacy/simple)
 │── setup_venv.bat       # Creates local virtualenv + installs dependencies
 │── Tools/               # Helper scripts (ignored in repo)
 │── .gitignore
-│── README.md
 │── LICENSE
+│── README.md
 ```
 
 ---
@@ -55,22 +63,29 @@ speedtest-dashboard/
    setup_venv.bat
    ```
 
-   This will:
-   - Create a `.venv` virtual environment.
-   - Install all Python dependencies.
-   - Seed Ookla CLI license acceptance if available.
-
 3. **Run the system**:
-   - Double-click `RunSpeedTest.bat`  
+
+   **Preferred (PowerShell):**
+   ```powershell
+   .\RunSpeedTest.ps1 -Interval 120 -Port 8501
+   ```
    - Two windows will open:
      - **Collector** (runs tests every 2 minutes by default)
      - **Dashboard** (Streamlit web UI at [http://localhost:8501](http://localhost:8501))
+
+   **Legacy (Batch):**
+   ```powershell
+   .\RunSpeedTest.bat
+   ```
 
 ---
 
 ## ⚙️ Configuration
 
-- **Collector interval**: edit `INTERVAL` in `RunSpeedTest.bat` (default: 120 seconds).  
+- **Collector interval**: `-Interval` parameter in `RunSpeedTest.ps1` (or edit `.bat`).  
+- **Dashboard port**: `-Port` parameter in `RunSpeedTest.ps1`.  
+- **Headless mode**: `.\RunSpeedTest.ps1 -Headless` (no browser auto-open).  
+- **Python executable**: `-Python` parameter in `RunSpeedTest.ps1`.  
 - **Theme**: switch between Light / Dark / Auto in the dashboard UI.  
 - **Timezone**: select your local timezone in the dashboard UI.  
 - **Colors** (default):
