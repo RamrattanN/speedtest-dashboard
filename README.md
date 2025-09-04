@@ -1,4 +1,9 @@
-# Speedtest Dashboard
+# Speedtest Dashboard  
+
+![License](https://img.shields.io/badge/License-MIT-blue.svg)  
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue)  
+![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B)  
+![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-lightgrey)  
 
 A self-hosted internet speed monitoring tool.  
 It collects ping, download, and upload speeds periodically using **Ookla’s Speedtest CLI** (preferred) or the **Python speedtest-cli library** (fallback).  
