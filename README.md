@@ -4,7 +4,8 @@
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)  
 ![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B)  
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-lightgrey)  
-[![Docs](https://img.shields.io/badge/Docs-Wiki-blue)](docs/wiki/SUMMARY.md)
+[![Docs](https://img.shields.io/badge/Docs-Wiki-blue)](docs/wiki/SUMMARY.md)  
+[![Release](https://img.shields.io/github/v/release/RamrattanN/speedtest-dashboard?sort=semver)](https://github.com/RamrattanN/speedtest-dashboard/releases)
 
 A self-hosted internet speed monitoring tool.  
 It collects ping, download, and upload speeds periodically using **Ookla’s Speedtest CLI** (preferred) or the **Python speedtest-cli library** (fallback).  
