@@ -32,7 +32,7 @@ Data is stored in CSV format and visualized via a Streamlit dashboard.
 ## 📸 Preview
 Here’s what the dashboard looks like in action:
 
-![Speedtest Dashboard Screenshot](assets/dashboard_preview.png)
+![Speedtest Dashboard Screenshot](assets/dashboard_preview.png?v=2025-09-04-1)
 
 ---
 
