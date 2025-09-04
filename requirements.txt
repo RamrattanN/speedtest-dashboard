@@ -1,0 +1,16 @@
+# Core data + charts
+pandas
+numpy
+plotly
+
+# Web UI
+streamlit
+streamlit-autorefresh
+
+# Speed tests
+speedtest-cli
+
+# Timezone database (needed on Windows; harmless elsewhere)
+tzdata
+
+# python -m pip install -r requirements.txt  <- Run in Terminal
