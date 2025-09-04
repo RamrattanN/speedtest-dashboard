@@ -1,30 +1,47 @@
 # Getting Started
 
-The Speedtest Dashboard is a **self-hosted internet monitoring tool**.  
-It periodically runs speedtests, logs results into CSV, and visualizes them in a Streamlit dashboard.
+This guide helps you set up and run the Speedtest Dashboard.
 
-## Requirements
-- Windows 10/11 (PowerShell or CMD)
-- Python 3.11+
-- Git (for cloning the repo)
-- [Ookla Speedtest CLI](https://www.speedtest.net/apps/cli) (preferred)
-- Optional fallback: `speedtest-cli` Python package
+---
 
-## Installation
-1. Clone the repo:
+## ✅ Prerequisites
+- Windows 10/11  
+- Python 3.11+  
+- [Ookla Speedtest CLI](https://www.speedtest.net/apps/cli) (recommended)  
+- Git (to clone the repository)
+
+---
+
+## 📥 Installation
+
+1. **Clone the repository**
    ```powershell
    git clone https://github.com/RamrattanN/speedtest-dashboard.git
    cd speedtest-dashboard
    ```
 
-2. Install dependencies:
+2. **Install dependencies** (first time only)
    ```powershell
-   python -m pip install -r requirements.txt
+   setup_venv.bat
    ```
 
-3. (Optional) Create a virtual environment:
-   ```powershell
-   .\\setup_venv.bat
-   ```
+---
 
-✅ You’re ready to run your first collector and dashboard!
+## ▶️ Launching
+
+### Option A — Batch (simple / independent)
+```bat
+RunSpeedTest.bat
+```
+Starts collector and dashboard with default interval (120 seconds).
+
+### Option B — PowerShell (preferred)
+```powershell
+.\RunSpeedTest.ps1 -Interval 120 -Port 8501
+```
+Supports options for Python path, headless mode, and custom ports.
+
+---
+
+## 🌐 Dashboard Access
+Once running, open: [http://localhost:8501](http://localhost:8501)

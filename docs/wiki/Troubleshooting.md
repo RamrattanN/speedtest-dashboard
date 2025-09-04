@@ -1,21 +1,34 @@
 # Troubleshooting
 
-Common problems and fixes.
+Common issues and fixes.
 
-## Dashboard not loading
-- Ensure collector is running and writing to `speedtest_results.csv`.
-- Check `streamlit` is installed: `pip install streamlit`.
+---
 
-## Collector errors
-- `PermissionError: Access is denied`  
-  → Make sure Dropbox/OneDrive isn’t locking the file. Try saving to a local folder.
+## ❌ Dashboard not opening
+- Ensure dashboard window is running (`dashboard.py`)
+- Open [http://localhost:8501](http://localhost:8501)
 
-- `HTTP Error 403: Forbidden`  
-  → Switch from `speedtest-cli` to Ookla CLI (`speedtest.exe`) or vice versa.
+---
 
-## Port conflict
-If `http://localhost:8501` is unavailable:
-- Check for another Streamlit instance:  
-  `netstat -ano | findstr :8501`
-- Kill the process, or start on a new port:  
-  `streamlit run dashboard.py --server.port 8502`
+## ❌ Collector not writing data
+- Check that `speedtest.exe` is installed and license accepted
+- Ensure `speedtest_results.csv` is not locked by Dropbox sync
+
+---
+
+## ❌ Python not found
+- Add Python 3.11+ to PATH
+- Or pass full path using PowerShell `-Python` argument
+
+---
+
+## ❌ Dependency errors
+Reinstall requirements:
+```powershell
+python -m pip install -r requirements.txt
+```
+
+---
+
+## 📌 Tip
+Always launch via `RunSpeedTest.bat` or `RunSpeedTest.ps1` instead of calling the scripts directly.
