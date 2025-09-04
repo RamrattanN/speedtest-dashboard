@@ -1,22 +1,21 @@
 # Troubleshooting
 
-## Collector won’t start
-- Check Python 3.11+ is installed
-- Confirm `speedtest.exe` (Ookla CLI) is installed and on PATH
-- If unavailable, fallback is `speedtest-cli`
+Common problems and fixes.
 
 ## Dashboard not loading
-- Run: `python -m streamlit run dashboard.py`
-- Ensure Streamlit is installed: `pip show streamlit`
+- Ensure collector is running and writing to `speedtest_results.csv`.
+- Check `streamlit` is installed: `pip install streamlit`.
 
-## File access errors
-- Dropbox sync can lock `speedtest_results.csv`
-- Close other apps or pause sync temporarily
+## Collector errors
+- `PermissionError: Access is denied`  
+  → Make sure Dropbox/OneDrive isn’t locking the file. Try saving to a local folder.
 
-## GitHub sync problems
-Use:
-```powershell
-git fetch origin
-git pull --rebase origin main
-git push origin main
-```
+- `HTTP Error 403: Forbidden`  
+  → Switch from `speedtest-cli` to Ookla CLI (`speedtest.exe`) or vice versa.
+
+## Port conflict
+If `http://localhost:8501` is unavailable:
+- Check for another Streamlit instance:  
+  `netstat -ano | findstr :8501`
+- Kill the process, or start on a new port:  
+  `streamlit run dashboard.py --server.port 8502`

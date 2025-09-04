@@ -1,70 +1,78 @@
 @echo off
-setlocal ENABLEDELAYEDEXPANSION
+setlocal enableextensions enabledelayedexpansion
+REM ------------------------------------------------------------
+REM RunSpeedTest.bat  (standalone launcher)
+REM   - Installs deps (if requirements.txt exists)
+REM   - (Optionally) accepts Ookla CLI license if speedtest.exe found
+REM   - Launches collector and dashboard in separate PowerShell windows
+REM ------------------------------------------------------------
 
-rem -----------------------------------------------------------------------------
-rem  Speedtest Dashboard launcher (Windows)
-rem  - Uses local venv if present (.\.venv).  Otherwise uses system Python.
-rem  - Ensures requirements are installed.
-rem  - Seeds Ookla CLI license if the 'speedtest' binary is on PATH.
-rem  - Starts Collector and Dashboard in separate windows.
-rem -----------------------------------------------------------------------------
+REM --- Project root = folder this BAT lives in
+set "ROOT=%~dp0"
+pushd "%ROOT%"
 
-rem === Settings you may change ===
-set INTERVAL=120
-set DASHBOARD_PORT=8501
-set OPEN_BROWSER=1
-rem ================================
-
-rem Move to the folder where this .bat resides
-cd /d "%~dp0"
-
-rem Prefer a local virtual environment if it exists
-set PY_EXE=python
-if exist ".venv\Scripts\python.exe" (
-  set PY_EXE=.venv\Scripts\python.exe
-)
-
-rem Show which Python will be used
-echo Using Python: %PY_EXE%
 echo.
+echo [INFO] Project root: "%ROOT%"
 
-rem Install requirements (safe to run repeatedly)
-if exist "requirements.txt" (
-  echo Installing/upgrading Python packages from requirements.txt ...
-  "%PY_EXE%" -m pip install --upgrade pip >nul
-  "%PY_EXE%" -m pip install -r requirements.txt
-  echo.
+REM --- Pick Python (prefer py -3; fallback to python)
+set "PY="
+
+for /f "delims=" %%P in ('where py 2^>nul') do (
+  for /f "delims=" %%E in ('%%P -3 -c "import sys;print(sys.executable)" 2^>nul') do (
+    set "PY=%%E"
+  )
 )
 
-rem If Ookla CLI is installed, seed license acceptance once (no output)
-where speedtest >nul 2>&1
-if %ERRORLEVEL%==0 (
-  echo Detected Ookla CLI.  Seeding license acceptance (once) ...
-  speedtest --accept-license --accept-gdpr -f json --progress=no >nul 2>&1
-  echo.
+if not defined PY (
+  for /f "delims=" %%P in ('where python 2^>nul') do (
+    set "PY=%%P"
+    goto :have_python
+  )
 )
 
-rem Start the collector (daemon).  Uses our resilient collector.py.
-echo Starting collector (interval %INTERVAL%s) ...
-start "Collector" cmd /k "%PY_EXE% collector.py --daemon --interval %INTERVAL%"
+:have_python
+if not defined PY (
+  echo [ERROR] Python not found on PATH. Install Python 3.10+ and try again.
+  goto :end
+)
 
-rem Give the collector a brief head start
-timeout /t 3 >nul
+echo [INFO] Python: "%PY%"
 
-rem Start the Streamlit dashboard
-echo Starting dashboard on http://localhost:%DASHBOARD_PORT% ...
-set STREAMLIT_CMD=%PY_EXE% -m streamlit run dashboard.py --server.port %DASHBOARD_PORT% --server.headless true
-if "%OPEN_BROWSER%"=="1" (
-  rem Let Streamlit open the browser automatically
+REM --- Install/upgrade requirements (harmless if already satisfied)
+if exist "%ROOT%requirements.txt" (
+  echo [INFO] Installing/upgrading Python packages from requirements.txt ...
+  "%PY%" -m pip install -r "%ROOT%requirements.txt"
+  if errorlevel 1 (
+    echo [WARN] pip install returned a non-zero exit code. Continuing...
+  )
 ) else (
-  set STREAMLIT_CMD=%STREAMLIT_CMD% --server.headless true
+  echo [INFO] No requirements.txt found. Skipping dependency install.
 )
 
-start "Dashboard" cmd /k %STREAMLIT_CMD%
+REM --- If Ookla CLI is present, seed license acceptance so collector can use it
+if exist "%ROOT%speedtest.exe" (
+  echo [INFO] Detected Ookla CLI. Seeding license acceptance ...
+  "%ROOT%speedtest.exe" --accept-license --accept-gdpr >nul 2>nul
+)
+
+REM --- Interval in seconds (first arg), default 120
+set "INTERVAL=%~1"
+if not defined INTERVAL set "INTERVAL=120"
+echo [INFO] Collector interval: %INTERVAL% seconds
+
+REM --- Launch collector (window stays open)
+start "Speedtest Collector" powershell -NoExit -ExecutionPolicy Bypass ^
+  -Command "Set-Location -LiteralPath '%ROOT%'; & '%PY%' 'collector.py' --daemon --interval %INTERVAL%"
+
+REM --- Launch dashboard (window stays open)
+start "Speedtest Dashboard" powershell -NoExit -ExecutionPolicy Bypass ^
+  -Command "Set-Location -LiteralPath '%ROOT%'; & '%PY%' -m streamlit run 'dashboard.py'"
 
 echo.
-echo Done.  Two windows should be open:  "Collector" and "Dashboard".
-echo If a browser did not open, visit:  http://localhost:%DASHBOARD_PORT%
+echo [INFO] Launched collector and dashboard.
+echo [INFO] Dashboard URL: http://localhost:8501
 echo.
 
+:end
+popd
 endlocal

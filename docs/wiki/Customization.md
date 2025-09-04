@@ -1,21 +1,24 @@
 # Customization
 
-## Colors
+The Speedtest Dashboard is designed to be flexible.
+
+## Chart Options
+- **Bar / Line toggle** – switch between visualizations.  
+- **Show window** – last hour, 24 hours, week, month, or year.  
+- **Overlay** – enable previous-period comparisons.
+
+## Color Selection
+Choose your preferred colors for Download, Upload, and Ping in **Settings**.
+
 Default colors:
-- Upload: `#8BDCCD`
 - Download: `#1976D2`
+- Upload: `#8BDCCD`
 - Ping: `#20B9D8`
 
-Change them from the **Settings** section in the dashboard.
+## Themes
+- **Auto** – follow system setting (Windows).  
+- **Light** – bright theme.  
+- **Dark** – high contrast theme.
 
-## Timezones
-- Default: `America/Chicago`
-- Dropdown includes all IANA timezones
-- "Enable Daylight Savings" option ensures correct offsets
-
-## Historical Overlays
-When enabled, you’ll see the previous period’s data:
-- Previous 24 hours
-- Previous week
-- Previous month
-- Previous year
+## Server Selection
+Multi-select box lets you include or exclude specific Speedtest servers.

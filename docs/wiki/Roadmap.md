@@ -1,16 +1,11 @@
 # Roadmap
 
-✅ Current Features:
-- Collector with configurable intervals
-- Streamlit dashboard with Bar/Line toggle
-- Auto/Manual refresh
-- Timezone + theme settings
-- CSV rollover (30 days + 12 months archives)
-- Historical overlays (daily, weekly, monthly, yearly)
-- Color customization (upload, download, ping)
+Planned improvements and features.
 
-🚀 Planned Enhancements:
-- Publish as pip package (`pip install speedtest-dashboard-nr`)
-- Docker image for deployment
-- Alerting: email / webhook on outages
-- Extended reporting (uptime %, outages timeline)
+- [ ] **CSV rollover** – archive monthly results, keep 12 months.  
+- [ ] **Multiple host support** – run against multiple servers in one session.  
+- [ ] **Trend overlays** – rolling daily/weekly/monthly averages.  
+- [ ] **Task Scheduler integration** – one-click schedule collector.  
+- [ ] **Config persistence** – save user settings in JSON.  
+- [ ] **GitHub Actions** – automated tests and builds.  
+- [ ] **Cross-platform support** – improve scripts for Linux/macOS.

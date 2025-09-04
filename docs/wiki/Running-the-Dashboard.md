@@ -1,21 +1,28 @@
 # Running the Dashboard
 
-There are multiple ways to run the system:
+The dashboard is powered by [Streamlit](https://streamlit.io/).
 
-## 1. Combined (Collector + Dashboard)
+## Start the Collector
+First, run the collector in a PowerShell window:
+
 ```powershell
-speedtest-dashboard --interval 120 --port 8501
+python collector.py --daemon --interval 120
 ```
 
-## 2. Collector only
+This writes results into `speedtest_results.csv`.
+
+## Start the Dashboard
+In another window, run:
+
 ```powershell
-speedtest-collector --daemon --interval 120
+python -m streamlit run dashboard.py
 ```
 
-## 3. Dashboard only
-```powershell
-speedtest-dashboard-ui --server.port 8501
-```
+By default the dashboard is available at:  
+👉 [http://localhost:8501](http://localhost:8501)
 
-📍 Once running, open your browser at:  
-[http://localhost:8501](http://localhost:8501)
+## Batch/PowerShell Launchers
+- **RunSpeedTest.bat**  
+  Starts both collector and dashboard in separate windows.  
+- **RunSpeedTest.ps1**  
+  PowerShell launcher (with logging and easier scripting).
