@@ -1,6 +1,7 @@
 # results and archives
 *.csv
 archive/
+Tools/
 
 # Exclude reference docs and baseline folder
 Baseline/
