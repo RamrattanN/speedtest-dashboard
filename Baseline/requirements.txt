@@ -1,4 +1,0 @@
-speedtest-cli
-pandas
-plotly
-streamlit
