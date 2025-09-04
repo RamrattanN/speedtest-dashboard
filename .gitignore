@@ -2,6 +2,10 @@
 *.csv
 archive/
 
+# Exclude reference docs and baseline folder
+Baseline/
+speedtest.md
+
 # binaries and installers
 *.exe
 *.zip
