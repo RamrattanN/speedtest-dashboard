@@ -94,6 +94,18 @@ It respects Ookla’s license: you may not use Speedtest data commercially.
 ---
 
 ## 🙌 Credits
-- [Ookla Speedtest CLI](https://www.speedtest.net/apps/cli)  
-- [streamlit](https://streamlit.io)  
-- [pandas](https://pandas.pydata.org)  
+- **Concept & Direction**: [Nilesh Ramrattan](https://github.com/RamrattanN)  
+  Provided the overall vision, requirements, and design guidance for building a reliable, self-hosted speedtest monitoring dashboard.
+
+- **Development**: Assisted by ChatGPT (OpenAI)  
+  Supported with Python, Streamlit, and automation code generation, along with setup scripts and documentation.
+
+- **Technologies**:
+  - [Ookla Speedtest CLI](https://www.speedtest.net/apps/cli) – backbone for accurate speed measurements.
+  - [Streamlit](https://streamlit.io) – dashboard UI framework.
+  - [pandas](https://pandas.pydata.org) & [numpy](https://numpy.org) – data processing.
+  - [plotly](https://plotly.com/python/) – interactive charting.
+
+---
+
+
