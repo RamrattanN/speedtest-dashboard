@@ -1,0 +1,2 @@
+python collector.py --daemon
+streamlit run dashboard.py
