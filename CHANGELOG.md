@@ -1,54 +1,59 @@
 # Changelog
-All notable changes to this project will be documented in this file.  
+All notable changes to this project are documented here.  
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),  
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)  
+and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
 ## [Unreleased]
+### Planned
+- Additional overlay controls
+- Multi-host visualization
+- GitHub Actions for automated checks
+- Windows Task Scheduler helper
+
+---
+
+## [0.1.1] - 2025-09-04
+### Changed
+- **Batch launcher**: `RunSpeedTest.bat` made fully independent (not a wrapper).
+- **Docs**: Updated README and links to wiki pages.
 
 ### Added
-- Placeholder section for upcoming features (historical overlays, multiple host support, etc.).
+- Enhanced PowerShell launcher (`RunSpeedTest.ps1`) with clearer args and defaults.
+- Regenerated `.github` issue and PR templates.
+- Wiki pages re-synced and added Home.md.
 
 ---
 
 ## [0.1.0] - 2025-08-14
 ### Added
-- **Collector (`collector.py`)**: runs speedtests at configurable intervals, stores results in CSV.
-- **Dashboard (`dashboard.py`)**: Streamlit web interface with:
-  - Bar/Line chart toggle
+- Collector (`collector.py`) — runs speedtests at configurable intervals, stores results in CSV.
+- Dashboard (`dashboard.py`) — Streamlit UI:
+  - Bar/Line toggle
   - Timezone selection
-  - Auto-refresh/manual refresh
+  - Auto/manual refresh
   - Light/Dark/Auto theme
-  - Color selection for Upload/Download/Ping
-  - Historical overlays (daily/weekly/monthly/yearly)
-- **Launchers**:
-  - `RunSpeedTest.ps1`: PowerShell launcher (preferred).
-  - `RunSpeedTest.bat`: Batch launcher (legacy).
-- **Documentation**:
-  - `README.md` with badges, setup instructions, configuration options, and credits.
-  - `LICENSE` (MIT).
-  - `assets/dashboard_preview.png` preview screenshot.
-- **Repository hygiene**:
-  - `.gitignore` excluding CSVs, archives, tools, binaries, venv, and OS cruft.
-
-### Changed
-- Updated repo structure in documentation to reflect PowerShell launcher.
-- Improved README with preview section and GitHub badges.
-
-### Removed
-- Legacy reference files (`speedtest.md`, `Baseline/`) excluded from repo.
+  - Color selection
+  - Historical overlays
+- Launchers:
+  - `RunSpeedTest.ps1` (PowerShell, preferred)
+  - `RunSpeedTest.bat` (initial batch version)
+- Docs:
+  - `README.md`, `LICENSE`, preview screenshot
+- Repo hygiene: `.gitignore` for results, tools, binaries, venv, OS cruft
 
 ---
 
 ## [0.0.1] - 2025-08-13
 ### Added
-- Initial proof-of-concept with collector, dashboard, and simple batch launcher.
-- Early iterations of requirements management and Streamlit UI.
+- Initial proof-of-concept (collector, dashboard, simple batch launcher).
+- Early requirements management and Streamlit UI.
 
 ---
 
-[Unreleased]: https://github.com/RamrattanN/speedtest-dashboard/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/RamrattanN/speedtest-dashboard/releases/tag/v0.1.0
-[0.0.1]: https://github.com/RamrattanN/speedtest-dashboard/releases/tag/v0.0.1
+[Unreleased]: https://github.com/RamrattanN/speedtest-dashboard/compare/v0.1.1...HEAD  
+[0.1.1]: https://github.com/RamrattanN/speedtest-dashboard/compare/v0.1.0...v0.1.1  
+[0.1.0]: https://github.com/RamrattanN/speedtest-dashboard/releases/tag/v0.1.0  
+[0.0.1]: https://github.com/RamrattanN/speedtest-dashboard/releases/tag/v0.0.1  
