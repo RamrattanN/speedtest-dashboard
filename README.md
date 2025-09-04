@@ -29,8 +29,10 @@ speedtest-dashboard/
 │── requirements.txt     # Python dependencies
 │── RunSpeedTest.bat     # Windows launcher (collector + dashboard)
 │── setup_venv.bat       # Creates local virtualenv + installs dependencies
+│── Tools/               # Helper scripts (ignored in repo)
 │── .gitignore
 │── README.md
+│── LICENSE
 ```
 
 ---
@@ -88,12 +90,13 @@ The dashboard can overlay previous periods (e.g., last 24h vs. previous 24h).
 ---
 
 ## 📝 License
-This project is for **personal use only**.  
+This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.  
 It respects Ookla’s license: you may not use Speedtest data commercially.  
 
 ---
 
 ## 🙌 Credits
+
 - **Concept & Direction**: [Nilesh Ramrattan](https://github.com/RamrattanN)  
   Provided the overall vision, requirements, and design guidance for building a reliable, self-hosted speedtest monitoring dashboard.
 
@@ -107,5 +110,3 @@ It respects Ookla’s license: you may not use Speedtest data commercially.
   - [plotly](https://plotly.com/python/) – interactive charting.
 
 ---
-
-
