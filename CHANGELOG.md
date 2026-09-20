@@ -23,6 +23,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Removed the hardcoded personal Dropbox path from the application.
 - Collector startup now creates the configured data directory without referencing
   the removed legacy `ROOT` variable.
+- A detected but failing Ookla CLI now falls back to Python `speedtest-cli`
+  unless `--require-ookla` is specified.
 
 ---
 

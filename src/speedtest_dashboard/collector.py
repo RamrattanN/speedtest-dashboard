@@ -301,13 +301,18 @@ def run_one(server_id: Optional[str], prefer_ookla: bool, allow_python_fallback:
     Try Ookla first if requested/available.  Fall back to Python lib if allowed.
     Retried by caller on failure.
     """
-    if prefer_ookla and have_ookla_cli():
-        return run_one_via_ookla(server_id)
-
-    if prefer_ookla and not have_ookla_cli():
-        print_ookla_install_guidance_once()
-        if not allow_python_fallback:
-            raise RuntimeError("Ookla CLI is required by --require-ookla but was not found on PATH.")
+    if prefer_ookla:
+        if have_ookla_cli():
+            try:
+                return run_one_via_ookla(server_id)
+            except Exception as exc:
+                if not allow_python_fallback:
+                    raise
+                print(f"[WARN] Ookla CLI failed: {exc}.  Falling back to Python speedtest-cli.")
+        else:
+            print_ookla_install_guidance_once()
+            if not allow_python_fallback:
+                raise RuntimeError("Ookla CLI is required by --require-ookla but was not found on PATH.")
 
     return run_one_via_python(server_id)
 
