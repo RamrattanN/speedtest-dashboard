@@ -13,7 +13,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Configurable cross-platform data directory with a visible home-folder default.
 - Offline automated tests and GitHub Actions CI.
 - Ramrattan-styled application header, latest-result cards, and compact content panels.
-- Dedicated in-application Help page for setup, controls, result interpretation, and troubleshooting.
+- Rentals-style right-side Help panel for setup, controls, result interpretation, and troubleshooting.
+- Packaged Ramrattan logo reused from the Rentals application.
 
 ### Changed
 - Consolidated the collector and dashboard into the installable Python package.

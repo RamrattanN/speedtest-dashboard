@@ -1,3 +1,4 @@
+import base64
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -87,13 +88,29 @@ def test_help_navigation_is_specific_to_speedtest(tmp_path, monkeypatch):
     app = AppTest.from_file(dashboard_path)
 
     app.run(timeout=20)
-    help_button = next(button for button in app.button if button.label == "Help")
+    help_button = next(
+        button for button in app.button if button.label == "Help with this page"
+    )
     help_button.click().run(timeout=20)
 
     assert not app.exception
     assert any("Using the Speedtest Monitor" in block.value for block in app.markdown)
     assert any(
-        "collection interval and screen-refresh interval are separate" in block.value
+        "collector normally records a result every five minutes" in block.value
         for block in app.markdown
     )
     assert app.code[0].value == "./RunSpeedTest.command --interval 300"
+
+
+def test_ramrattan_logo_asset_is_a_packaged_png():
+    asset_path = (
+        Path(__file__).parents[1]
+        / "src"
+        / "speedtest_dashboard"
+        / "assets"
+        / "ramrattan-logo.png.b64"
+    )
+    logo_bytes = base64.b64decode(asset_path.read_text(encoding="utf-8"))
+
+    assert logo_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+    assert len(logo_bytes) > 20_000

@@ -37,6 +37,12 @@ DEFAULT_COLOR_PING = "#20B9D8"
 # Global accent color
 ACCENT_NAVY = "#001F54"
 
+LOGO_B64_PATH = Path(__file__).parent / "assets" / "ramrattan-logo.png.b64"
+RAMRATTAN_LOGO_URI = (
+    "data:image/png;base64,"
+    + "".join(LOGO_B64_PATH.read_text(encoding="utf-8").split())
+)
+
 # -------- THEME HELPERS --------
 def detect_windows_theme() -> str:
     try:
@@ -98,19 +104,12 @@ def apply_theme_css(theme: str) -> str:
             gap: 20px;
         }}
 
-        .rr-mark {{
-            display: grid;
-            width: 64px;
-            height: 64px;
-            place-items: center;
+        .rr-logo {{
+            display: block;
+            width: auto;
+            height: 78px;
+            object-fit: contain;
             flex: 0 0 auto;
-            border: 2px solid rgba(255, 255, 255, 0.72);
-            border-radius: 16px;
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.08);
-            font-size: 1.7rem;
-            font-weight: 800;
-            letter-spacing: -0.05em;
         }}
 
         .rr-hero .eyebrow {{
@@ -221,6 +220,32 @@ def apply_theme_css(theme: str) -> str:
             color: #173f63;
         }}
 
+        div[data-testid="stDialog"] div[role="dialog"] {{
+            position: fixed;
+            inset: 0 0 0 auto;
+            width: min(500px, 94vw);
+            max-width: 500px;
+            height: 100vh;
+            max-height: 100vh;
+            margin: 0;
+            border-radius: 22px 0 0 22px;
+            border: 0;
+            background: {surface};
+            box-shadow: -20px 0 60px rgba(13, 41, 66, 0.22);
+        }}
+
+        div[data-testid="stDialog"] div[role="dialog"] > div {{
+            max-height: 100vh;
+            overflow-y: auto;
+            padding: 1.15rem 1.35rem 2rem;
+        }}
+
+        div[data-testid="stDialog"] .rr-help-card {{
+            margin-bottom: 14px;
+            padding: 18px 20px;
+            box-shadow: none;
+        }}
+
         @media (max-width: 760px) {{
             .rr-hero {{
                 align-items: flex-start;
@@ -229,9 +254,8 @@ def apply_theme_css(theme: str) -> str:
             .rr-status {{
                 display: none;
             }}
-            .rr-mark {{
-                width: 52px;
-                height: 52px;
+            .rr-logo {{
+                height: 62px;
             }}
         }}
 
@@ -446,10 +470,10 @@ st.set_page_config(
 apply_theme_css("light")
 
 st.markdown(
-    """
+    f"""
     <header class="rr-hero">
       <div class="rr-hero-main">
-        <div class="rr-mark" aria-hidden="true">R</div>
+        <img class="rr-logo" src="{RAMRATTAN_LOGO_URI}" alt="Ramrattan logo">
         <div>
           <p class="eyebrow">RAMRATTAN NETWORK TOOLS</p>
           <h1>Speedtest Monitor</h1>
@@ -463,132 +487,105 @@ st.markdown(
 )
 
 
-def select_page(page: str) -> None:
-    """Switch between the dashboard and its guidance page."""
-    st.session_state["speedtest_page"] = page
-
-
-if "speedtest_page" not in st.session_state:
-    st.session_state["speedtest_page"] = "dashboard"
-
-current_page = st.session_state["speedtest_page"]
-nav_dashboard, nav_help, nav_space = st.columns([1.2, 1.2, 5.6], gap="small")
-with nav_dashboard:
-    st.button(
-        "Dashboard",
-        key="nav_dashboard",
-        type="primary" if current_page == "dashboard" else "secondary",
-        width="stretch",
-        on_click=select_page,
-        args=("dashboard",),
-    )
-with nav_help:
-    st.button(
-        "Help",
-        key="nav_help",
-        type="primary" if current_page == "help" else "secondary",
-        width="stretch",
-        on_click=select_page,
-        args=("help",),
-    )
-
-
-def render_help_page() -> None:
-    """Render guidance tailored to the speed-test collector and dashboard."""
+@st.dialog("Help with Speedtest Monitor", width="large")
+def render_help_panel() -> None:
+    """Render speed-test guidance in a right-side Help panel."""
     st.markdown(
         """
         <div class="rr-section-heading">
-          <p class="eyebrow">HELP AND GUIDANCE</p>
+          <p class="eyebrow">HELP WITH THIS PAGE</p>
           <h2>Using the Speedtest Monitor</h2>
-          <p>Follow these steps to run the monitor, understand the results, and resolve common issues.</p>
+          <p>Keep this guidance open while reviewing the dashboard.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    left, right = st.columns(2, gap="large")
-    with left:
-        st.markdown(
-            """
-            <section class="rr-help-card">
-              <h3>Start and stop the monitor</h3>
-              <p><strong>What to do</strong></p>
-              <ol>
-                <li>Open Terminal in the project folder.</li>
-                <li>Run the launcher shown below.</li>
-                <li>Keep Terminal open while collecting results.</li>
-                <li>Press Control-C in Terminal to stop both processes safely.</li>
-              </ol>
-              <p class="remember"><strong>Remember:</strong> The collection interval and screen-refresh interval are separate.  The recommended launcher records a result every five minutes, while the display checks for new results every 60 seconds.</p>
-            </section>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.code("./RunSpeedTest.command --interval 300", language="bash")
+    st.markdown(
+        """
+        <section class="rr-help-card">
+          <h3>Start and stop the monitor</h3>
+          <p><strong>What to do</strong></p>
+          <ol>
+            <li>Open Terminal in the project folder.</li>
+            <li>Run the launcher shown below.</li>
+            <li>Keep Terminal open while collecting results.</li>
+            <li>Press Control-C in Terminal to stop both processes safely.</li>
+          </ol>
+          <p class="remember"><strong>Remember:</strong> The collector normally records a result every five minutes.  The dashboard checks for new results every 60 seconds.</p>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.code("./RunSpeedTest.command --interval 300", language="bash")
 
-        st.markdown(
-            """
-            <section class="rr-help-card">
-              <h3>Understand the measurements</h3>
-              <ul>
-                <li><strong>Download</strong> measures how quickly data reaches this computer.  Higher is generally better.</li>
-                <li><strong>Upload</strong> measures how quickly data leaves this computer.  Higher is generally better.</li>
-                <li><strong>Ping</strong> measures response time in milliseconds.  Lower is generally better.</li>
-                <li><strong>Server</strong> identifies the test location selected for that sample.  Different servers can produce different results.</li>
-              </ul>
-              <p class="remember"><strong>Remember:</strong> One result is only a snapshot.  Trends across several samples are more useful than a single high or low reading.</p>
-            </section>
-            """,
-            unsafe_allow_html=True,
-        )
+    st.markdown(
+        f"""
+        <section class="rr-help-card">
+          <h3>Use the dashboard</h3>
+          <ol>
+            <li>Review the latest-result cards for a quick status check.</li>
+            <li>Choose Bar or Line / Curve for the chart style.</li>
+            <li>Use View options to select servers, the time window, and comparison overlay.</li>
+            <li>Leave Refresh display every 60s enabled to see new CSV results automatically.</li>
+            <li>Open Display settings to change timezone, theme, and chart colours.</li>
+          </ol>
+          <p class="remember"><strong>Data location:</strong> {DEFAULT_CSV}</p>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    with right:
-        st.markdown(
-            f"""
-            <section class="rr-help-card">
-              <h3>Use the dashboard</h3>
-              <ol>
-                <li>Review the latest-result cards for a quick status check.</li>
-                <li>Choose Bar or Line / Curve for the chart style.</li>
-                <li>Use View options to select servers, the time window, and comparison overlay.</li>
-                <li>Leave Refresh display every 60s enabled to see new CSV results automatically.</li>
-                <li>Open Display settings to change timezone, theme, and chart colours.</li>
-              </ol>
-              <p class="remember"><strong>Data location:</strong> {DEFAULT_CSV}</p>
-            </section>
-            """,
-            unsafe_allow_html=True,
-        )
+    st.markdown(
+        """
+        <section class="rr-help-card">
+          <h3>Understand the measurements</h3>
+          <ul>
+            <li><strong>Download</strong> measures how quickly data reaches this computer.  Higher is generally better.</li>
+            <li><strong>Upload</strong> measures how quickly data leaves this computer.  Higher is generally better.</li>
+            <li><strong>Ping</strong> measures response time in milliseconds.  Lower is generally better.</li>
+            <li><strong>Server</strong> identifies the test location selected for that sample.  Different servers can produce different results.</li>
+          </ul>
+          <p class="remember"><strong>Remember:</strong> Trends across several samples are more useful than one isolated result.</p>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        st.markdown(
-            """
-            <section class="rr-help-card">
-              <h3>Resolve common issues</h3>
-              <ul>
-                <li><strong>No data yet:</strong> Confirm the collector is still running and wait for its first completed test.</li>
-                <li><strong>Dashboard does not update:</strong> Confirm Refresh display every 60s is enabled, then use Refresh now once if needed.</li>
-                <li><strong>Ookla warning:</strong> The monitor can fall back automatically to the Python speed-test engine.</li>
-                <li><strong>Port already in use:</strong> Open the Local URL printed most recently in Terminal.</li>
-                <li><strong>Need to restart:</strong> Stop with Control-C, pull the latest branch, then run the launcher again.</li>
-              </ul>
-              <p class="remember"><strong>Remember:</strong> Do not close Terminal if you want collection to continue.</p>
-            </section>
-            """,
-            unsafe_allow_html=True,
-        )
+    st.markdown(
+        """
+        <section class="rr-help-card">
+          <h3>Resolve common issues</h3>
+          <ul>
+            <li><strong>No data yet:</strong> Confirm the collector is running and wait for its first completed test.</li>
+            <li><strong>Dashboard does not update:</strong> Confirm automatic display refresh is enabled, then use Refresh now once if needed.</li>
+            <li><strong>Ookla warning:</strong> The monitor can fall back automatically to the Python speed-test engine.</li>
+            <li><strong>Port already in use:</strong> Open the Local URL printed most recently in Terminal.</li>
+            <li><strong>Need to restart:</strong> Stop with Control-C, pull the latest branch, then run the launcher again.</li>
+          </ul>
+          <p class="remember"><strong>Remember:</strong> Do not close Terminal if you want collection to continue.</p>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    with st.container(border=True):
-        st.markdown("### About this application")
-        st.write(
-            "Ramrattan Speedtest Monitor is a local dashboard for recording and reviewing "
-            "internet performance over time.  It is part of Ramrattan Network Tools."
-        )
-        st.caption("Built and maintained by Ramrattan.com.  Data remains on the computer running the monitor.")
+    st.markdown("---")
+    st.markdown("**Ramrattan Speedtest Monitor**")
+    st.caption(
+        "Built and maintained by Ramrattan.com.  "
+        "Data remains on the computer running the monitor."
+    )
 
 
-if current_page == "help":
-    render_help_page()
-    st.stop()
+help_space, help_action = st.columns([6.6, 1.4])
+with help_action:
+    if st.button(
+        "Help with this page",
+        key="open_help_panel",
+        width="stretch",
+    ):
+        render_help_panel()
+
 
 st.markdown(
     """
@@ -942,3 +939,4 @@ st.caption(
     "Ramrattan Speedtest Monitor · Local data only · "
     "Use Help for operating guidance and troubleshooting."
 )
+
