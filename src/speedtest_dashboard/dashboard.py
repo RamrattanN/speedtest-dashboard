@@ -35,7 +35,7 @@ DEFAULT_COLOR_DOWNLOAD = "#1976D2"
 DEFAULT_COLOR_PING = "#20B9D8"
 
 # Global accent color
-ACCENT_NAVY = "#001F54"
+ACCENT_NAVY = "#173F63"
 
 LOGO_B64_PATH = Path(__file__).parent / "assets" / "ramrattan-logo.png.b64"
 RAMRATTAN_LOGO_URI = (
@@ -220,30 +220,79 @@ def apply_theme_css(theme: str) -> str:
             color: #173f63;
         }}
 
-        div[data-testid="stDialog"] div[role="dialog"] {{
+        .st-key-help_panel {{
             position: fixed;
-            inset: 0 0 0 auto;
-            width: min(500px, 94vw);
-            max-width: 500px;
+            inset: 0 0 0 auto !important;
+            z-index: 999999;
+            width: min(430px, 96vw) !important;
+            max-width: 430px !important;
             height: 100vh;
             max-height: 100vh;
-            margin: 0;
-            border-radius: 22px 0 0 22px;
-            border: 0;
+            padding: 18px 20px 30px;
+            overflow-y: auto;
+            border: 0 !important;
+            border-left: 1px solid {line} !important;
+            border-radius: 0 !important;
             background: {surface};
             box-shadow: -20px 0 60px rgba(13, 41, 66, 0.22);
         }}
 
-        div[data-testid="stDialog"] div[role="dialog"] > div {{
-            max-height: 100vh;
-            overflow-y: auto;
-            padding: 1.15rem 1.35rem 2rem;
+        .st-key-help_panel > div {{
+            width: 100%;
         }}
 
-        div[data-testid="stDialog"] .rr-help-card {{
+        .st-key-help_panel .rr-help-card {{
             margin-bottom: 14px;
             padding: 18px 20px;
             box-shadow: none;
+        }}
+
+        .st-key-help_panel .rr-section-heading {{
+            margin-top: 0;
+        }}
+
+        button[kind="primary"],
+        .stButton > button[kind="primary"] {{
+            border-color: #173f63 !important;
+            color: #ffffff !important;
+            background: #173f63 !important;
+        }}
+
+        button[kind="primary"]:hover,
+        button[kind="primary"]:focus-visible,
+        .stButton > button[kind="primary"]:hover,
+        .stButton > button[kind="primary"]:focus-visible {{
+            border-color: #2f78b8 !important;
+            background: #2f78b8 !important;
+        }}
+
+        [data-testid="stSwitch"] [role="switch"][aria-checked="true"],
+        [data-testid="stCheckbox"] [role="checkbox"][aria-checked="true"],
+        label[data-baseweb="checkbox"]:has(input:checked) > div {{
+            border-color: #173f63 !important;
+            background-color: #173f63 !important;
+        }}
+
+        [data-testid="stRadio"] [role="radio"][aria-checked="true"] > div:first-child,
+        [data-testid="stRadio"] input:checked + div {{
+            border-color: #173f63 !important;
+            background-color: #173f63 !important;
+        }}
+
+        [data-testid="stSlider"] [role="slider"] {{
+            border-color: #173f63 !important;
+            background-color: #173f63 !important;
+        }}
+
+        [data-baseweb="tag"],
+        [data-baseweb="tag"] span {{
+            border-color: #2f78b8 !important;
+            color: #173f63 !important;
+            background-color: #eaf3fa !important;
+        }}
+
+        [data-baseweb="tag"] svg path {{
+            fill: #173f63 !important;
         }}
 
         @media (max-width: 760px) {{
@@ -487,7 +536,6 @@ st.markdown(
 )
 
 
-@st.dialog("Help with Speedtest Monitor", width="large")
 def render_help_panel() -> None:
     """Render speed-test guidance in a right-side Help panel."""
     st.markdown(
@@ -577,13 +625,35 @@ def render_help_panel() -> None:
     )
 
 
+def set_help_panel(open_panel: bool) -> None:
+    """Open or close the non-modal Help panel."""
+    st.session_state["help_panel_open"] = open_panel
+
+
+if "help_panel_open" not in st.session_state:
+    st.session_state["help_panel_open"] = False
+
 help_space, help_action = st.columns([6.6, 1.4])
 with help_action:
-    if st.button(
+    st.button(
         "Help with this page",
         key="open_help_panel",
         width="stretch",
-    ):
+        on_click=set_help_panel,
+        args=(True,),
+    )
+
+if st.session_state["help_panel_open"]:
+    with st.container(key="help_panel"):
+        close_space, close_action = st.columns([3, 1])
+        with close_action:
+            st.button(
+                "Close X",
+                key="close_help_panel",
+                width="stretch",
+                on_click=set_help_panel,
+                args=(False,),
+            )
         render_help_panel()
 
 
@@ -939,4 +1009,3 @@ st.caption(
     "Ramrattan Speedtest Monitor · Local data only · "
     "Use Help for operating guidance and troubleshooting."
 )
-

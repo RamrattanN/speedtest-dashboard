@@ -1,6 +1,7 @@
 import base64
 from datetime import datetime, timezone
 from pathlib import Path
+import tomllib
 
 import pandas as pd
 from streamlit.testing.v1 import AppTest
@@ -101,6 +102,12 @@ def test_help_navigation_is_specific_to_speedtest(tmp_path, monkeypatch):
     )
     assert app.code[0].value == "./RunSpeedTest.command --interval 300"
 
+    close_button = next(button for button in app.button if button.label == "Close X")
+    close_button.click().run(timeout=20)
+    assert not any(
+        "Using the Speedtest Monitor" in block.value for block in app.markdown
+    )
+
 
 def test_ramrattan_logo_asset_is_a_packaged_png():
     asset_path = (
@@ -114,3 +121,13 @@ def test_ramrattan_logo_asset_is_a_packaged_png():
 
     assert logo_bytes.startswith(b"\x89PNG\r\n\x1a\n")
     assert len(logo_bytes) > 20_000
+
+
+def test_streamlit_theme_uses_ramrattan_palette():
+    config_path = Path(__file__).parents[1] / ".streamlit" / "config.toml"
+    with config_path.open("rb") as config_file:
+        theme = tomllib.load(config_file)["theme"]
+
+    assert theme["primaryColor"] == "#173F63"
+    assert theme["backgroundColor"] == "#F3F7FA"
+    assert theme["secondaryBackgroundColor"] == "#FFFFFF"

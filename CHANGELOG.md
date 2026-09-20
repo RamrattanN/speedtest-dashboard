@@ -13,7 +13,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Configurable cross-platform data directory with a visible home-folder default.
 - Offline automated tests and GitHub Actions CI.
 - Ramrattan-styled application header, latest-result cards, and compact content panels.
-- Rentals-style right-side Help panel for setup, controls, result interpretation, and troubleshooting.
+- Non-modal Rentals-style right sidebar Help for setup, controls, result interpretation, and troubleshooting.
 - Packaged Ramrattan logo reused from the Rentals application.
 
 ### Changed
@@ -21,6 +21,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Windows launchers now use the project-local virtual environment consistently.
 - PowerShell launcher now supports interval, port, headless, and data-directory options.
 - Dashboard controls, filters, chart, and summary now use a tighter card-based layout.
+- Interactive controls now use the Ramrattan navy and blue palette instead of Streamlit red.
 
 ### Fixed
 - Installed console commands no longer depend on missing repository-root files.
