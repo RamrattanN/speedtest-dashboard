@@ -28,6 +28,35 @@ jobs:
         run: pytest -q
       - name: Build unsigned Intel application and disk image
         run: bash scripts/build_macos_pilot.sh
+      - name: Smoke-test packaged dashboard route
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="dist/Speedtest Monitor.app/Contents/MacOS/Speedtest Monitor"
+          LOG="$RUNNER_TEMP/speedtest-monitor-smoke.log"
+          DATA="$RUNNER_TEMP/speedtest-monitor-data"
+          "$APP" --service --port 8765 --interval 86400 --data-dir "$DATA" >"$LOG" 2>&1 &
+          PID=$!
+          cleanup() {
+            kill "$PID" 2>/dev/null || true
+            wait "$PID" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8765/ \
+              --output "$RUNNER_TEMP/dashboard.html"; then
+              grep -qi '<!doctype html' "$RUNNER_TEMP/dashboard.html"
+              exit 0
+            fi
+            if ! kill -0 "$PID" 2>/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          cat "$LOG"
+          exit 1
       - name: Upload private pilot disk image
         uses: actions/upload-artifact@v4
         with:
