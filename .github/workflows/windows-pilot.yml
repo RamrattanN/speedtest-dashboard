@@ -38,7 +38,7 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $installer = Join-Path $PWD "dist\Speedtest-Monitor-Windows-x64-pilot-1.exe"
-          $installDir = Join-Path $env:RUNNER_TEMP "Speedtest Monitor"
+          $installDir = Join-Path $env:RUNNER_TEMP "SpeedtestMonitor"
           $dataDir = Join-Path $env:RUNNER_TEMP "speedtest-monitor-data"
           $installerLog = Join-Path $env:RUNNER_TEMP "speedtest-monitor-install.log"
           $dashboardHtml = Join-Path $env:RUNNER_TEMP "dashboard.html"
