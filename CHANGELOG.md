@@ -34,6 +34,9 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   of incorrectly expecting a development frontend on port 3000.
 - The macOS packaging workflow now launches the finished application and
   verifies the dashboard root route before publishing its disk image.
+- Pilot artifacts, disk images, application metadata, controller text, and
+  startup logs now carry an explicit Pilot 3 identifier to prevent stale-build
+  installation during acceptance testing.
 - Installed console commands no longer depend on missing repository-root files.
 - Removed the hardcoded personal Dropbox path from the application.
 - Collector startup now creates the configured data directory without referencing
