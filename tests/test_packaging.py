@@ -1,4 +1,5 @@
 import base64
+import importlib.util
 from io import BytesIO
 from pathlib import Path
 
@@ -6,9 +7,13 @@ from PIL import Image
 
 
 def test_macos_icon_source_fills_canvas(tmp_path):
-    from scripts.build_macos_icon import build_icon_source
-
     project_root = Path(__file__).parents[1]
+    module_path = project_root / "scripts" / "build_macos_icon.py"
+    spec = importlib.util.spec_from_file_location("build_macos_icon", module_path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
     source = (
         project_root
         / "src"
@@ -18,7 +23,7 @@ def test_macos_icon_source_fills_canvas(tmp_path):
     )
     target = tmp_path / "source.png"
 
-    build_icon_source(source, target)
+    module.build_icon_source(source, target)
 
     icon = Image.open(target).convert("RGBA")
     bounds = icon.getchannel("A").getbbox()
