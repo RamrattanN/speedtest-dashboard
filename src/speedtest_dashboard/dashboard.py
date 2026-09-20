@@ -555,7 +555,7 @@ def render_help_panel() -> None:
         st.markdown(
             """
             <section class="rr-help-card">
-              <h3>Start and stop the monitor</h3>
+              <h3>Run the installed monitor</h3>
               <p><strong>What to do</strong></p>
               <ol>
                 <li>Open Speedtest Monitor from the Applications folder.</li>
@@ -564,6 +564,17 @@ def render_help_panel() -> None:
                 <li>Select Quit Monitor in the controller to stop collection safely.</li>
               </ol>
               <p class="remember"><strong>Remember:</strong> Keep the Speedtest Monitor controller open while you want results collected.  A new test normally runs every five minutes, while this dashboard checks for new results every 60 seconds.</p>
+            </section>
+            <section class="rr-help-card">
+              <h3>Install or update the private pilot</h3>
+              <ol>
+                <li>Quit any running copy of Speedtest Monitor.</li>
+                <li>Open the current pilot disk image and drag Speedtest Monitor to Applications.</li>
+                <li>Choose Replace if macOS reports that an older copy is installed.</li>
+                <li>If macOS blocks the unsigned pilot, use Privacy &amp; Security in System Settings to allow it, or follow the quarantine-removal command supplied with the pilot.</li>
+                <li>Confirm that the controller shows the expected pilot number before acceptance testing.</li>
+              </ol>
+              <p class="remember"><strong>Private pilot:</strong> The current application is not code-signed or notarized.  These extra first-launch steps will be removed before public distribution.</p>
             </section>
             """,
             unsafe_allow_html=True,
@@ -615,6 +626,16 @@ def render_help_panel() -> None:
             <li><strong>Server</strong> identifies the test location selected for that sample.  Different servers can produce different results.</li>
           </ul>
           <p class="remember"><strong>Remember:</strong> Trends across several samples are more useful than one isolated result.</p>
+        </section>
+        <section class="rr-help-card">
+          <h3>Data and privacy</h3>
+          <ul>
+            <li>Measurements are stored locally on this computer as CSV files.</li>
+            <li>The dashboard is served only from the local monitor application.</li>
+            <li>Closing the browser does not delete results or stop collection.</li>
+            <li>The main CSV retains approximately 30 days of samples, with older monthly archives retained separately.</li>
+          </ul>
+          <p class="remember"><strong>Results file:</strong> {DEFAULT_CSV}</p>
         </section>
         """,
         unsafe_allow_html=True,

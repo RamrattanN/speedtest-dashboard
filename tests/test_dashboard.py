@@ -137,6 +137,10 @@ def test_packaged_help_uses_desktop_controller_instructions(tmp_path, monkeypatc
     assert "Open Speedtest Monitor from the Applications folder" in help_text
     assert "close the browser tab without stopping collection" in help_text
     assert "Quit Monitor" in help_text
+    assert "Install or update the private pilot" in help_text
+    assert "not code-signed or notarized" in help_text
+    assert "Data and privacy" in help_text
+    assert "Measurements are stored locally" in help_text
     assert not app.code
 
 

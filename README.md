@@ -6,7 +6,8 @@
 [![CI](https://github.com/RamrattanN/speedtest-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/RamrattanN/speedtest-dashboard/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/RamrattanN/speedtest-dashboard?sort=semver)](https://github.com/RamrattanN/speedtest-dashboard/releases)
 
-A self-hosted internet speed monitor for macOS and Windows.  It periodically
+A local internet speed monitor with a packaged macOS pilot and portable Python
+developer mode.  It periodically
 collects ping, download, and upload results using the official Ookla Speedtest
 CLI when available, with the Python `speedtest-cli` library as a fallback.
 Results are stored locally in CSV files and displayed in a Streamlit dashboard.
@@ -20,8 +21,9 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 - Up to 12 monthly archive files.
 - Bar and line charts with previous-period comparison.
 - Timezone, theme, color, server, and date-window controls.
-- macOS and Windows launchers using an isolated local Python environment.
-- Unsigned macOS Intel pilot application for users who do not use Terminal.
+- Unsigned macOS Intel pilot application for users who do not use Terminal in
+  everyday use.
+- macOS developer launcher using an isolated local Python environment.
 - Installable command-line package.
 - Automated tests that do not perform real internet speed tests.
 
@@ -29,14 +31,18 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 
 ### Private desktop pilot
 
-The unsigned macOS Intel pilot is distributed as a disk image.  Open the disk
-image, drag **Speedtest Monitor** to **Applications**, then open the application.
-It includes Python and the required dependencies and does not require the
-repository, VS Code, or Terminal.
+The unsigned macOS Intel Pilot 3 application is distributed as
+`Speedtest-Monitor-macOS-Intel-pilot-3.dmg`.  Open the disk image, drag
+**Speedtest Monitor** to **Applications**, then open the application.  It
+includes Python and the required dependencies and does not require the
+repository or VS Code.
 
-Because the pilot is unsigned, macOS may block the first launch.  Control-click
-the application, select **Open**, then confirm **Open**.  Use the small
-controller window to reopen the dashboard or quit the monitor safely.
+Because the private pilot is unsigned, macOS may block the first launch.  Use
+**System Settings > Privacy & Security > Open Anyway** when it is offered.  If
+macOS still blocks the application, follow the quarantine-removal command in
+the [macOS Pilot Packaging](docs/Mac-Pilot-Packaging.md) guide.  This is a
+one-time pilot installation step.  Everyday operation uses the small controller
+window to reopen the dashboard or quit the monitor safely.
 
 See [macOS Pilot Packaging](docs/Mac-Pilot-Packaging.md) for build, test, and
 distribution instructions.
@@ -57,13 +63,15 @@ See the [Mac Testing Guide](docs/Mac-Testing.md) for complete installation and
 acceptance steps.  The [VS Code Setup Guide](docs/VS-Code-Setup-Mac.md) explains
 how to work on the project without memorizing Terminal commands.
 
-## Quick start on Windows
+## Developer use on Windows
 
-Install Python 3.11 or newer, then double-click `RunSpeedTest.bat`, or use
-PowerShell:
+The first downloadable desktop pilot supports Intel Macs.  Windows packaging is
+not part of Pilot 3.  Developers can still install Python 3.11 or newer, clone
+the repository, run `setup_venv.bat`, and start the installed command:
 
-```powershell
-.\RunSpeedTest.ps1 -Interval 120 -Port 8501
+```bat
+setup_venv.bat
+.venv\Scripts\speedtest-dashboard.exe --interval 300 --port 8501
 ```
 
 Results are stored in `%USERPROFILE%\SpeedtestDashboard` by default.
@@ -94,8 +102,7 @@ speedtest-dashboard/
 ├── src/speedtest_dashboard/  # Collector, dashboard, runner, and configuration
 ├── tests/                    # Offline automated tests
 ├── RunSpeedTest.command      # macOS launcher
-├── RunSpeedTest.ps1          # Windows PowerShell launcher
-├── RunSpeedTest.bat          # Windows batch launcher
+├── setup_venv.bat            # Optional Windows developer setup helper
 ├── docs/                     # Guides and project documentation
 └── pyproject.toml            # Package and dependency configuration
 ```
@@ -112,8 +119,8 @@ CI verifies Python 3.11 and 3.12 on Linux, Python 3.12 on macOS, source
 compilation, tests, the Mac launcher, wheel creation, isolated installation,
 and installed command entry points.
 
-The separate macOS pilot workflow builds an unsigned Intel `.app` and `.dmg`
-for controlled testing.  The application build must run on a macOS Intel
+The separate macOS pilot workflow builds and smoke-tests an unsigned Intel
+`.app` and `.dmg` for controlled testing.  The application build must run on a macOS Intel
 runner because PyInstaller builds for the operating system and architecture on
 which it runs.
 

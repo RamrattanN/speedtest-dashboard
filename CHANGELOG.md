@@ -21,12 +21,18 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Consolidated the collector and dashboard into the installable Python package.
-- Windows launchers now use the project-local virtual environment consistently.
-- PowerShell launcher now supports interval, port, headless, and data-directory options.
 - Dashboard controls, filters, chart, and summary now use a tighter card-based layout.
 - Interactive controls now use the Ramrattan navy and blue palette instead of Streamlit red.
 - Help now detects desktop packaging and replaces developer Terminal commands
   with Applications-folder, controller, browser, and safe-quit guidance.
+- Packaged Help now covers pilot installation and replacement, unsigned-app
+  security handling, local data privacy, and controller-based operation.
+- README and wiki documentation now identify macOS Intel Pilot 3 as the current
+  downloadable release and distinguish it from source-based developer use.
+
+### Removed
+- Retired the legacy `RunSpeedTest.ps1` and `RunSpeedTest.bat` launchers.  The
+  installable Python command remains available for Windows development.
 
 ### Fixed
 - Packaged macOS builds now force Streamlit production mode so the dashboard

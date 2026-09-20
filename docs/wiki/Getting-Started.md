@@ -1,36 +1,44 @@
 # Getting Started
 
-## Prerequisites
+## macOS Intel private pilot
 
-- macOS or Windows 10/11.
-- Python 3.11 or newer.
-- Git for cloning the repository.
-- Official Ookla Speedtest CLI recommended, but not required for initial setup.
+Pilot users need an Intel Mac and the current Pilot 3 disk image.  Python, Git,
+VS Code, and a repository checkout are not required.
 
-## macOS
+1. Quit any older copy of Speedtest Monitor.
+2. Open `Speedtest-Monitor-macOS-Intel-pilot-3.dmg`.
+3. Drag **Speedtest Monitor** to **Applications**.
+4. Complete the unsigned-pilot security step described in the
+   [macOS Pilot Packaging guide](../Mac-Pilot-Packaging.md).
+5. Open **Speedtest Monitor** and keep the controller open.
+
+The dashboard opens automatically when the service is ready.  Results are
+stored in `~/SpeedtestDashboard`.
+
+## macOS developer setup
+
+Developers need Python 3.11 or newer and Git:
 
 ```bash
 git clone https://github.com/RamrattanN/speedtest-dashboard.git
 cd speedtest-dashboard
 chmod +x RunSpeedTest.command
-./RunSpeedTest.command
+./RunSpeedTest.command --interval 300
 ```
 
 See the [Mac Testing Guide](../Mac-Testing.md) and
-[VS Code Setup Guide](../VS-Code-Setup-Mac.md) for guided instructions.
+[VS Code Setup Guide](../VS-Code-Setup-Mac.md) for guided development steps.
 
-## Windows
+## Windows developer setup
 
-```powershell
+Pilot 3 does not include a Windows desktop application.  Developers can use
+Python 3.11 or newer and the installable command:
+
+```bat
 git clone https://github.com/RamrattanN/speedtest-dashboard.git
 cd speedtest-dashboard
-.\setup_venv.bat
-.\RunSpeedTest.ps1 -Interval 120 -Port 8501
+setup_venv.bat
+.venv\Scripts\speedtest-dashboard.exe --interval 300 --port 8501
 ```
 
-`RunSpeedTest.bat` is also available for a double-click start.
-
-## Dashboard access
-
-Open <http://localhost:8501> after the launcher starts.  Results are stored in
-the `SpeedtestDashboard` folder inside your home folder by default.
+The former PowerShell and batch launchers are retired.

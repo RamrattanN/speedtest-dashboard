@@ -1,45 +1,31 @@
 # Configuration
 
-The collector and dashboard share one data directory and can be configured from
-the combined launcher.
+## Desktop pilot defaults
 
-## Test interval
+Pilot 3 is designed for a simple double-click experience.  Its controller uses:
 
-The default is 120 seconds.  Examples:
+- Test interval: 300 seconds
+- Preferred local port: 8501
+- Data folder: `~/SpeedtestDashboard`
+- Display refresh: 60 seconds
+
+If port 8501 is already in use, the controller selects another local port and
+opens the correct address.  Use **Open Dashboard** rather than typing a port.
+
+## Developer configuration
+
+The source launcher and installed command support overrides:
 
 ```bash
 ./RunSpeedTest.command --interval 300
-speedtest-dashboard --interval 300
+speedtest-dashboard --interval 300 --port 8501
+speedtest-dashboard --data-dir ~/Documents/SpeedtestData
 ```
 
-```powershell
-.\RunSpeedTest.ps1 -Interval 300
-```
-
-The Windows batch launcher accepts interval and port as its first two values:
-
-```bat
-RunSpeedTest.bat 300 8600
-```
-
-## Dashboard port
-
-The default port is 8501.  Use `--port` on macOS or `-Port` in PowerShell.
-
-## Data directory
-
-The default is a visible `SpeedtestDashboard` folder in the current user's home
-folder.  It contains `speedtest_results.csv` and the `archive` folder.
-
-Change it with one of these methods:
+The data directory can also be set for all commands:
 
 ```bash
-speedtest-dashboard --data-dir ~/Documents/SpeedtestData
 export SPEEDTEST_DASHBOARD_DATA_DIR="$HOME/Documents/SpeedtestData"
-```
-
-```powershell
-.\RunSpeedTest.ps1 -DataDir "$HOME\Documents\SpeedtestData"
 ```
 
 An explicit `--data-dir` value has priority over the environment variable.
@@ -48,9 +34,9 @@ An explicit `--data-dir` value has priority over the environment variable.
 
 - Theme: Light, Dark, or automatic system detection.
 - Timezone: `America/Chicago` by default, selectable in the dashboard.
-- Download color: `#1976D2`.
-- Upload color: `#8BDCCD`.
-- Ping color: `#20B9D8`.
+- Download colour: `#1976D2`.
+- Upload colour: `#8BDCCD`.
+- Ping colour: `#20B9D8`.
 
 ## Data retention
 

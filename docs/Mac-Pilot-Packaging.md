@@ -61,17 +61,31 @@ testing.
 
 ## Install and first launch
 
-1. Open the downloaded disk image.
-2. Drag **Speedtest Monitor** to **Applications**.
-3. Because this private pilot is unsigned, remove the downloaded-file
-   quarantine in Terminal:
+1. Quit any running copy of **Speedtest Monitor**.
+2. Open `Speedtest-Monitor-macOS-Intel-pilot-3.dmg`.
+3. Drag **Speedtest Monitor** to **Applications** and choose **Replace** if an
+   older pilot is installed.
+4. Try opening the application.  If macOS blocks the unsigned pilot, open
+   **System Settings > Privacy & Security** and use **Open Anyway** when that
+   option is available.
+5. If macOS still blocks it, remove the downloaded-file quarantine in Terminal:
 
    ```bash
-   xattr -dr com.apple.quarantine "/Applications/Speedtest Monitor.app"
+   sudo xattr -dr com.apple.quarantine "/Applications/Speedtest Monitor.app"
    ```
 
-4. Open **Speedtest Monitor** from Applications.
-5. Keep the controller open while monitoring should continue.
+   Enter the Mac login password when prompted.  Terminal does not display the
+   password while it is typed.
+6. Verify that the installed application is Pilot 3:
+
+   ```bash
+   /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
+     "/Applications/Speedtest Monitor.app/Contents/Info.plist"
+   ```
+
+   The expected value is `0.2.0-pilot.3`.
+7. Open **Speedtest Monitor** from Applications and keep its controller open
+   while monitoring should continue.
 
 ## Pilot acceptance checks
 
@@ -83,12 +97,42 @@ testing.
 - The dashboard refreshes without manual browser refresh.
 - **Quit Monitor** stops both the dashboard and collector.
 - Existing CSV results remain available after reopening the application.
+- The controller footer identifies the build as **Pilot 3**.
+
+## Pilot troubleshooting
+
+### Browser reports Not Found or cannot connect
+
+Quit the controller, stop any remaining pilot process, and confirm that the
+default port is free before reopening the application:
+
+```bash
+pkill -f '/Applications/Speedtest Monitor.app/Contents/MacOS/Speedtest Monitor' || true
+lsof -nP -iTCP:8501 -sTCP:LISTEN
+```
+
+The `lsof` command should display nothing.  Pilot 3 serves the complete
+Streamlit application on its selected local port and uses the controller's
+**Open Dashboard** button to open the correct address.
+
+### Controller remains on Starting
+
+Review the last entries in the local application log:
+
+```bash
+tail -100 "$HOME/Library/Logs/Ramrattan Speedtest Monitor/monitor.log"
+```
+
+The log should contain `Speedtest Monitor build 0.2.0-pilot.3 starting` and a
+local Streamlit server address.  Preserve the log output when reporting a
+pilot defect.
 
 ## Known pilot limitations
 
 - The disk image is unsigned and not notarized.
-- GitHub's downloaded artifact receives macOS quarantine metadata.  Pilot
-  testers must run the documented `xattr` command after copying the app.
+- GitHub's downloaded artifact receives macOS quarantine metadata.  Some pilot
+  testers must use **Open Anyway** or the documented `xattr` command after
+  copying the app.
 - The first build supports Intel Macs only.
 - The controller must remain open while collection continues.
 - Automatic launch at login is not included.

@@ -1,26 +1,54 @@
 # Troubleshooting
 
+## macOS blocks the private pilot
+
+Pilot 3 is unsigned and not notarized.  First try **System Settings > Privacy &
+Security > Open Anyway**.  If the application remains blocked, run:
+
+```bash
+sudo xattr -dr com.apple.quarantine "/Applications/Speedtest Monitor.app"
+```
+
+Enter the Mac login password when prompted.  Terminal does not display the
+password while it is typed.
+
 ## Dashboard does not open
 
-- Confirm the launcher is still running.
-- Open <http://localhost:8501> manually.
-- Check whether another application is using port 8501.
-- In VS Code, run the **Dashboard only** debug configuration and review the
-  integrated Terminal.
+- Keep the Speedtest Monitor controller open.
+- Wait until it reports **The monitor is running**.
+- Select **Open Dashboard** in the controller.
+- Do not type `localhost:3000`.  Pilot 3 serves the dashboard on its selected
+  local port.
+
+If the browser reports **Not Found**, quit the controller, stop a stale pilot
+process, and confirm that the preferred port is free:
+
+```bash
+pkill -f '/Applications/Speedtest Monitor.app/Contents/MacOS/Speedtest Monitor' || true
+lsof -nP -iTCP:8501 -sTCP:LISTEN
+```
+
+Reopen Speedtest Monitor after the `lsof` command displays nothing.
+
+## Controller remains on Starting
+
+Review the application log:
+
+```bash
+tail -100 "$HOME/Library/Logs/Ramrattan Speedtest Monitor/monitor.log"
+```
+
+Pilot 3 should log `Speedtest Monitor build 0.2.0-pilot.3 starting`.
 
 ## Collector does not write data
 
-- Review the collector output for `403`, `Forbidden`, license, or connection
-  errors.
-- Install the official Ookla Speedtest CLI if the Python fallback is blocked.
-- Confirm the data directory is writable.
-- Confirm `speedtest_results.csv` is not open in an application that locks it.
+- Wait for the first speed test to complete.
+- Confirm that `~/SpeedtestDashboard` is writable.
+- Confirm that `speedtest_results.csv` is not locked by another application.
+- An Ookla warning is not necessarily fatal because the monitor can use the
+  Python speed-test fallback.
 
-## Python is not found
-
-Install Python 3.11 or newer, restart Terminal or VS Code, and run setup again.
-
-## Dependency or environment errors
+## Developer environment errors
 
 On macOS, recreate the local environment:
 
@@ -29,23 +57,11 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -e ".[test]"
 ```
 
-On Windows, run:
-
-```bat
-setup_venv.bat
-```
-
-## Mac launcher is blocked
-
-From the project folder, run:
-
-```bash
-chmod +x RunSpeedTest.command
-./RunSpeedTest.command
-```
+On Windows, run `setup_venv.bat` and then use the installed command documented
+in [Getting Started](Getting-Started.md).
 
 ## Information to capture
 
-Copy the complete error and provide your Python version, Mac processor type or
-Windows version, current Git commit, and whether the failure affected the
-collector, dashboard, or both.
+Record the pilot number, Mac processor type, the exact symptom, and the last
+100 lines of `monitor.log`.  State whether the problem affected the controller,
+collector, dashboard, or all three.

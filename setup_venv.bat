@@ -53,8 +53,8 @@ echo === Verifying Streamlit and core packages ===
 ".venv\Scripts\python.exe" -c "import streamlit, pandas; print('OK: streamlit', streamlit.__version__, 'pandas', pandas.__version__)" 2>NUL
 
 echo.
-echo Done.  A local venv is ready at .venv  and RunSpeedTest.bat will use it automatically.
-echo To start everything now run:  RunSpeedTest.bat
+echo Done.  A local venv is ready at .venv.
+echo To start everything now run:  .venv\Scripts\speedtest-dashboard.exe --interval 300 --port 8501
 echo.
 
 endlocal
