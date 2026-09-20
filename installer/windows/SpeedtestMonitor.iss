@@ -48,11 +48,10 @@ var
   UninstallButton: TNewButton;
   CancelButton: TNewButton;
 begin
-  MaintenanceForm := CreateCustomForm;
+  MaintenanceForm := CreateCustomForm(
+    ScaleX(440), ScaleY(190), True, True);
   try
     MaintenanceForm.Caption := '{#AppName} Maintenance';
-    MaintenanceForm.ClientWidth := ScaleX(440);
-    MaintenanceForm.ClientHeight := ScaleY(190);
     MaintenanceForm.Position := poScreenCenter;
 
     HeadingLabel := TNewStaticText.Create(MaintenanceForm);
