@@ -177,7 +177,7 @@ def test_windows_streamlit_options_disable_packaged_development_mode():
     assert options["server.port"] == 8600
     assert options["browser.serverAddress"] == "127.0.0.1"
     assert options["browser.serverPort"] == 8600
-    assert windows_app.APP_BUILD == "0.2.0-windows-pilot.2"
+    assert windows_app.APP_BUILD == "0.2.0-windows-pilot.3"
 
 
 def test_windows_log_directory_uses_local_app_data(tmp_path, monkeypatch):
@@ -186,6 +186,22 @@ def test_windows_log_directory_uses_local_app_data(tmp_path, monkeypatch):
     assert windows_app.log_directory() == (
         tmp_path / "Ramrattan Speedtest Monitor" / "Logs"
     )
+
+
+def test_windows_windowed_service_restores_output_streams(tmp_path, monkeypatch):
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    monkeypatch.setattr(windows_app.sys, "stdout", None)
+    monkeypatch.setattr(windows_app.sys, "stderr", None)
+    monkeypatch.setattr(windows_app, "_SERVICE_LOG_HANDLE", None)
+
+    windows_app.ensure_service_output_streams()
+    print("collector output is available", flush=True)
+
+    assert windows_app.sys.stdout is not None
+    assert windows_app.sys.stderr is windows_app.sys.stdout
+    assert "collector output is available" in (
+        tmp_path / "Ramrattan Speedtest Monitor" / "Logs" / "monitor.log"
+    ).read_text(encoding="utf-8")
 
 
 def test_windows_service_loads_options_before_starting_server(tmp_path, monkeypatch):

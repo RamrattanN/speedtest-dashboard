@@ -16,11 +16,12 @@ from speedtest_dashboard.app_config import DATA_DIR_ENV, get_data_dir
 
 
 APP_NAME = "Speedtest Monitor"
-APP_BUILD = "0.2.0-windows-pilot.2"
+APP_BUILD = "0.2.0-windows-pilot.3"
 DESKTOP_MODE_ENV = "SPEEDTEST_DASHBOARD_DESKTOP"
 DESKTOP_PLATFORM_ENV = "SPEEDTEST_DASHBOARD_DESKTOP_PLATFORM"
 DEFAULT_INTERVAL = 300
 DEFAULT_PORT = 8501
+_SERVICE_LOG_HANDLE = None
 
 
 def streamlit_options(port: int) -> dict[str, object]:
@@ -89,8 +90,8 @@ def run_services(
     start_collector: bool = True,
 ) -> None:
     """Run the collector and Streamlit server inside the hidden child process."""
-    if sys.stdout is not None:
-        print(f"[INFO] {APP_NAME} build {APP_BUILD} starting on port {port}", flush=True)
+    ensure_service_output_streams()
+    print(f"[INFO] {APP_NAME} build {APP_BUILD} starting on port {port}", flush=True)
     os.environ[DATA_DIR_ENV] = str(data_dir)
     os.environ[DESKTOP_MODE_ENV] = "1"
     os.environ[DESKTOP_PLATFORM_ENV] = "windows"
@@ -133,6 +134,27 @@ def log_directory() -> Path:
     local_app_data = os.environ.get("LOCALAPPDATA")
     root = Path(local_app_data) if local_app_data else Path.home() / "AppData" / "Local"
     return root / "Ramrattan Speedtest Monitor" / "Logs"
+
+
+def ensure_service_output_streams() -> None:
+    """Give a windowed PyInstaller child writable stdout and stderr streams.
+
+    PyInstaller deliberately sets these streams to ``None`` for a windowed
+    executable.  The collector reports progress with ``print()``, so leaving
+    them unset can stop its background thread before the first result while
+    Streamlit continues serving an apparently healthy, empty dashboard.
+    """
+    global _SERVICE_LOG_HANDLE
+
+    if sys.stdout is None:
+        log_dir = log_directory()
+        log_dir.mkdir(parents=True, exist_ok=True)
+        _SERVICE_LOG_HANDLE = (log_dir / "monitor.log").open(
+            "a", encoding="utf-8", buffering=1
+        )
+        sys.stdout = _SERVICE_LOG_HANDLE
+    if sys.stderr is None:
+        sys.stderr = sys.stdout
 
 
 def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
@@ -232,7 +254,7 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
 
     tk.Label(
         root,
-        text=f"Windows Pilot 2  |  Results folder: {data_dir}",
+        text=f"Windows Pilot 3  |  Results folder: {data_dir}",
         font=("Segoe UI", 9),
         foreground="#66788A",
         background="#F3F7FA",

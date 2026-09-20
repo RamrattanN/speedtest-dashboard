@@ -37,7 +37,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $installer = Join-Path $PWD "dist\Speedtest-Monitor-Windows-x64-pilot-2.exe"
+          $installer = Join-Path $PWD "dist\Speedtest-Monitor-Windows-x64-pilot-3.exe"
           $installDir = Join-Path $env:RUNNER_TEMP "SpeedtestMonitor"
           $dataDir = Join-Path $env:RUNNER_TEMP "speedtest-monitor-data"
           $installerLog = Join-Path $env:RUNNER_TEMP "speedtest-monitor-install.log"
@@ -60,7 +60,7 @@ jobs:
             throw "Installed application was not found: $app"
           }
           $version = (Get-Item $app).VersionInfo.ProductVersion
-          if ($version -ne "0.2.0-windows-pilot.2") {
+          if ($version -ne "0.2.0-windows-pilot.3") {
             throw "Unexpected installed product version: $version"
           }
 
@@ -87,6 +87,11 @@ jobs:
             }
             if (-not $ready) {
               throw "The installed dashboard did not become ready."
+            }
+            $serviceLog = Join-Path $env:LOCALAPPDATA "Ramrattan Speedtest Monitor\Logs\monitor.log"
+            if ((-not (Test-Path $serviceLog)) -or
+                ((Get-Content $serviceLog -Raw) -notmatch "0\.2\.0-windows-pilot\.3 starting")) {
+              throw "The packaged windowed service did not restore its output streams."
             }
           } finally {
             if (-not $service.HasExited) {
@@ -123,7 +128,7 @@ jobs:
       - name: Upload private pilot installer
         uses: actions/upload-artifact@v4
         with:
-          name: Speedtest-Monitor-Windows-x64-pilot-2
-          path: dist/Speedtest-Monitor-Windows-x64-pilot-2.exe
+          name: Speedtest-Monitor-Windows-x64-pilot-3
+          path: dist/Speedtest-Monitor-Windows-x64-pilot-3.exe
           if-no-files-found: error
           retention-days: 14

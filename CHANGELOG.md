@@ -41,6 +41,9 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   installable Python command remains available for Windows development.
 
 ### Fixed
+- The windowed Windows service now restores writable output streams before
+  starting the collector, preventing its background thread from stopping
+  silently before the first measurement.
 - Packaged macOS builds now force Streamlit production mode so the dashboard
   and its static frontend are both served on the selected local port instead
   of incorrectly expecting a development frontend on port 3000.
