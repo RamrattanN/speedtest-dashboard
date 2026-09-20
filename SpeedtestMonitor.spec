@@ -70,8 +70,8 @@ app = BUNDLE(
     bundle_identifier="com.ramrattan.speedtest-monitor",
     info_plist={
         "CFBundleDisplayName": "Speedtest Monitor",
-        "CFBundleShortVersionString": "0.2.0-pilot",
-        "CFBundleVersion": "1",
+        "CFBundleShortVersionString": "0.2.0-pilot.3",
+        "CFBundleVersion": "3",
         "LSMinimumSystemVersion": "13.0",
         "NSHighResolutionCapable": True,
     },
