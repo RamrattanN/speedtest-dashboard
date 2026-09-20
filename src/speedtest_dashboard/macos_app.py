@@ -107,11 +107,15 @@ def run_services(port: int, interval: int, data_dir: Path) -> None:
         daemon=True,
     ).start()
 
+    options = streamlit_options(port)
+    # ``bootstrap.run`` assumes the CLI has already loaded flag options.  The
+    # desktop launcher calls it directly, so load them before Server creation.
+    bootstrap.load_config_options(options)
     bootstrap.run(
         str(dashboard_script_path()),
         False,
         [],
-        streamlit_options(port),
+        options,
     )
 
 
