@@ -25,6 +25,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the removed legacy `ROOT` variable.
 - A detected but failing Ookla CLI now falls back to Python `speedtest-cli`
   unless `--require-ookla` is specified.
+- Python collection now selects certifi's CA bundle when the interpreter has no
+  usable default certificate file, while preserving explicit overrides.
 
 ---
 

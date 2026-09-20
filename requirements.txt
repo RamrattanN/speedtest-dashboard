@@ -1,4 +1,5 @@
 # Core data + charts
+certifi>=2024.7.4
 pandas>=2.2
 numpy>=1.26
 plotly>=5.22

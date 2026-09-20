@@ -32,6 +32,7 @@ import argparse
 import json
 import os
 import shutil
+import ssl
 import subprocess
 import sys
 import tempfile
@@ -40,6 +41,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional, Dict, List, Tuple
 
+import certifi
 import pandas as pd
 
 from speedtest_dashboard.app_config import configure_data_paths
@@ -64,6 +66,28 @@ def ensure_paths() -> None:
 def ensure_csv_exists(path: Path) -> None:
     if not path.exists():
         pd.DataFrame(columns=COLUMNS).to_csv(path, index=False)
+
+
+def configure_ssl_certificate_bundle() -> Path | None:
+    """Use certifi when Python has no usable default CA file.
+
+    Respect an explicit ``SSL_CERT_FILE`` value so managed or corporate
+    environments can provide their own certificate bundle.
+    """
+    explicit_bundle = os.environ.get("SSL_CERT_FILE")
+    if explicit_bundle:
+        return Path(explicit_bundle)
+
+    default_bundle = ssl.get_default_verify_paths().cafile
+    if default_bundle and Path(default_bundle).is_file():
+        return Path(default_bundle)
+
+    certifi_bundle = Path(certifi.where())
+    if certifi_bundle.is_file():
+        os.environ["SSL_CERT_FILE"] = str(certifi_bundle)
+        return certifi_bundle
+
+    return None
 
 
 def save_atomic(df: pd.DataFrame, path: Path) -> None:
@@ -267,6 +291,7 @@ def run_one_via_python(server_id: Optional[str] = None) -> Dict:
     """
     Use Python speedtest-cli.  Tag engine='python-lib'.
     """
+    configure_ssl_certificate_bundle()
     import speedtest  # lazy import
 
     st = speedtest.Speedtest()

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 import pandas as pd
 
@@ -32,6 +33,33 @@ def test_ensure_paths_creates_configured_data_directories(tmp_path, monkeypatch)
 
     assert csv_path.parent.is_dir()
     assert archive_dir.is_dir()
+
+
+def test_configure_ssl_certificate_bundle_uses_certifi_when_default_is_missing(tmp_path, monkeypatch):
+    certifi_bundle = tmp_path / "cacert.pem"
+    certifi_bundle.write_text("test certificate bundle", encoding="utf-8")
+    monkeypatch.delenv("SSL_CERT_FILE", raising=False)
+    monkeypatch.setattr(
+        collector.ssl,
+        "get_default_verify_paths",
+        lambda: SimpleNamespace(cafile=None),
+    )
+    monkeypatch.setattr(collector.certifi, "where", lambda: str(certifi_bundle))
+
+    selected = collector.configure_ssl_certificate_bundle()
+
+    assert selected == certifi_bundle
+    assert collector.os.environ["SSL_CERT_FILE"] == str(certifi_bundle)
+
+
+def test_configure_ssl_certificate_bundle_preserves_explicit_override(tmp_path, monkeypatch):
+    explicit_bundle = tmp_path / "managed.pem"
+    monkeypatch.setenv("SSL_CERT_FILE", str(explicit_bundle))
+
+    selected = collector.configure_ssl_certificate_bundle()
+
+    assert selected == explicit_bundle
+    assert collector.os.environ["SSL_CERT_FILE"] == str(explicit_bundle)
 
 
 def test_run_one_falls_back_when_detected_ookla_cli_fails(monkeypatch, capsys):
