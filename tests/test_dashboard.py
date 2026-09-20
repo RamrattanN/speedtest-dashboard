@@ -13,7 +13,7 @@ def test_dashboard_renders_without_data(tmp_path, monkeypatch):
     app.run(timeout=20)
 
     assert not app.exception
-    assert [title.value for title in app.title] == ["Speedtest Monitor"]
+    assert any("Speedtest Monitor" in block.value for block in app.markdown)
     assert any("No data yet" in message.value for message in app.info)
 
 
@@ -38,7 +38,12 @@ def test_dashboard_renders_recorded_measurement(tmp_path, monkeypatch):
     app.run(timeout=20)
 
     assert not app.exception
-    assert [heading.value for heading in app.subheader] == ["Summary (window above)"]
+    assert [metric.label for metric in app.metric] == [
+        "Download",
+        "Upload",
+        "Ping",
+        "Recorded",
+    ]
     assert len(app.dataframe) == 1
 
 
@@ -74,3 +79,21 @@ def test_dashboard_redraw_includes_new_server(tmp_path, monkeypatch):
         "1 · First Server",
         "2 · Second Server",
     }
+
+
+def test_help_navigation_is_specific_to_speedtest(tmp_path, monkeypatch):
+    monkeypatch.setenv("SPEEDTEST_DASHBOARD_DATA_DIR", str(tmp_path))
+    dashboard_path = Path(__file__).parents[1] / "src" / "speedtest_dashboard" / "dashboard.py"
+    app = AppTest.from_file(dashboard_path)
+
+    app.run(timeout=20)
+    help_button = next(button for button in app.button if button.label == "Help")
+    help_button.click().run(timeout=20)
+
+    assert not app.exception
+    assert any("Using the Speedtest Monitor" in block.value for block in app.markdown)
+    assert any(
+        "collection interval and screen-refresh interval are separate" in block.value
+        for block in app.markdown
+    )
+    assert app.code[0].value == "./RunSpeedTest.command --interval 300"
