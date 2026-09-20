@@ -16,7 +16,7 @@ from speedtest_dashboard.app_config import DATA_DIR_ENV, get_data_dir
 
 
 APP_NAME = "Speedtest Monitor"
-APP_BUILD = "0.2.0-pilot.3"
+APP_BUILD = "0.2.0-pilot.4"
 DESKTOP_MODE_ENV = "SPEEDTEST_DASHBOARD_DESKTOP"
 DESKTOP_PLATFORM_ENV = "SPEEDTEST_DASHBOARD_DESKTOP_PLATFORM"
 DEFAULT_INTERVAL = 300

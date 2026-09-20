@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/macos-pilot.yml"
       - "SpeedtestMonitor.spec"
+      - "scripts/build_macos_icon.py"
       - "scripts/build_macos_pilot.sh"
       - "pyproject.toml"
       - "src/speedtest_dashboard/**"
@@ -47,7 +48,7 @@ jobs:
             if curl --fail --silent --show-error http://127.0.0.1:8765/ \
               --output "$RUNNER_TEMP/dashboard.html"; then
               grep -qi '<!doctype html' "$RUNNER_TEMP/dashboard.html"
-              grep -q '0.2.0-pilot.3' "$LOG"
+              grep -q '0.2.0-pilot.4' "$LOG"
               exit 0
             fi
             if ! kill -0 "$PID" 2>/dev/null; then
@@ -61,7 +62,7 @@ jobs:
       - name: Upload private pilot disk image
         uses: actions/upload-artifact@v4
         with:
-          name: Speedtest-Monitor-macOS-Intel-pilot-3
-          path: dist/Speedtest-Monitor-macOS-Intel-pilot-3.dmg
+          name: Speedtest-Monitor-macOS-Intel-pilot-4
+          path: dist/Speedtest-Monitor-macOS-Intel-pilot-4.dmg
           if-no-files-found: error
           retention-days: 14

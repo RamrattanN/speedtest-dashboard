@@ -37,7 +37,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $installer = Join-Path $PWD "dist\Speedtest-Monitor-Windows-x64-pilot-1.exe"
+          $installer = Join-Path $PWD "dist\Speedtest-Monitor-Windows-x64-pilot-2.exe"
           $installDir = Join-Path $env:RUNNER_TEMP "SpeedtestMonitor"
           $dataDir = Join-Path $env:RUNNER_TEMP "speedtest-monitor-data"
           $installerLog = Join-Path $env:RUNNER_TEMP "speedtest-monitor-install.log"
@@ -60,7 +60,7 @@ jobs:
             throw "Installed application was not found: $app"
           }
           $version = (Get-Item $app).VersionInfo.ProductVersion
-          if ($version -ne "0.2.0-windows-pilot.1") {
+          if ($version -ne "0.2.0-windows-pilot.2") {
             throw "Unexpected installed product version: $version"
           }
 
@@ -93,10 +93,37 @@ jobs:
               Stop-Process -Id $service.Id -Force
             }
           }
+          $historyMarker = Join-Path $env:USERPROFILE "SpeedtestDashboard\uninstall-preserves-history.txt"
+          New-Item -ItemType Directory -Force (Split-Path $historyMarker) | Out-Null
+          Set-Content $historyMarker "preserve"
+
+          $repair = Start-Process $installer -Wait -PassThru -ArgumentList @(
+            "/VERYSILENT",
+            "/SUPPRESSMSGBOXES",
+            "/NORESTART",
+            "/MAINTENANCE=repair",
+            "/DIR=$installDir"
+          )
+          if (($repair.ExitCode -ne 0) -or (-not (Test-Path $app))) {
+            throw "Repair did not restore the installed application."
+          }
+
+          Start-Process $installer -Wait -ArgumentList @(
+            "/VERYSILENT",
+            "/SUPPRESSMSGBOXES",
+            "/NORESTART",
+            "/MAINTENANCE=uninstall"
+          )
+          if (Test-Path $app) {
+            throw "Maintenance uninstall did not remove the application."
+          }
+          if (-not (Test-Path $historyMarker)) {
+            throw "Maintenance uninstall removed user measurement history."
+          }
       - name: Upload private pilot installer
         uses: actions/upload-artifact@v4
         with:
-          name: Speedtest-Monitor-Windows-x64-pilot-1
-          path: dist/Speedtest-Monitor-Windows-x64-pilot-1.exe
+          name: Speedtest-Monitor-Windows-x64-pilot-2
+          path: dist/Speedtest-Monitor-Windows-x64-pilot-2.exe
           if-no-files-found: error
           retention-days: 14
