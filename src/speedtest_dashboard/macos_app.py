@@ -16,6 +16,7 @@ from speedtest_dashboard.app_config import DATA_DIR_ENV, get_data_dir
 
 
 APP_NAME = "Speedtest Monitor"
+APP_BUILD = "0.2.0-pilot.3"
 DESKTOP_MODE_ENV = "SPEEDTEST_DASHBOARD_DESKTOP"
 DEFAULT_INTERVAL = 300
 DEFAULT_PORT = 8501
@@ -87,6 +88,7 @@ def service_command(port: int, interval: int, data_dir: Path) -> list[str]:
 
 def run_services(port: int, interval: int, data_dir: Path) -> None:
     """Run the collector and Streamlit server inside the hidden child process."""
+    print(f"[INFO] {APP_NAME} build {APP_BUILD} starting on port {port}", flush=True)
     os.environ[DATA_DIR_ENV] = str(data_dir)
     os.environ[DESKTOP_MODE_ENV] = "1"
 
@@ -226,7 +228,7 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
 
     data_label = tk.Label(
         root,
-        text=f"Results folder: {data_dir}",
+        text=f"Pilot 3  |  Results folder: {data_dir}",
         font=("Helvetica Neue", 10),
         foreground="#66788A",
         background="#F3F7FA",
