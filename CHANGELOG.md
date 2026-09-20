@@ -32,6 +32,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Packaged macOS builds now force Streamlit production mode so the dashboard
   and its static frontend are both served on the selected local port instead
   of incorrectly expecting a development frontend on port 3000.
+- The macOS packaging workflow now launches the finished application and
+  verifies the dashboard root route before publishing its disk image.
 - Installed console commands no longer depend on missing repository-root files.
 - Removed the hardcoded personal Dropbox path from the application.
 - Collector startup now creates the configured data directory without referencing
