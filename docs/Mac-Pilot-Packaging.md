@@ -63,8 +63,14 @@ testing.
 
 1. Open the downloaded disk image.
 2. Drag **Speedtest Monitor** to **Applications**.
-3. Control-click the application and select **Open**.
-4. Confirm **Open** when macOS displays the unsigned-application warning.
+3. Because this private pilot is unsigned, remove the downloaded-file
+   quarantine in Terminal:
+
+   ```bash
+   xattr -dr com.apple.quarantine "/Applications/Speedtest Monitor.app"
+   ```
+
+4. Open **Speedtest Monitor** from Applications.
 5. Keep the controller open while monitoring should continue.
 
 ## Pilot acceptance checks
@@ -81,6 +87,8 @@ testing.
 ## Known pilot limitations
 
 - The disk image is unsigned and not notarized.
+- GitHub's downloaded artifact receives macOS quarantine metadata.  Pilot
+  testers must run the documented `xattr` command after copying the app.
 - The first build supports Intel Macs only.
 - The controller must remain open while collection continues.
 - Automatic launch at login is not included.
