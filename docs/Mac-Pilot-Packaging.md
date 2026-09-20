@@ -38,7 +38,7 @@ bash scripts/build_macos_pilot.sh
 The resulting disk image is:
 
 ```text
-dist/Speedtest-Monitor-macOS-Intel-pilot.dmg
+dist/Speedtest-Monitor-macOS-Intel-pilot-3.dmg
 ```
 
 ## GitHub Actions build
@@ -53,7 +53,7 @@ be run manually:
 1. Open **Actions** in GitHub.
 2. Select **Build macOS Intel pilot**.
 3. Select **Run workflow**.
-4. Download the `Speedtest-Monitor-macOS-Intel-pilot` artifact after the build
+4. Download the `Speedtest-Monitor-macOS-Intel-pilot-3` artifact after the build
    completes.
 
 The artifact expires after 14 days and is intended only for controlled pilot
