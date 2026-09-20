@@ -22,6 +22,18 @@ def test_sanitize_server_information():
     assert collector.sanitize_server_info("nan", "None") == ("", "")
 
 
+def test_ensure_paths_creates_configured_data_directories(tmp_path, monkeypatch):
+    csv_path = tmp_path / "configured" / "speedtest_results.csv"
+    archive_dir = csv_path.parent / "archive"
+    monkeypatch.setattr(collector, "DEFAULT_CSV", csv_path)
+    monkeypatch.setattr(collector, "ARCHIVE_DIR", archive_dir)
+
+    collector.ensure_paths()
+
+    assert csv_path.parent.is_dir()
+    assert archive_dir.is_dir()
+
+
 def test_prune_main_removes_rows_older_than_retention_period():
     now = datetime.now(timezone.utc)
     frame = pd.DataFrame([

@@ -57,7 +57,7 @@ _ookla_guidance_printed = False
 
 # ---------- Filesystem helpers ----------
 def ensure_paths() -> None:
-    ROOT.mkdir(parents=True, exist_ok=True)
+    DEFAULT_CSV.parent.mkdir(parents=True, exist_ok=True)
     ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
 
 
