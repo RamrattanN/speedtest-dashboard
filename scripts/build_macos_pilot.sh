@@ -37,7 +37,7 @@ iconutil -c icns "$ICONSET" -o "$ICON_ROOT/SpeedtestMonitor.icns"
 python -m PyInstaller --clean --noconfirm SpeedtestMonitor.spec
 
 PILOT_DIR="$ROOT/dist/pilot"
-DMG_PATH="$ROOT/dist/Speedtest-Monitor-macOS-Intel-pilot.dmg"
+DMG_PATH="$ROOT/dist/Speedtest-Monitor-macOS-Intel-pilot-3.dmg"
 rm -rf "$PILOT_DIR" "$DMG_PATH"
 mkdir -p "$PILOT_DIR"
 cp -R "$ROOT/dist/Speedtest Monitor.app" "$PILOT_DIR/"
