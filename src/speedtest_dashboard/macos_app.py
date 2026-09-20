@@ -21,6 +21,30 @@ DEFAULT_INTERVAL = 300
 DEFAULT_PORT = 8501
 
 
+def streamlit_options(port: int) -> dict[str, object]:
+    """Return production-safe Streamlit settings for the packaged app.
+
+    PyInstaller relocates Streamlit outside a conventional ``site-packages``
+    directory.  Streamlit otherwise mistakes the frozen bundle for a source
+    checkout, enables development mode, and expects a separate Vite frontend
+    on port 3000.
+    """
+    return {
+        "global.developmentMode": False,
+        "server.address": "127.0.0.1",
+        "server.port": port,
+        "browser.serverAddress": "127.0.0.1",
+        "browser.serverPort": port,
+        "server.headless": True,
+        "browser.gatherUsageStats": False,
+        "theme.base": "light",
+        "theme.primaryColor": "#173F63",
+        "theme.backgroundColor": "#F3F7FA",
+        "theme.secondaryBackgroundColor": "#FFFFFF",
+        "theme.textColor": "#17232E",
+    }
+
+
 def is_frozen() -> bool:
     """Return whether the process is running from a PyInstaller bundle."""
     return bool(getattr(sys, "frozen", False))
@@ -87,17 +111,7 @@ def run_services(port: int, interval: int, data_dir: Path) -> None:
         str(dashboard_script_path()),
         False,
         [],
-        {
-            "server.address": "127.0.0.1",
-            "server.port": port,
-            "server.headless": True,
-            "browser.gatherUsageStats": False,
-            "theme.base": "light",
-            "theme.primaryColor": "#173F63",
-            "theme.backgroundColor": "#F3F7FA",
-            "theme.secondaryBackgroundColor": "#FFFFFF",
-            "theme.textColor": "#17232E",
-        },
+        streamlit_options(port),
     )
 
 
