@@ -1,0 +1,37 @@
+name: Build macOS Intel pilot
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/macos-pilot.yml"
+      - "SpeedtestMonitor.spec"
+      - "scripts/build_macos_pilot.sh"
+      - "pyproject.toml"
+      - "src/speedtest_dashboard/**"
+
+permissions:
+  contents: read
+
+jobs:
+  build-macos-pilot:
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install project, tests, and pilot builder
+        run: python -m pip install -e ".[test,macos-pilot]"
+      - name: Run automated tests
+        run: pytest -q
+      - name: Build unsigned Intel application and disk image
+        run: bash scripts/build_macos_pilot.sh
+      - name: Upload private pilot disk image
+        uses: actions/upload-artifact@v4
+        with:
+          name: Speedtest-Monitor-macOS-Intel-pilot
+          path: dist/Speedtest-Monitor-macOS-Intel-pilot.dmg
+          if-no-files-found: error
+          retention-days: 14

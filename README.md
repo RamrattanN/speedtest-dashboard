@@ -21,10 +21,27 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 - Bar and line charts with previous-period comparison.
 - Timezone, theme, color, server, and date-window controls.
 - macOS and Windows launchers using an isolated local Python environment.
+- Unsigned macOS Intel pilot application for users who do not use Terminal.
 - Installable command-line package.
 - Automated tests that do not perform real internet speed tests.
 
 ## Quick start on macOS
+
+### Private desktop pilot
+
+The unsigned macOS Intel pilot is distributed as a disk image.  Open the disk
+image, drag **Speedtest Monitor** to **Applications**, then open the application.
+It includes Python and the required dependencies and does not require the
+repository, VS Code, or Terminal.
+
+Because the pilot is unsigned, macOS may block the first launch.  Control-click
+the application, select **Open**, then confirm **Open**.  Use the small
+controller window to reopen the dashboard or quit the monitor safely.
+
+See [macOS Pilot Packaging](docs/Mac-Pilot-Packaging.md) for build, test, and
+distribution instructions.
+
+### Developer launcher
 
 Install Python 3.11 or newer, then clone the repository and run:
 
@@ -95,9 +112,15 @@ CI verifies Python 3.11 and 3.12 on Linux, Python 3.12 on macOS, source
 compilation, tests, the Mac launcher, wheel creation, isolated installation,
 and installed command entry points.
 
+The separate macOS pilot workflow builds an unsigned Intel `.app` and `.dmg`
+for controlled testing.  The application build must run on a macOS Intel
+runner because PyInstaller builds for the operating system and architecture on
+which it runs.
+
 ## Documentation
 
 - [Mac Testing Guide](docs/Mac-Testing.md)
+- [macOS Pilot Packaging](docs/Mac-Pilot-Packaging.md)
 - [VS Code Setup on Mac](docs/VS-Code-Setup-Mac.md)
 - [Getting Started](docs/wiki/Getting-Started.md)
 - [Configuration](docs/wiki/Configuration.md)

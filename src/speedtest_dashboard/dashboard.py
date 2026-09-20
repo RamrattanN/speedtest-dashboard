@@ -14,6 +14,7 @@ Speedtest dashboard (compact UI + navy accents):
 """
 
 from datetime import datetime, timedelta
+import os
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -36,6 +37,7 @@ DEFAULT_COLOR_PING = "#20B9D8"
 
 # Global accent color
 ACCENT_NAVY = "#173F63"
+DESKTOP_MODE = os.environ.get("SPEEDTEST_DASHBOARD_DESKTOP") == "1"
 
 LOGO_B64_PATH = Path(__file__).parent / "assets" / "ramrattan-logo.png.b64"
 RAMRATTAN_LOGO_URI = (
@@ -549,23 +551,41 @@ def render_help_panel() -> None:
         unsafe_allow_html=True,
     )
 
-    st.markdown(
-        """
-        <section class="rr-help-card">
-          <h3>Start and stop the monitor</h3>
-          <p><strong>What to do</strong></p>
-          <ol>
-            <li>Open Terminal in the project folder.</li>
-            <li>Run the launcher shown below.</li>
-            <li>Keep Terminal open while collecting results.</li>
-            <li>Press Control-C in Terminal to stop both processes safely.</li>
-          </ol>
-          <p class="remember"><strong>Remember:</strong> The collector normally records a result every five minutes.  The dashboard checks for new results every 60 seconds.</p>
-        </section>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.code("./RunSpeedTest.command --interval 300", language="bash")
+    if DESKTOP_MODE:
+        st.markdown(
+            """
+            <section class="rr-help-card">
+              <h3>Start and stop the monitor</h3>
+              <p><strong>What to do</strong></p>
+              <ol>
+                <li>Open Speedtest Monitor from the Applications folder.</li>
+                <li>Use Open Dashboard in the controller whenever you need to return to this page.</li>
+                <li>You may close the browser tab without stopping collection.</li>
+                <li>Select Quit Monitor in the controller to stop collection safely.</li>
+              </ol>
+              <p class="remember"><strong>Remember:</strong> Keep the Speedtest Monitor controller open while you want results collected.  A new test normally runs every five minutes, while this dashboard checks for new results every 60 seconds.</p>
+            </section>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            """
+            <section class="rr-help-card">
+              <h3>Start and stop the monitor</h3>
+              <p><strong>Developer mode</strong></p>
+              <ol>
+                <li>Open Terminal in the project folder.</li>
+                <li>Run the launcher shown below.</li>
+                <li>Keep Terminal open while collecting results.</li>
+                <li>Press Control-C in Terminal to stop both processes safely.</li>
+              </ol>
+              <p class="remember"><strong>Remember:</strong> The collector normally records a result every five minutes.  The dashboard checks for new results every 60 seconds.</p>
+            </section>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.code("./RunSpeedTest.command --interval 300", language="bash")
 
     st.markdown(
         f"""
@@ -600,18 +620,33 @@ def render_help_panel() -> None:
         unsafe_allow_html=True,
     )
 
+    restart_guidance = (
+        "Quit the monitor from its controller, then open it again from Applications."
+        if DESKTOP_MODE
+        else "Stop with Control-C, pull the latest branch, then run the launcher again."
+    )
+    keep_running_guidance = (
+        "Keep the Speedtest Monitor controller open if you want collection to continue."
+        if DESKTOP_MODE
+        else "Do not close Terminal if you want collection to continue."
+    )
+    browser_guidance = (
+        "Reopen it from the monitor controller without interrupting collection."
+        if DESKTOP_MODE
+        else "Open the Local URL printed most recently in Terminal."
+    )
     st.markdown(
-        """
+        f"""
         <section class="rr-help-card">
           <h3>Resolve common issues</h3>
           <ul>
             <li><strong>No data yet:</strong> Confirm the collector is running and wait for its first completed test.</li>
             <li><strong>Dashboard does not update:</strong> Confirm automatic display refresh is enabled, then use Refresh now once if needed.</li>
             <li><strong>Ookla warning:</strong> The monitor can fall back automatically to the Python speed-test engine.</li>
-            <li><strong>Port already in use:</strong> Open the Local URL printed most recently in Terminal.</li>
-            <li><strong>Need to restart:</strong> Stop with Control-C, pull the latest branch, then run the launcher again.</li>
+            <li><strong>Browser tab was closed:</strong> {browser_guidance}</li>
+            <li><strong>Need to restart:</strong> {restart_guidance}</li>
           </ul>
-          <p class="remember"><strong>Remember:</strong> Do not close Terminal if you want collection to continue.</p>
+          <p class="remember"><strong>Remember:</strong> {keep_running_guidance}</p>
         </section>
         """,
         unsafe_allow_html=True,

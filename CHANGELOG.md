@@ -15,6 +15,9 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Ramrattan-styled application header, latest-result cards, and compact content panels.
 - Non-modal Rentals-style right sidebar Help for setup, controls, result interpretation, and troubleshooting.
 - Packaged Ramrattan logo reused from the Rentals application.
+- Unsigned macOS Intel pilot packaging with a native controller, bundled
+  Python runtime, disk-image build script, and GitHub Actions artifact workflow.
+- Pilot packaging and acceptance guide for controlled distribution.
 
 ### Changed
 - Consolidated the collector and dashboard into the installable Python package.
@@ -22,6 +25,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - PowerShell launcher now supports interval, port, headless, and data-directory options.
 - Dashboard controls, filters, chart, and summary now use a tighter card-based layout.
 - Interactive controls now use the Ramrattan navy and blue palette instead of Streamlit red.
+- Help now detects desktop packaging and replaces developer Terminal commands
+  with Applications-folder, controller, browser, and safe-quit guidance.
 
 ### Fixed
 - Installed console commands no longer depend on missing repository-root files.

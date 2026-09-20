@@ -123,6 +123,23 @@ def test_ramrattan_logo_asset_is_a_packaged_png():
     assert len(logo_bytes) > 20_000
 
 
+def test_packaged_help_uses_desktop_controller_instructions(tmp_path, monkeypatch):
+    monkeypatch.setenv("SPEEDTEST_DASHBOARD_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("SPEEDTEST_DASHBOARD_DESKTOP", "1")
+    dashboard_path = Path(__file__).parents[1] / "src" / "speedtest_dashboard" / "dashboard.py"
+    app = AppTest.from_file(dashboard_path)
+
+    app.run(timeout=20)
+    next(button for button in app.button if button.label == "Help with this page").click().run(timeout=20)
+
+    assert not app.exception
+    help_text = "\n".join(block.value for block in app.markdown)
+    assert "Open Speedtest Monitor from the Applications folder" in help_text
+    assert "close the browser tab without stopping collection" in help_text
+    assert "Quit Monitor" in help_text
+    assert not app.code
+
+
 def test_streamlit_theme_uses_ramrattan_palette():
     config_path = Path(__file__).parents[1] / ".streamlit" / "config.toml"
     with config_path.open("rb") as config_file:

@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from speedtest_dashboard import runner
+from speedtest_dashboard import macos_app, runner
 
 
 class FakeProcess:
@@ -66,3 +66,30 @@ def test_runner_passes_shared_configuration_to_both_processes(tmp_path, monkeypa
     assert "--server.headless" in dashboard_call["command"]
     assert dashboard_call["env"][runner.DATA_DIR_ENV] == data_dir
     assert fake_process.terminated
+
+
+def test_macos_service_command_uses_module_in_source_mode(tmp_path, monkeypatch):
+    monkeypatch.setattr(macos_app, "is_frozen", lambda: False)
+    command = macos_app.service_command(8600, 300, tmp_path)
+
+    assert command[:3] == [
+        macos_app.sys.executable,
+        "-m",
+        "speedtest_dashboard.macos_app",
+    ]
+    assert command[-6:] == [
+        "--port",
+        "8600",
+        "--interval",
+        "300",
+        "--data-dir",
+        str(tmp_path),
+    ]
+
+
+def test_macos_dashboard_path_uses_pyinstaller_bundle(tmp_path, monkeypatch):
+    monkeypatch.setattr(macos_app.sys, "_MEIPASS", str(tmp_path), raising=False)
+
+    assert macos_app.dashboard_script_path() == (
+        tmp_path / "speedtest_dashboard" / "dashboard.py"
+    )
