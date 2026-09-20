@@ -93,3 +93,13 @@ def test_macos_dashboard_path_uses_pyinstaller_bundle(tmp_path, monkeypatch):
     assert macos_app.dashboard_script_path() == (
         tmp_path / "speedtest_dashboard" / "dashboard.py"
     )
+
+
+def test_macos_streamlit_options_disable_packaged_development_mode():
+    options = macos_app.streamlit_options(8600)
+
+    assert options["global.developmentMode"] is False
+    assert options["server.address"] == "127.0.0.1"
+    assert options["server.port"] == 8600
+    assert options["browser.serverAddress"] == "127.0.0.1"
+    assert options["browser.serverPort"] == 8600
