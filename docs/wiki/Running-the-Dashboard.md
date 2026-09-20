@@ -19,6 +19,12 @@ browser.
 
 Stop the developer launcher with **Control-C**.
 
+## Installed Windows pilot
+
+Open **Speedtest Monitor** from the Start menu.  Its controller has the same
+**Open Dashboard** and **Quit Monitor** behavior as the macOS pilot.  Closing
+the browser tab does not stop collection.
+
 ## Installed Python command
 
 ```bash

@@ -18,6 +18,10 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Unsigned macOS Intel pilot packaging with a native controller, bundled
   Python runtime, disk-image build script, and GitHub Actions artifact workflow.
 - Pilot packaging and acceptance guide for controlled distribution.
+- Unsigned Windows x64 Pilot 1 packaging with a native controller, per-user
+  installer, Start menu shortcut, embedded version metadata, and GitHub Actions
+  installed-app smoke test.
+- Windows pilot packaging and acceptance guide.
 
 ### Changed
 - Consolidated the collector and dashboard into the installable Python package.
@@ -29,6 +33,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   security handling, local data privacy, and controller-based operation.
 - README and wiki documentation now identify macOS Intel Pilot 3 as the current
   downloadable release and distinguish it from source-based developer use.
+- Packaged Help now selects macOS or Windows installation, security, launch,
+  and restart guidance at runtime.
 
 ### Removed
 - Retired the legacy `RunSpeedTest.ps1` and `RunSpeedTest.bat` launchers.  The

@@ -5,11 +5,12 @@ them in a local Streamlit dashboard.  Results stay on the computer in CSV files.
 
 ## Current release path
 
-The current downloadable release is the unsigned **macOS Intel Pilot 3**.  It
-includes its own Python runtime and does not require the repository, VS Code, or
-Terminal for everyday use.
+The current downloadable builds are unsigned **macOS Intel Pilot 3** and
+**Windows x64 Pilot 1**.  Both include their own Python runtime and do not
+require the repository, VS Code, or Terminal for everyday use.
 
-1. Install **Speedtest Monitor** in Applications.
+1. Install **Speedtest Monitor** in Applications on macOS or with the per-user
+   Windows installer.
 2. Open the application and keep its controller running.
 3. Use **Open Dashboard** to return to the dashboard at any time.
 4. Use **Quit Monitor** to stop both collection and the dashboard safely.
@@ -19,8 +20,7 @@ dashboard checks for new results every 60 seconds.
 
 Source-based developer operation remains available through the macOS launcher
 or the installed `speedtest-dashboard` command.  The legacy PowerShell and
-Windows batch launchers have been retired.  A Windows desktop package is not
-part of Pilot 3.
+Windows batch launchers have been retired.
 
 ## Documentation
 

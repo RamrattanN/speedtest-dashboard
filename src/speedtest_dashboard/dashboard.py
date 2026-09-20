@@ -38,6 +38,7 @@ DEFAULT_COLOR_PING = "#20B9D8"
 # Global accent color
 ACCENT_NAVY = "#173F63"
 DESKTOP_MODE = os.environ.get("SPEEDTEST_DASHBOARD_DESKTOP") == "1"
+DESKTOP_PLATFORM = os.environ.get("SPEEDTEST_DASHBOARD_DESKTOP_PLATFORM", "macos")
 
 LOGO_B64_PATH = Path(__file__).parent / "assets" / "ramrattan-logo.png.b64"
 RAMRATTAN_LOGO_URI = (
@@ -552,13 +553,39 @@ def render_help_panel() -> None:
     )
 
     if DESKTOP_MODE:
-        st.markdown(
+        if DESKTOP_PLATFORM == "windows":
+            launch_location = "the Windows Start menu"
+            install_steps = """
+                <li>Quit any running copy of Speedtest Monitor.</li>
+                <li>Run the current Windows x64 pilot installer.</li>
+                <li>If Microsoft Defender SmartScreen appears, select More info, then Run anyway.</li>
+                <li>Open Speedtest Monitor from the Start menu after installation.</li>
+                <li>Confirm that the controller shows the expected Windows pilot number.</li>
             """
+            security_note = (
+                "The Windows private pilot is not code-signed.  The first installer launch "
+                "may require explicit SmartScreen approval."
+            )
+        else:
+            launch_location = "the Applications folder"
+            install_steps = """
+                <li>Quit any running copy of Speedtest Monitor.</li>
+                <li>Open the current pilot disk image and drag Speedtest Monitor to Applications.</li>
+                <li>Choose Replace if macOS reports that an older copy is installed.</li>
+                <li>If macOS blocks the unsigned pilot, use Privacy &amp; Security in System Settings to allow it, or follow the quarantine-removal command supplied with the pilot.</li>
+                <li>Confirm that the controller shows the expected pilot number before acceptance testing.</li>
+            """
+            security_note = (
+                "The current application is not code-signed or notarized.  These extra "
+                "first-launch steps will be removed before public distribution."
+            )
+        st.markdown(
+            f"""
             <section class="rr-help-card">
               <h3>Run the installed monitor</h3>
               <p><strong>What to do</strong></p>
               <ol>
-                <li>Open Speedtest Monitor from the Applications folder.</li>
+                <li>Open Speedtest Monitor from {launch_location}.</li>
                 <li>Use Open Dashboard in the controller whenever you need to return to this page.</li>
                 <li>You may close the browser tab without stopping collection.</li>
                 <li>Select Quit Monitor in the controller to stop collection safely.</li>
@@ -568,13 +595,9 @@ def render_help_panel() -> None:
             <section class="rr-help-card">
               <h3>Install or update the private pilot</h3>
               <ol>
-                <li>Quit any running copy of Speedtest Monitor.</li>
-                <li>Open the current pilot disk image and drag Speedtest Monitor to Applications.</li>
-                <li>Choose Replace if macOS reports that an older copy is installed.</li>
-                <li>If macOS blocks the unsigned pilot, use Privacy &amp; Security in System Settings to allow it, or follow the quarantine-removal command supplied with the pilot.</li>
-                <li>Confirm that the controller shows the expected pilot number before acceptance testing.</li>
+                {install_steps}
               </ol>
-              <p class="remember"><strong>Private pilot:</strong> The current application is not code-signed or notarized.  These extra first-launch steps will be removed before public distribution.</p>
+              <p class="remember"><strong>Private pilot:</strong> {security_note}</p>
             </section>
             """,
             unsafe_allow_html=True,
@@ -642,7 +665,11 @@ def render_help_panel() -> None:
     )
 
     restart_guidance = (
-        "Quit the monitor from its controller, then open it again from Applications."
+        (
+            "Quit the monitor from its controller, then open it again from the Start menu."
+            if DESKTOP_PLATFORM == "windows"
+            else "Quit the monitor from its controller, then open it again from Applications."
+        )
         if DESKTOP_MODE
         else "Stop with Control-C, pull the latest branch, then run the launcher again."
     )

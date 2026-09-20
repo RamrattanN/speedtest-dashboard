@@ -2,7 +2,8 @@
 
 ## Desktop pilot defaults
 
-Pilot 3 is designed for a simple double-click experience.  Its controller uses:
+The macOS and Windows pilots are designed for a simple double-click experience.
+Their controllers use:
 
 - Test interval: 300 seconds
 - Preferred local port: 8501

@@ -1,0 +1,102 @@
+name: Build Windows x64 pilot
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/windows-pilot.yml"
+      - "SpeedtestMonitorWindows.spec"
+      - "installer/windows/**"
+      - "scripts/build_windows_icon.py"
+      - "scripts/build_windows_pilot.ps1"
+      - "pyproject.toml"
+      - "src/speedtest_dashboard/**"
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows-pilot:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install project, tests, and pilot builder
+        run: python -m pip install -e ".[test,windows-pilot]"
+      - name: Run automated tests
+        run: pytest -q
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+      - name: Build unsigned Windows application and installer
+        shell: pwsh
+        run: ./scripts/build_windows_pilot.ps1
+      - name: Install and smoke-test packaged dashboard
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installer = Join-Path $PWD "dist\Speedtest-Monitor-Windows-x64-pilot-1.exe"
+          $installDir = Join-Path $env:RUNNER_TEMP "Speedtest Monitor"
+          $dataDir = Join-Path $env:RUNNER_TEMP "speedtest-monitor-data"
+          $installerLog = Join-Path $env:RUNNER_TEMP "speedtest-monitor-install.log"
+          $dashboardHtml = Join-Path $env:RUNNER_TEMP "dashboard.html"
+
+          $install = Start-Process $installer -Wait -PassThru -ArgumentList @(
+            "/VERYSILENT",
+            "/SUPPRESSMSGBOXES",
+            "/NORESTART",
+            "/DIR=$installDir",
+            "/LOG=$installerLog"
+          )
+          if ($install.ExitCode -ne 0) {
+            Get-Content $installerLog
+            throw "Installer exited with code $($install.ExitCode)."
+          }
+
+          $app = Join-Path $installDir "Speedtest Monitor.exe"
+          if (-not (Test-Path $app)) {
+            throw "Installed application was not found: $app"
+          }
+          $version = (Get-Item $app).VersionInfo.ProductVersion
+          if ($version -ne "0.2.0-windows-pilot.1") {
+            throw "Unexpected installed product version: $version"
+          }
+
+          $service = Start-Process $app -PassThru -ArgumentList @(
+            "--service",
+            "--dashboard-only",
+            "--port", "8766",
+            "--interval", "86400",
+            "--data-dir", $dataDir
+          )
+          try {
+            $ready = $false
+            for ($attempt = 0; $attempt -lt 90; $attempt++) {
+              if ($service.HasExited) { break }
+              try {
+                Invoke-WebRequest "http://127.0.0.1:8766/" -OutFile $dashboardHtml
+                if ((Get-Content $dashboardHtml -Raw) -match "(?i)<!doctype html") {
+                  $ready = $true
+                  break
+                }
+              } catch {
+                Start-Sleep -Seconds 1
+              }
+            }
+            if (-not $ready) {
+              throw "The installed dashboard did not become ready."
+            }
+          } finally {
+            if (-not $service.HasExited) {
+              Stop-Process -Id $service.Id -Force
+            }
+          }
+      - name: Upload private pilot installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Speedtest-Monitor-Windows-x64-pilot-1
+          path: dist/Speedtest-Monitor-Windows-x64-pilot-1.exe
+          if-no-files-found: error
+          retention-days: 14

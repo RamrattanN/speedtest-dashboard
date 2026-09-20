@@ -29,6 +29,9 @@ test = [
 macos-pilot = [
     "pyinstaller>=6.22",
 ]
+windows-pilot = [
+    "pyinstaller>=6.22",
+]
 
 [project.urls]
 Homepage = "https://github.com/RamrattanN/speedtest-dashboard"
@@ -39,6 +42,7 @@ speedtest-dashboard = "speedtest_dashboard.runner:main"
 speedtest-collector = "speedtest_dashboard.collector_app:main"
 speedtest-dashboard-ui = "speedtest_dashboard.dashboard_app:main"
 speedtest-dashboard-macos = "speedtest_dashboard.macos_app:main"
+speedtest-dashboard-windows = "speedtest_dashboard.windows_app:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

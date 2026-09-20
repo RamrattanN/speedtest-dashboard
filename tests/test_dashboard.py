@@ -126,6 +126,7 @@ def test_ramrattan_logo_asset_is_a_packaged_png():
 def test_packaged_help_uses_desktop_controller_instructions(tmp_path, monkeypatch):
     monkeypatch.setenv("SPEEDTEST_DASHBOARD_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("SPEEDTEST_DASHBOARD_DESKTOP", "1")
+    monkeypatch.setenv("SPEEDTEST_DASHBOARD_DESKTOP_PLATFORM", "macos")
     dashboard_path = Path(__file__).parents[1] / "src" / "speedtest_dashboard" / "dashboard.py"
     app = AppTest.from_file(dashboard_path)
 
@@ -142,6 +143,26 @@ def test_packaged_help_uses_desktop_controller_instructions(tmp_path, monkeypatc
     assert "Data and privacy" in help_text
     assert "Measurements are stored locally" in help_text
     assert not app.code
+
+
+def test_windows_packaged_help_uses_installer_and_start_menu(tmp_path, monkeypatch):
+    monkeypatch.setenv("SPEEDTEST_DASHBOARD_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("SPEEDTEST_DASHBOARD_DESKTOP", "1")
+    monkeypatch.setenv("SPEEDTEST_DASHBOARD_DESKTOP_PLATFORM", "windows")
+    dashboard_path = Path(__file__).parents[1] / "src" / "speedtest_dashboard" / "dashboard.py"
+    app = AppTest.from_file(dashboard_path)
+
+    app.run(timeout=20)
+    next(button for button in app.button if button.label == "Help with this page").click().run(timeout=20)
+
+    assert not app.exception
+    help_text = "\n".join(block.value for block in app.markdown)
+    assert "Open Speedtest Monitor from the Windows Start menu" in help_text
+    assert "Run the current Windows x64 pilot installer" in help_text
+    assert "Microsoft Defender SmartScreen" in help_text
+    assert "not code-signed" in help_text
+    assert "Applications folder" not in help_text
+    assert "disk image" not in help_text
 
 
 def test_streamlit_theme_uses_ramrattan_palette():

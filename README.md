@@ -6,8 +6,8 @@
 [![CI](https://github.com/RamrattanN/speedtest-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/RamrattanN/speedtest-dashboard/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/RamrattanN/speedtest-dashboard?sort=semver)](https://github.com/RamrattanN/speedtest-dashboard/releases)
 
-A local internet speed monitor with a packaged macOS pilot and portable Python
-developer mode.  It periodically
+A local internet speed monitor with packaged macOS and Windows private pilots,
+plus a portable Python developer mode.  It periodically
 collects ping, download, and upload results using the official Ookla Speedtest
 CLI when available, with the Python `speedtest-cli` library as a fallback.
 Results are stored locally in CSV files and displayed in a Streamlit dashboard.
@@ -23,6 +23,7 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 - Timezone, theme, color, server, and date-window controls.
 - Unsigned macOS Intel pilot application for users who do not use Terminal in
   everyday use.
+- Unsigned Windows x64 installer with a native controller and Start menu entry.
 - macOS developer launcher using an isolated local Python environment.
 - Installable command-line package.
 - Automated tests that do not perform real internet speed tests.
@@ -63,11 +64,25 @@ See the [Mac Testing Guide](docs/Mac-Testing.md) for complete installation and
 acceptance steps.  The [VS Code Setup Guide](docs/VS-Code-Setup-Mac.md) explains
 how to work on the project without memorizing Terminal commands.
 
-## Developer use on Windows
+## Quick start on Windows
 
-The first downloadable desktop pilot supports Intel Macs.  Windows packaging is
-not part of Pilot 3.  Developers can still install Python 3.11 or newer, clone
-the repository, run `setup_venv.bat`, and start the installed command:
+### Private desktop pilot
+
+Download and unzip the `Speedtest-Monitor-Windows-x64-pilot-1` GitHub Actions
+artifact, then run `Speedtest-Monitor-Windows-x64-pilot-1.exe`.  The per-user
+installer adds **Speedtest Monitor** to the Start menu and does not require
+Python or the repository.
+
+The pilot is unsigned.  If Microsoft Defender SmartScreen appears, select
+**More info**, confirm that the file came from the controlled pilot download,
+then select **Run anyway**.  See
+[Windows Pilot Packaging](docs/Windows-Pilot-Packaging.md) for installation,
+testing, logs, and removal.
+
+### Developer setup
+
+Developers can install Python 3.11 or newer, clone the repository, run
+`setup_venv.bat`, and start the installed command:
 
 ```bat
 setup_venv.bat
@@ -119,15 +134,16 @@ CI verifies Python 3.11 and 3.12 on Linux, Python 3.12 on macOS, source
 compilation, tests, the Mac launcher, wheel creation, isolated installation,
 and installed command entry points.
 
-The separate macOS pilot workflow builds and smoke-tests an unsigned Intel
-`.app` and `.dmg` for controlled testing.  The application build must run on a macOS Intel
-runner because PyInstaller builds for the operating system and architecture on
-which it runs.
+Separate pilot workflows build and smoke-test the unsigned macOS Intel disk
+image and Windows x64 installer.  Each packaged application is built on its
+target operating system because PyInstaller builds for the system on which it
+runs.
 
 ## Documentation
 
 - [Mac Testing Guide](docs/Mac-Testing.md)
 - [macOS Pilot Packaging](docs/Mac-Pilot-Packaging.md)
+- [Windows Pilot Packaging](docs/Windows-Pilot-Packaging.md)
 - [VS Code Setup on Mac](docs/VS-Code-Setup-Mac.md)
 - [Getting Started](docs/wiki/Getting-Started.md)
 - [Configuration](docs/wiki/Configuration.md)

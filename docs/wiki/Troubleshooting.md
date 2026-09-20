@@ -30,6 +30,16 @@ lsof -nP -iTCP:8501 -sTCP:LISTEN
 
 Reopen Speedtest Monitor after the `lsof` command displays nothing.
 
+On Windows, keep the controller open until it says **The monitor is running**,
+then select **Open Dashboard**.  Do not browse to `localhost:3000`.
+
+## Windows SmartScreen blocks the private pilot
+
+Windows Pilot 1 is unsigned.  If the installer came from the controlled pilot
+download, select **More info**, verify the Speedtest Monitor filename, then
+select **Run anyway**.  Do not bypass SmartScreen for an installer received
+from any other source.
+
 ## Controller remains on Starting
 
 Review the application log:
@@ -39,6 +49,10 @@ tail -100 "$HOME/Library/Logs/Ramrattan Speedtest Monitor/monitor.log"
 ```
 
 Pilot 3 should log `Speedtest Monitor build 0.2.0-pilot.3 starting`.
+
+On Windows, review
+`%LOCALAPPDATA%\Ramrattan Speedtest Monitor\Logs\monitor.log`.  The controller
+footer should identify **Windows Pilot 1**.
 
 ## Collector does not write data
 
@@ -62,6 +76,6 @@ in [Getting Started](Getting-Started.md).
 
 ## Information to capture
 
-Record the pilot number, Mac processor type, the exact symptom, and the last
-100 lines of `monitor.log`.  State whether the problem affected the controller,
-collector, dashboard, or all three.
+Record the pilot number, operating system and processor type, the exact
+symptom, and the last 100 lines of `monitor.log`.  State whether the problem
+affected the controller, collector, dashboard, or all three.

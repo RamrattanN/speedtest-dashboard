@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from speedtest_dashboard import macos_app, runner
+from speedtest_dashboard import macos_app, runner, windows_app
 
 
 class FakeProcess:
@@ -136,6 +136,77 @@ def test_macos_service_loads_options_before_starting_server(tmp_path, monkeypatc
     )
 
     macos_app.run_services(8600, 300, tmp_path)
+
+    assert [event[0] for event in events] == ["load", "run"]
+    assert events[0][1]["global.developmentMode"] is False
+    assert events[1][1]["server.port"] == 8600
+
+
+def test_windows_service_command_uses_module_in_source_mode(tmp_path, monkeypatch):
+    monkeypatch.setattr(windows_app, "is_frozen", lambda: False)
+    command = windows_app.service_command(8600, 300, tmp_path)
+
+    assert command[:3] == [
+        windows_app.sys.executable,
+        "-m",
+        "speedtest_dashboard.windows_app",
+    ]
+    assert command[-6:] == [
+        "--port",
+        "8600",
+        "--interval",
+        "300",
+        "--data-dir",
+        str(tmp_path),
+    ]
+
+
+def test_windows_dashboard_path_uses_pyinstaller_bundle(tmp_path, monkeypatch):
+    monkeypatch.setattr(windows_app.sys, "_MEIPASS", str(tmp_path), raising=False)
+
+    assert windows_app.dashboard_script_path() == (
+        tmp_path / "speedtest_dashboard" / "dashboard.py"
+    )
+
+
+def test_windows_streamlit_options_disable_packaged_development_mode():
+    options = windows_app.streamlit_options(8600)
+
+    assert options["global.developmentMode"] is False
+    assert options["server.address"] == "127.0.0.1"
+    assert options["server.port"] == 8600
+    assert options["browser.serverAddress"] == "127.0.0.1"
+    assert options["browser.serverPort"] == 8600
+    assert windows_app.APP_BUILD == "0.2.0-windows-pilot.1"
+
+
+def test_windows_log_directory_uses_local_app_data(tmp_path, monkeypatch):
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+
+    assert windows_app.log_directory() == (
+        tmp_path / "Ramrattan Speedtest Monitor" / "Logs"
+    )
+
+
+def test_windows_service_loads_options_before_starting_server(tmp_path, monkeypatch):
+    events = []
+
+    class FakeBootstrap:
+        @staticmethod
+        def load_config_options(options):
+            events.append(("load", options.copy()))
+
+        @staticmethod
+        def run(script, is_hello, args, options):
+            events.append(("run", options.copy()))
+
+    monkeypatch.setitem(
+        windows_app.sys.modules,
+        "streamlit.web",
+        SimpleNamespace(bootstrap=FakeBootstrap),
+    )
+
+    windows_app.run_services(8600, 300, tmp_path, start_collector=False)
 
     assert [event[0] for event in events] == ["load", "run"]
     assert events[0][1]["global.developmentMode"] is False

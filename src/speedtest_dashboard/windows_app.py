@@ -1,4 +1,4 @@
-"""Native macOS pilot controller for the local Speedtest Monitor."""
+"""Native Windows pilot controller for the local Speedtest Monitor."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from speedtest_dashboard.app_config import DATA_DIR_ENV, get_data_dir
 
 
 APP_NAME = "Speedtest Monitor"
-APP_BUILD = "0.2.0-pilot.3"
+APP_BUILD = "0.2.0-windows-pilot.1"
 DESKTOP_MODE_ENV = "SPEEDTEST_DASHBOARD_DESKTOP"
 DESKTOP_PLATFORM_ENV = "SPEEDTEST_DASHBOARD_DESKTOP_PLATFORM"
 DEFAULT_INTERVAL = 300
@@ -24,13 +24,7 @@ DEFAULT_PORT = 8501
 
 
 def streamlit_options(port: int) -> dict[str, object]:
-    """Return production-safe Streamlit settings for the packaged app.
-
-    PyInstaller relocates Streamlit outside a conventional ``site-packages``
-    directory.  Streamlit otherwise mistakes the frozen bundle for a source
-    checkout, enables development mode, and expects a separate Vite frontend
-    on port 3000.
-    """
+    """Return production-safe Streamlit settings for the packaged app."""
     return {
         "global.developmentMode": False,
         "server.address": "127.0.0.1",
@@ -72,7 +66,7 @@ def available_port(preferred: int = DEFAULT_PORT) -> int:
 
 
 def service_command(port: int, interval: int, data_dir: Path) -> list[str]:
-    """Build the child command for source or packaged execution."""
+    """Build the hidden child-service command."""
     args = [
         "--service",
         "--port",
@@ -84,43 +78,45 @@ def service_command(port: int, interval: int, data_dir: Path) -> list[str]:
     ]
     if is_frozen():
         return [sys.executable, *args]
-    return [sys.executable, "-m", "speedtest_dashboard.macos_app", *args]
+    return [sys.executable, "-m", "speedtest_dashboard.windows_app", *args]
 
 
-def run_services(port: int, interval: int, data_dir: Path) -> None:
+def run_services(
+    port: int,
+    interval: int,
+    data_dir: Path,
+    *,
+    start_collector: bool = True,
+) -> None:
     """Run the collector and Streamlit server inside the hidden child process."""
-    print(f"[INFO] {APP_NAME} build {APP_BUILD} starting on port {port}", flush=True)
+    if sys.stdout is not None:
+        print(f"[INFO] {APP_NAME} build {APP_BUILD} starting on port {port}", flush=True)
     os.environ[DATA_DIR_ENV] = str(data_dir)
     os.environ[DESKTOP_MODE_ENV] = "1"
-    os.environ[DESKTOP_PLATFORM_ENV] = "macos"
+    os.environ[DESKTOP_PLATFORM_ENV] = "windows"
 
-    from speedtest_dashboard import collector
     from streamlit.web import bootstrap
 
-    collector_args = [
-        "--daemon",
-        "--interval",
-        str(interval),
-        "--data-dir",
-        str(data_dir),
-    ]
-    threading.Thread(
-        target=collector.main,
-        args=(collector_args,),
-        name="speedtest-collector",
-        daemon=True,
-    ).start()
+    if start_collector:
+        from speedtest_dashboard import collector
+
+        collector_args = [
+            "--daemon",
+            "--interval",
+            str(interval),
+            "--data-dir",
+            str(data_dir),
+        ]
+        threading.Thread(
+            target=collector.main,
+            args=(collector_args,),
+            name="speedtest-collector",
+            daemon=True,
+        ).start()
 
     options = streamlit_options(port)
-    # ``bootstrap.run`` assumes the CLI has already loaded flag options.  The
-    # desktop launcher calls it directly, so load them before Server creation.
     bootstrap.load_config_options(options)
-    bootstrap.run(
-        str(dashboard_script_path()),
-        False,
-        [],
-        options,
-    )
+    bootstrap.run(str(dashboard_script_path()), False, [], options)
 
 
 def service_is_ready(url: str) -> bool:
@@ -132,8 +128,15 @@ def service_is_ready(url: str) -> bool:
         return False
 
 
+def log_directory() -> Path:
+    """Return the per-user Windows application log directory."""
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    root = Path(local_app_data) if local_app_data else Path.home() / "AppData" / "Local"
+    return root / "Ramrattan Speedtest Monitor" / "Logs"
+
+
 def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
-    """Show the macOS controller and supervise the hidden service process."""
+    """Show the Windows controller and supervise the hidden service process."""
     import tkinter as tk
     from tkinter import messagebox
 
@@ -141,65 +144,64 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
     url = f"http://127.0.0.1:{port}"
     data_dir.mkdir(parents=True, exist_ok=True)
 
-    log_dir = Path.home() / "Library" / "Logs" / "Ramrattan Speedtest Monitor"
+    log_dir = log_directory()
     log_dir.mkdir(parents=True, exist_ok=True)
     log_handle = (log_dir / "monitor.log").open("a", encoding="utf-8")
 
     child_env = os.environ.copy()
     child_env[DATA_DIR_ENV] = str(data_dir)
     child_env[DESKTOP_MODE_ENV] = "1"
-    child_env[DESKTOP_PLATFORM_ENV] = "macos"
+    child_env[DESKTOP_PLATFORM_ENV] = "windows"
+    popen_kwargs: dict[str, object] = {}
+    if os.name == "nt":
+        popen_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
     child = subprocess.Popen(
         service_command(port, interval, data_dir),
         env=child_env,
         stdout=log_handle,
         stderr=subprocess.STDOUT,
+        **popen_kwargs,
     )
 
     root = tk.Tk()
     root.title(APP_NAME)
-    root.geometry("520x285")
+    root.geometry("560x300")
     root.resizable(False, False)
     root.configure(background="#F3F7FA")
 
-    heading = tk.Label(
+    tk.Label(
         root,
-        text="Speedtest Monitor",
-        font=("Helvetica Neue", 24, "bold"),
+        text=APP_NAME,
+        font=("Segoe UI", 24, "bold"),
         foreground="#173F63",
         background="#F3F7FA",
-    )
-    heading.pack(pady=(28, 6))
-
-    explanation = tk.Label(
+    ).pack(pady=(30, 6))
+    tk.Label(
         root,
-        text="Monitoring this Mac's internet connection every five minutes.",
-        font=("Helvetica Neue", 13),
+        text="Monitoring this PC's internet connection every five minutes.",
+        font=("Segoe UI", 12),
         foreground="#425466",
         background="#F3F7FA",
-    )
-    explanation.pack()
+    ).pack()
 
     status_text = tk.StringVar(value="Starting the local dashboard...")
-    status = tk.Label(
+    tk.Label(
         root,
         textvariable=status_text,
-        font=("Helvetica Neue", 12),
+        font=("Segoe UI", 11),
         foreground="#2F78B8",
         background="#F3F7FA",
-    )
-    status.pack(pady=(20, 16))
+    ).pack(pady=(22, 16))
 
     button_frame = tk.Frame(root, background="#F3F7FA")
     button_frame.pack()
-
     open_button = tk.Button(
         button_frame,
         text="Open Dashboard",
         command=lambda: webbrowser.open(url),
         state="disabled",
-        width=18,
-        pady=7,
+        width=20,
+        pady=8,
     )
     open_button.grid(row=0, column=0, padx=8)
 
@@ -220,24 +222,22 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
             stop_child()
             root.destroy()
 
-    quit_button = tk.Button(
+    tk.Button(
         button_frame,
         text="Quit Monitor",
         command=quit_app,
-        width=18,
-        pady=7,
-    )
-    quit_button.grid(row=0, column=1, padx=8)
+        width=20,
+        pady=8,
+    ).grid(row=0, column=1, padx=8)
 
-    data_label = tk.Label(
+    tk.Label(
         root,
-        text=f"Pilot 3  |  Results folder: {data_dir}",
-        font=("Helvetica Neue", 10),
+        text=f"Windows Pilot 1  |  Results folder: {data_dir}",
+        font=("Segoe UI", 9),
         foreground="#66788A",
         background="#F3F7FA",
-        wraplength=470,
-    )
-    data_label.pack(pady=(22, 0))
+        wraplength=520,
+    ).pack(pady=(24, 0))
 
     browser_opened = False
 
@@ -262,6 +262,7 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog=APP_NAME)
     parser.add_argument("--service", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--dashboard-only", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--interval", type=int, default=DEFAULT_INTERVAL)
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
     parser.add_argument("--data-dir")
@@ -269,7 +270,12 @@ def main(argv: list[str] | None = None) -> None:
 
     data_dir = get_data_dir(args.data_dir)
     if args.service:
-        run_services(args.port, args.interval, data_dir)
+        run_services(
+            args.port,
+            args.interval,
+            data_dir,
+            start_collector=not args.dashboard_only,
+        )
     else:
         run_controller(args.interval, args.port, data_dir)
 
