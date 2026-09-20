@@ -103,3 +103,39 @@ def test_macos_streamlit_options_disable_packaged_development_mode():
     assert options["server.port"] == 8600
     assert options["browser.serverAddress"] == "127.0.0.1"
     assert options["browser.serverPort"] == 8600
+
+
+def test_macos_service_loads_options_before_starting_server(tmp_path, monkeypatch):
+    events = []
+
+    class FakeBootstrap:
+        @staticmethod
+        def load_config_options(options):
+            events.append(("load", options.copy()))
+
+        @staticmethod
+        def run(script, is_hello, args, options):
+            events.append(("run", options.copy()))
+
+    class FakeCollector:
+        @staticmethod
+        def main(args):
+            return None
+
+    monkeypatch.setitem(macos_app.sys.modules, "streamlit.web", SimpleNamespace(bootstrap=FakeBootstrap))
+    monkeypatch.setattr(
+        macos_app,
+        "threading",
+        SimpleNamespace(Thread=lambda **kwargs: SimpleNamespace(start=lambda: None)),
+    )
+    monkeypatch.setitem(
+        macos_app.sys.modules,
+        "speedtest_dashboard.collector",
+        FakeCollector,
+    )
+
+    macos_app.run_services(8600, 300, tmp_path)
+
+    assert [event[0] for event in events] == ["load", "run"]
+    assert events[0][1]["global.developmentMode"] is False
+    assert events[1][1]["server.port"] == 8600
