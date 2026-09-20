@@ -27,6 +27,9 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   unless `--require-ookla` is specified.
 - Python collection now selects certifi's CA bundle when the interpreter has no
   usable default certificate file, while preserving explicit overrides.
+- Replaced the third-party browser auto-refresh component with Streamlit's
+  native timed fragment to prevent blank pages after the 60-second refresh.
+- Updated chart and table width configuration for current Streamlit releases.
 
 ---
 

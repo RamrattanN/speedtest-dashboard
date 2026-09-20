@@ -15,6 +15,8 @@ Speedtest dashboard (compact UI + navy accents):
 
 from datetime import datetime, timedelta
 from pathlib import Path
+import time
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -280,14 +282,20 @@ with c2:
 refresh_clicked = st.button("Refresh now", disabled=autorefresh, key="refresh_now_btn")
 
 if autorefresh:
-    try:
-        from streamlit_autorefresh import st_autorefresh
-        st_autorefresh(interval=60_000, key="refresh")
-    except ImportError:
-        st.caption("Auto-refresh helper not installed.  Run: pip install streamlit-autorefresh")
-else:
-    if refresh_clicked:
-        st.rerun()
+    @st.fragment(run_every=60, key="dashboard_auto_refresh")
+    def schedule_auto_refresh() -> None:
+        """Trigger a full app rerun after each native fragment interval."""
+        now = time.monotonic()
+        previous = st.session_state.get("dashboard_last_full_refresh")
+        if previous is None:
+            st.session_state["dashboard_last_full_refresh"] = now
+        elif now - previous >= 59:
+            st.session_state["dashboard_last_full_refresh"] = now
+            st.rerun()
+
+    schedule_auto_refresh()
+elif refresh_clicked:
+    st.rerun()
 
 # SETTINGS
 with st.expander("Settings", expanded=False):
@@ -498,10 +506,10 @@ fig.update_layout(
     hovermode="x unified",
 )
 
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
 
 # Summary
 st.subheader("Summary (window above)")
 stats = current_window[["download_mbps", "upload_mbps", "ping_ms"]].describe().T[["mean", "min", "max"]]
 stats.columns = ["mean", "min", "max"]
-st.dataframe(stats, use_container_width=True, height=200)
+st.dataframe(stats, width="stretch", height=200)
