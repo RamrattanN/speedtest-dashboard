@@ -30,6 +30,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Replaced the third-party browser auto-refresh component with Streamlit's
   native timed fragment to prevent blank pages after the 60-second refresh.
 - Updated chart and table width configuration for current Streamlit releases.
+- The dashboard now redraws its data directly every 60 seconds without a browser refresh.
+- Newly discovered speed-test servers remain visible during automatic redraws.
 
 ---
 

@@ -15,8 +15,6 @@ Speedtest dashboard (compact UI + navy accents):
 
 from datetime import datetime, timedelta
 from pathlib import Path
-import time
-
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -277,25 +275,9 @@ c1, c2 = st.columns([1, 1])
 with c1:
     chart_mode = st.radio("Chart Type", ["Bar", "Line / Curve"], index=0, horizontal=True)
 with c2:
-    autorefresh = st.toggle("Auto-refresh every 60s", value=True)
+    autorefresh = st.toggle("Refresh display every 60s", value=True)
 
-refresh_clicked = st.button("Refresh now", disabled=autorefresh, key="refresh_now_btn")
-
-if autorefresh:
-    @st.fragment(run_every=60, key="dashboard_auto_refresh")
-    def schedule_auto_refresh() -> None:
-        """Trigger a full app rerun after each native fragment interval."""
-        now = time.monotonic()
-        previous = st.session_state.get("dashboard_last_full_refresh")
-        if previous is None:
-            st.session_state["dashboard_last_full_refresh"] = now
-        elif now - previous >= 59:
-            st.session_state["dashboard_last_full_refresh"] = now
-            st.rerun()
-
-    schedule_auto_refresh()
-elif refresh_clicked:
-    st.rerun()
+st.button("Refresh now", disabled=autorefresh, key="refresh_now_btn")
 
 # SETTINGS
 with st.expander("Settings", expanded=False):
@@ -330,186 +312,218 @@ overlay_down = derive_overlay_color(color_down, theme)
 overlay_up   = derive_overlay_color(color_up, theme)
 overlay_ping = derive_overlay_color(color_ping, theme)
 
-# Load data
-df = load_data(DEFAULT_CSV)
-if df.empty:
-    st.caption("Each point represents a sample.  Data retained for 30 days (main CSV).")
-    st.info(f"No data yet.  Waiting for collector to write results to:\n{DEFAULT_CSV}")
-    st.stop()
-
-# Caption with detected sampling interval
-sample_min = infer_sample_minutes(df)
-if sample_min is None:
-    st.caption("Each point represents a sample.  Data retained for 30 days (main CSV).")
-else:
-    unit = "minute" if sample_min == 1 else "minutes"
-    st.caption(f"Each point represents a {sample_min}-{unit} sample.  Data retained for 30 days (main CSV).")
-
-# Server filter
-servers_df = df[["server_id", "server_name"]].copy()
-has_id_mask = servers_df["server_id"].astype(str).str.len() > 0
-servers_df = servers_df[has_id_mask]
-servers_df["label"] = servers_df["server_id"] + " · " + servers_df["server_name"].replace("", "(no name)")
-server_labels = sorted(servers_df["label"].unique())
-
-col_srv1, col_srv2 = st.columns([3, 1])
-with col_srv1:
-    selected_labels = st.multiselect("Servers", server_labels, default=server_labels)
-with col_srv2:
-    include_blank = st.checkbox("Include blanks", value=True, help="Include rows with no server ID/name")
-
-if selected_labels:
-    selected_ids = set(l.split(" · ", 1)[0] for l in selected_labels)
-    mask = df["server_id"].isin(selected_ids)
-    if include_blank:
-        mask = mask | (df["server_id"] == "")
-    df = df[mask]
-else:
-    if not include_blank:
-        df = df[df["server_id"] != ""]
-
-# TZ conversion
-df_local = df.copy()
-df_local["timestamp_local"] = convert_to_tz(df_local["timestamp"], tz_name)
-
-# Window and overlay controls
-range_choice = st.selectbox(
-    "Show window", ["Last Hour", "Last 24 hours", "Last 7 days", "Last 30 days", "Last 12 months"], index=2
+@st.fragment(
+    run_every="60s" if autorefresh else None,
+    key="dashboard_data",
 )
-show_prev_overlay = st.checkbox(
-    "Show previous period overlay",
-    value=False,
-    help="Compare against the immediately preceding period of the same length.",
-)
+def render_dashboard() -> None:
+    """Read and redraw the recorded measurements."""
+    # Load data
+    df = load_data(DEFAULT_CSV)
+    if df.empty:
+        st.caption("Each point represents a sample.  Data retained for 30 days (main CSV).")
+        st.info(f"No data yet.  Waiting for collector to write results to:\n{DEFAULT_CSV}")
+        st.stop()
 
-now_local = datetime.now(ZoneInfo(tz_name))
-current_window = slice_window(df_local, now_local, range_choice)
-if current_window.empty:
-    st.info("No data in the selected window.")
-    st.stop()
-
-prev_aligned = pd.DataFrame()
-if show_prev_overlay:
-    prev_aligned = previous_period_overlay(current_window, df_local, range_choice)
-
-# Chart
-fig = go.Figure()
-x = current_window["timestamp_local"]
-
-if chart_mode.startswith("Bar"):
-    fig.add_bar(
-        name="Download (Mbps)",
-        x=x,
-        y=current_window["download_mbps"],
-        marker=dict(color=color_down, line=dict(width=0)),
-        opacity=0.85,
-        legendgroup="primary_down",
-    )
-    fig.add_bar(
-        name="Upload (Mbps)",
-        x=x,
-        y=current_window["upload_mbps"],
-        marker=dict(color=color_up, line=dict(width=0)),
-        opacity=0.85,
-        legendgroup="primary_up",
-    )
-    fig.add_trace(
-        go.Scatter(
-            name="Ping (ms)",
-            x=x,
-            y=current_window["ping_ms"],
-            mode="lines",
-            line=dict(color=color_ping, width=2),
-            yaxis="y2",
-            legendgroup="primary_ping",
+    # Caption with detected sampling interval
+    sample_min = infer_sample_minutes(df)
+    if sample_min is None:
+        st.caption("Sampling interval will appear after a second result.  Data retained for 30 days (main CSV).")
+    else:
+        unit = "minute" if sample_min == 1 else "minutes"
+        st.caption(
+            f"Observed interval between recorded samples: {sample_min} {unit}.  "
+            "Data retained for 30 days (main CSV)."
         )
+
+    # Server filter
+    servers_df = df[["server_id", "server_name"]].copy()
+    has_id_mask = servers_df["server_id"].astype(str).str.len() > 0
+    servers_df = servers_df[has_id_mask]
+    servers_df["label"] = servers_df["server_id"] + " · " + servers_df["server_name"].replace("", "(no name)")
+    server_labels = sorted(servers_df["label"].unique())
+
+    # Keep newly discovered servers selected without restoring servers that the
+    # user deliberately deselected.
+    selected_key = "dashboard_selected_servers"
+    known_key = "dashboard_known_servers"
+    known_labels = set(st.session_state.get(known_key, []))
+    new_labels = set(server_labels) - known_labels
+    if selected_key not in st.session_state:
+        st.session_state[selected_key] = server_labels
+    else:
+        still_available = [
+            label for label in st.session_state[selected_key] if label in server_labels
+        ]
+        st.session_state[selected_key] = still_available + sorted(new_labels)
+    st.session_state[known_key] = server_labels
+
+    col_srv1, col_srv2 = st.columns([3, 1])
+    with col_srv1:
+        selected_labels = st.multiselect(
+            "Servers",
+            server_labels,
+            key=selected_key,
+        )
+    with col_srv2:
+        include_blank = st.checkbox("Include blanks", value=True, help="Include rows with no server ID/name")
+
+    if selected_labels:
+        selected_ids = set(l.split(" · ", 1)[0] for l in selected_labels)
+        mask = df["server_id"].isin(selected_ids)
+        if include_blank:
+            mask = mask | (df["server_id"] == "")
+        df = df[mask]
+    else:
+        if not include_blank:
+            df = df[df["server_id"] != ""]
+
+    # TZ conversion
+    df_local = df.copy()
+    df_local["timestamp_local"] = convert_to_tz(df_local["timestamp"], tz_name)
+
+    # Window and overlay controls
+    range_choice = st.selectbox(
+        "Show window", ["Last Hour", "Last 24 hours", "Last 7 days", "Last 30 days", "Last 12 months"], index=2
     )
-else:
-    fig.add_trace(
-        go.Scatter(
+    show_prev_overlay = st.checkbox(
+        "Show previous period overlay",
+        value=False,
+        help="Compare against the immediately preceding period of the same length.",
+    )
+
+    now_local = datetime.now(ZoneInfo(tz_name))
+    current_window = slice_window(df_local, now_local, range_choice)
+    if current_window.empty:
+        st.info("No data in the selected window.")
+        st.stop()
+
+    prev_aligned = pd.DataFrame()
+    if show_prev_overlay:
+        prev_aligned = previous_period_overlay(current_window, df_local, range_choice)
+
+    # Chart
+    fig = go.Figure()
+    x = current_window["timestamp_local"]
+
+    if chart_mode.startswith("Bar"):
+        fig.add_bar(
             name="Download (Mbps)",
             x=x,
             y=current_window["download_mbps"],
-            mode="lines",
-            line=dict(color=color_down, width=2.5),
+            marker=dict(color=color_down, line=dict(width=0)),
+            opacity=0.85,
             legendgroup="primary_down",
         )
-    )
-    fig.add_trace(
-        go.Scatter(
+        fig.add_bar(
             name="Upload (Mbps)",
             x=x,
             y=current_window["upload_mbps"],
-            mode="lines",
-            line=dict(color=color_up, width=2.5),
+            marker=dict(color=color_up, line=dict(width=0)),
+            opacity=0.85,
             legendgroup="primary_up",
         )
-    )
-    fig.add_trace(
-        go.Scatter(
-            name="Ping (ms)",
-            x=x,
-            y=current_window["ping_ms"],
-            mode="lines",
-            line=dict(color=color_ping, width=2.5),
-            yaxis="y2",
-            legendgroup="primary_ping",
+        fig.add_trace(
+            go.Scatter(
+                name="Ping (ms)",
+                x=x,
+                y=current_window["ping_ms"],
+                mode="lines",
+                line=dict(color=color_ping, width=2),
+                yaxis="y2",
+                legendgroup="primary_ping",
+            )
         )
+    else:
+        fig.add_trace(
+            go.Scatter(
+                name="Download (Mbps)",
+                x=x,
+                y=current_window["download_mbps"],
+                mode="lines",
+                line=dict(color=color_down, width=2.5),
+                legendgroup="primary_down",
+            )
+        )
+        fig.add_trace(
+            go.Scatter(
+                name="Upload (Mbps)",
+                x=x,
+                y=current_window["upload_mbps"],
+                mode="lines",
+                line=dict(color=color_up, width=2.5),
+                legendgroup="primary_up",
+            )
+        )
+        fig.add_trace(
+            go.Scatter(
+                name="Ping (ms)",
+                x=x,
+                y=current_window["ping_ms"],
+                mode="lines",
+                line=dict(color=color_ping, width=2.5),
+                yaxis="y2",
+                legendgroup="primary_ping",
+            )
+        )
+
+    # Previous-period overlay
+    if show_prev_overlay and not prev_aligned.empty:
+        x_prev = prev_aligned["timestamp_local"]
+        fig.add_trace(
+            go.Scatter(
+                name="Prev period Download",
+                x=x_prev,
+                y=prev_aligned["download_mbps"],
+                mode="lines",
+                line=dict(color=derive_overlay_color(color_down, theme), width=3.0, dash="dash"),
+                opacity=0.95,
+                legendgroup="overlay_down",
+            )
+        )
+        fig.add_trace(
+            go.Scatter(
+                name="Prev period Upload",
+                x=x_prev,
+                y=prev_aligned["upload_mbps"],
+                mode="lines",
+                line=dict(color=derive_overlay_color(color_up, theme), width=3.0, dash="dash"),
+                opacity=0.95,
+                legendgroup="overlay_up",
+            )
+        )
+        fig.add_trace(
+            go.Scatter(
+                name="Prev period Ping",
+                x=x_prev,
+                y=prev_aligned["ping_ms"],
+                mode="lines",
+                line=dict(color=derive_overlay_color(color_ping, theme), width=3.0, dash="dash"),
+                opacity=0.95,
+                yaxis="y2",
+                legendgroup="overlay_ping",
+            )
+        )
+
+    fig.update_layout(
+        template=plotly_template,
+        barmode="group",
+        legend_title_text="Metrics",
+        xaxis_title=f"Time ({tz_name})",
+        yaxis_title="Speed (Mbps)",
+        yaxis2=dict(title="Ping (ms)", overlaying="y", side="right", showgrid=False),
+        margin=dict(l=50, r=50, t=50, b=50),
+        hovermode="x unified",
     )
 
-# Previous-period overlay
-if show_prev_overlay and not prev_aligned.empty:
-    x_prev = prev_aligned["timestamp_local"]
-    fig.add_trace(
-        go.Scatter(
-            name="Prev period Download",
-            x=x_prev,
-            y=prev_aligned["download_mbps"],
-            mode="lines",
-            line=dict(color=derive_overlay_color(color_down, theme), width=3.0, dash="dash"),
-            opacity=0.95,
-            legendgroup="overlay_down",
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            name="Prev period Upload",
-            x=x_prev,
-            y=prev_aligned["upload_mbps"],
-            mode="lines",
-            line=dict(color=derive_overlay_color(color_up, theme), width=3.0, dash="dash"),
-            opacity=0.95,
-            legendgroup="overlay_up",
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            name="Prev period Ping",
-            x=x_prev,
-            y=prev_aligned["ping_ms"],
-            mode="lines",
-            line=dict(color=derive_overlay_color(color_ping, theme), width=3.0, dash="dash"),
-            opacity=0.95,
-            yaxis="y2",
-            legendgroup="overlay_ping",
-        )
-    )
+    st.plotly_chart(fig, width="stretch")
 
-fig.update_layout(
-    template=plotly_template,
-    barmode="group",
-    legend_title_text="Metrics",
-    xaxis_title=f"Time ({tz_name})",
-    yaxis_title="Speed (Mbps)",
-    yaxis2=dict(title="Ping (ms)", overlaying="y", side="right", showgrid=False),
-    margin=dict(l=50, r=50, t=50, b=50),
-    hovermode="x unified",
-)
+    # Summary
+    st.subheader("Summary (window above)")
+    stats = current_window[["download_mbps", "upload_mbps", "ping_ms"]].describe().T[["mean", "min", "max"]]
+    stats.columns = ["mean", "min", "max"]
+    st.dataframe(stats, width="stretch", height=200)
 
-st.plotly_chart(fig, width="stretch")
 
-# Summary
-st.subheader("Summary (window above)")
-stats = current_window[["download_mbps", "upload_mbps", "ping_ms"]].describe().T[["mean", "min", "max"]]
-stats.columns = ["mean", "min", "max"]
-st.dataframe(stats, width="stretch", height=200)
+
+render_dashboard()
