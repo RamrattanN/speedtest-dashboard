@@ -5,8 +5,8 @@ Planned features and improvements.
 ---
 
 ## 📅 Near-term
-- CSV rollover with monthly archives (12 months)
-- Historical overlays for all time windows
+- Complete macOS and Windows acceptance testing
+- Add explicit collection-engine health status to the dashboard
 - Multiple host/server visualization
 
 ---
@@ -14,7 +14,7 @@ Planned features and improvements.
 ## ⚙️ Medium-term
 - Windows Task Scheduler helper script
 - Persisted UI preferences (theme, colors, timezone)
-- GitHub Actions for automated checks
+- macOS background scheduling helper
 
 ---
 

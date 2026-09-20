@@ -39,12 +39,12 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo === Upgrading pip and installing requirements ===
+echo === Upgrading pip and installing Speedtest Dashboard ===
 ".venv\Scripts\python.exe" -m pip install --upgrade pip
-if exist "requirements.txt" (
-  ".venv\Scripts\python.exe" -m pip install -r requirements.txt
-) else (
-  echo WARNING: requirements.txt not found.  Skipping dependency install.
+".venv\Scripts\python.exe" -m pip install -e .
+if %ERRORLEVEL% NEQ 0 (
+  echo ERROR: Failed to install Speedtest Dashboard.
+  exit /b 1
 )
 
 echo.

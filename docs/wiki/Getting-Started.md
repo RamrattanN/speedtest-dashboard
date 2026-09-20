@@ -1,47 +1,36 @@
 # Getting Started
 
-This guide helps you set up and run the Speedtest Dashboard.
+## Prerequisites
 
----
+- macOS or Windows 10/11.
+- Python 3.11 or newer.
+- Git for cloning the repository.
+- Official Ookla Speedtest CLI recommended, but not required for initial setup.
 
-## ✅ Prerequisites
-- Windows 10/11  
-- Python 3.11+  
-- [Ookla Speedtest CLI](https://www.speedtest.net/apps/cli) (recommended)  
-- Git (to clone the repository)
+## macOS
 
----
-
-## 📥 Installation
-
-1. **Clone the repository**
-   ```powershell
-   git clone https://github.com/RamrattanN/speedtest-dashboard.git
-   cd speedtest-dashboard
-   ```
-
-2. **Install dependencies** (first time only)
-   ```powershell
-   setup_venv.bat
-   ```
-
----
-
-## ▶️ Launching
-
-### Option A — Batch (simple / independent)
-```bat
-RunSpeedTest.bat
+```bash
+git clone https://github.com/RamrattanN/speedtest-dashboard.git
+cd speedtest-dashboard
+chmod +x RunSpeedTest.command
+./RunSpeedTest.command
 ```
-Starts collector and dashboard with default interval (120 seconds).
 
-### Option B — PowerShell (preferred)
+See the [Mac Testing Guide](../Mac-Testing.md) and
+[VS Code Setup Guide](../VS-Code-Setup-Mac.md) for guided instructions.
+
+## Windows
+
 ```powershell
+git clone https://github.com/RamrattanN/speedtest-dashboard.git
+cd speedtest-dashboard
+.\setup_venv.bat
 .\RunSpeedTest.ps1 -Interval 120 -Port 8501
 ```
-Supports options for Python path, headless mode, and custom ports.
 
----
+`RunSpeedTest.bat` is also available for a double-click start.
 
-## 🌐 Dashboard Access
-Once running, open: [http://localhost:8501](http://localhost:8501)
+## Dashboard access
+
+Open <http://localhost:8501> after the launcher starts.  Results are stored in
+the `SpeedtestDashboard` folder inside your home folder by default.

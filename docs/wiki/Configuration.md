@@ -1,45 +1,58 @@
 # Configuration
 
-The dashboard and collector can be customized for your needs.
+The collector and dashboard share one data directory and can be configured from
+the combined launcher.
 
----
+## Test interval
 
-## ⏱ Interval
-- Default: 120 seconds (2 minutes)  
-- Change via:
-  - **Batch**: edit `RunSpeedTest.bat`
-  - **PowerShell**: use `-Interval` argument
+The default is 120 seconds.  Examples:
 
----
+```bash
+./RunSpeedTest.command --interval 300
+speedtest-dashboard --interval 300
+```
 
-## 🌐 Dashboard Port
-- Default: 8501  
-- Change via `-Port` argument in PowerShell
+```powershell
+.\RunSpeedTest.ps1 -Interval 300
+```
 
----
+The Windows batch launcher accepts interval and port as its first two values:
 
-## 🎨 Theme
-- Options: Light / Dark / Auto (system-based)  
-- Set in dashboard settings
+```bat
+RunSpeedTest.bat 300 8600
+```
 
----
+## Dashboard port
 
-## 🌍 Timezone
-- Default: America/Chicago  
-- Change via dropdown in dashboard
+The default port is 8501.  Use `--port` on macOS or `-Port` in PowerShell.
 
----
+## Data directory
 
-## 🎨 Colors
-Default colors:
-- Upload: `#8BDCCD`
-- Download: `#1976D2`
-- Ping: `#20B9D8`
+The default is a visible `SpeedtestDashboard` folder in the current user's home
+folder.  It contains `speedtest_results.csv` and the `archive` folder.
 
-Overlays use related but muted shades for clarity.
+Change it with one of these methods:
 
----
+```bash
+speedtest-dashboard --data-dir ~/Documents/SpeedtestData
+export SPEEDTEST_DASHBOARD_DATA_DIR="$HOME/Documents/SpeedtestData"
+```
 
-## 💾 Data Retention
-- Main CSV: ~30 days of samples
-- Archives: monthly CSVs up to 12 months
+```powershell
+.\RunSpeedTest.ps1 -DataDir "$HOME\Documents\SpeedtestData"
+```
+
+An explicit `--data-dir` value has priority over the environment variable.
+
+## Dashboard preferences
+
+- Theme: Light, Dark, or automatic system detection.
+- Timezone: `America/Chicago` by default, selectable in the dashboard.
+- Download color: `#1976D2`.
+- Upload color: `#8BDCCD`.
+- Ping color: `#20B9D8`.
+
+## Data retention
+
+- Main CSV: approximately 30 days of samples.
+- Archives: the latest 12 monthly CSV files.

@@ -14,40 +14,28 @@ pushd "%ROOT%"
 echo.
 echo [INFO] Project root: "%ROOT%"
 
-REM --- Pick Python (prefer py -3; fallback to python)
-set "PY="
+REM --- Use a project-local virtual environment
+set "PY=%ROOT%.venv\Scripts\python.exe"
 
-for /f "delims=" %%P in ('where py 2^>nul') do (
-  for /f "delims=" %%E in ('%%P -3 -c "import sys;print(sys.executable)" 2^>nul') do (
-    set "PY=%%E"
+if not exist "%PY%" (
+  where py >nul 2>nul
+  if not errorlevel 1 (
+    py -3 -m venv "%ROOT%.venv"
+  ) else (
+    where python >nul 2>nul
+    if errorlevel 1 (
+      echo [ERROR] Python not found on PATH. Install Python 3.11+ and try again.
+      goto :end
+    )
+    python -m venv "%ROOT%.venv"
   )
-)
-
-if not defined PY (
-  for /f "delims=" %%P in ('where python 2^>nul') do (
-    set "PY=%%P"
-    goto :have_python
-  )
-)
-
-:have_python
-if not defined PY (
-  echo [ERROR] Python not found on PATH. Install Python 3.10+ and try again.
-  goto :end
 )
 
 echo [INFO] Python: "%PY%"
 
-REM --- Install/upgrade requirements (harmless if already satisfied)
-if exist "%ROOT%requirements.txt" (
-  echo [INFO] Installing/upgrading Python packages from requirements.txt ...
-  "%PY%" -m pip install -r "%ROOT%requirements.txt"
-  if errorlevel 1 (
-    echo [WARN] pip install returned a non-zero exit code. Continuing...
-  )
-) else (
-  echo [INFO] No requirements.txt found. Skipping dependency install.
-)
+echo [INFO] Installing/updating Speedtest Dashboard ...
+"%PY%" -m pip install -e "%ROOT%"
+if errorlevel 1 goto :end
 
 REM --- If Ookla CLI is present, seed license acceptance so collector can use it
 if exist "%ROOT%speedtest.exe" (
@@ -58,19 +46,23 @@ if exist "%ROOT%speedtest.exe" (
 REM --- Interval in seconds (first arg), default 120
 set "INTERVAL=%~1"
 if not defined INTERVAL set "INTERVAL=120"
+set "PORT=%~2"
+if not defined PORT set "PORT=8501"
+set "DATA_DIR=%USERPROFILE%\SpeedtestDashboard"
 echo [INFO] Collector interval: %INTERVAL% seconds
 
 REM --- Launch collector (window stays open)
 start "Speedtest Collector" powershell -NoExit -ExecutionPolicy Bypass ^
-  -Command "Set-Location -LiteralPath '%ROOT%'; & '%PY%' 'collector.py' --daemon --interval %INTERVAL%"
+  -Command "Set-Location -LiteralPath '%ROOT%'; & '%PY%' -m speedtest_dashboard.collector_app --daemon --interval %INTERVAL% --data-dir '%DATA_DIR%'"
 
 REM --- Launch dashboard (window stays open)
 start "Speedtest Dashboard" powershell -NoExit -ExecutionPolicy Bypass ^
-  -Command "Set-Location -LiteralPath '%ROOT%'; & '%PY%' -m streamlit run 'dashboard.py'"
+  -Command "Set-Location -LiteralPath '%ROOT%'; $env:SPEEDTEST_DASHBOARD_DATA_DIR='%DATA_DIR%'; & '%PY%' -m streamlit run 'dashboard.py' --server.port %PORT%"
 
 echo.
 echo [INFO] Launched collector and dashboard.
-echo [INFO] Dashboard URL: http://localhost:8501
+echo [INFO] Dashboard URL: http://localhost:%PORT%
+echo [INFO] Results folder: %DATA_DIR%
 echo.
 
 :end

@@ -7,11 +7,20 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ---
 
 ## [Unreleased]
-### Planned
-- Additional overlay controls
-- Multi-host visualization
-- GitHub Actions for automated checks
-- Windows Task Scheduler helper
+### Added
+- macOS launcher and step-by-step Mac acceptance guide.
+- Ready-made VS Code workspace, tasks, debugging profiles, and setup guide.
+- Configurable cross-platform data directory with a visible home-folder default.
+- Offline automated tests and GitHub Actions CI.
+
+### Changed
+- Consolidated the collector and dashboard into the installable Python package.
+- Windows launchers now use the project-local virtual environment consistently.
+- PowerShell launcher now supports interval, port, headless, and data-directory options.
+
+### Fixed
+- Installed console commands no longer depend on missing repository-root files.
+- Removed the hardcoded personal Dropbox path from the application.
 
 ---
 
