@@ -217,7 +217,7 @@ def print_ookla_install_guidance_once() -> None:
     print(
         "\n[INFO] Ookla Speedtest CLI was not found on PATH.  Using the Python speedtest-cli fallback.\n"
         "       The official Ookla CLI is more reliable and avoids 403 errors.\n"
-        "       Install it on Windows via ZIP: https://www.speedtest.net/apps/cli  → extract to e.g. C:\\Tools\\OoklaSpeedtest\n"
+        "       Install it on Windows via ZIP: https://www.speedtest.net/apps/cli  -> extract to e.g. C:\\Tools\\OoklaSpeedtest\n"
         "       Then add that folder to your PATH.  Verify with:  speedtest -V\n"
     )
 
@@ -250,10 +250,10 @@ def run_one_via_ookla(server_id: Optional[str] = None) -> Dict:
             try:
                 data = json.loads(result.stdout)
             except json.JSONDecodeError as e:
-                last_err = RuntimeError(f"Ookla CLI returned non‑JSON output: {e}.  stdout[:200]={result.stdout[:200]}")
+                last_err = RuntimeError(f"Ookla CLI returned non-JSON output: {e}.  stdout[:200]={result.stdout[:200]}")
                 continue
 
-            dl_bps = float(data.get("download", {}).get("bandwidth", 0.0) * 8.0)  # bytes/s → bits/s
+            dl_bps = float(data.get("download", {}).get("bandwidth", 0.0) * 8.0)  # bytes/s to bits/s
             ul_bps = float(data.get("upload", {}).get("bandwidth", 0.0) * 8.0)
             ping_ms = float(data.get("ping", {}).get("latency", 0.0))
             server = data.get("server", {}) or {}
@@ -417,11 +417,11 @@ def main(argv: list[str] | None = None):
                     last_err = e
                     msg = (str(e) or "").lower()
                     if "403" in msg or "forbidden" in msg:
-                        print(f"[WARN] 403/Forbidden from speedtest backend (attempt {attempt+1}/4).  Backing off {delay:.0f}s …")
+                        print(f"[WARN] 403/Forbidden from speedtest backend (attempt {attempt+1}/4).  Backing off {delay:.0f}s...")
                     elif "license" in msg:
-                        print(f"[WARN] License acceptance needed or not persisted (attempt {attempt+1}/4).  Backing off {delay:.0f}s …")
+                        print(f"[WARN] License acceptance needed or not persisted (attempt {attempt+1}/4).  Backing off {delay:.0f}s...")
                     else:
-                        print(f"[WARN] Speedtest attempt {attempt+1}/4 failed: {e}.  Backing off {delay:.0f}s …")
+                        print(f"[WARN] Speedtest attempt {attempt+1}/4 failed: {e}.  Backing off {delay:.0f}s...")
                     time.sleep(delay)
                     delay *= 2
             if last_err:

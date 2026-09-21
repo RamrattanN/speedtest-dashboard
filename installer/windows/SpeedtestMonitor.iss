@@ -1,5 +1,5 @@
 #define AppName "Speedtest Monitor"
-#define AppVersion "0.2.0-windows-pilot.3"
+#define AppVersion "0.2.0-windows-pilot.4"
 #define AppExeName "Speedtest Monitor.exe"
 
 [Setup]
@@ -14,7 +14,7 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\..\dist
-OutputBaseFilename=Speedtest-Monitor-Windows-x64-pilot-3
+OutputBaseFilename=Speedtest-Monitor-Windows-x64-pilot-4
 SetupIconFile=..\..\build\windows-icon\SpeedtestMonitor.ico
 Compression=lzma2
 SolidCompression=yes

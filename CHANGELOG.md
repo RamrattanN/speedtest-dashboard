@@ -41,6 +41,9 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   installable Python command remains available for Windows development.
 
 ### Fixed
+- Windows service logging now forces UTF-8 before the collector starts, avoiding
+  a CP1252 encoding failure that stopped collection when status text contained
+  Unicode characters.
 - The windowed Windows service now restores writable output streams before
   starting the collector, preventing its background thread from stopping
   silently before the first measurement.

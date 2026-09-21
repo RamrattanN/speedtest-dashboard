@@ -16,7 +16,7 @@ from speedtest_dashboard.app_config import DATA_DIR_ENV, get_data_dir
 
 
 APP_NAME = "Speedtest Monitor"
-APP_BUILD = "0.2.0-windows-pilot.3"
+APP_BUILD = "0.2.0-windows-pilot.4"
 DESKTOP_MODE_ENV = "SPEEDTEST_DASHBOARD_DESKTOP"
 DESKTOP_PLATFORM_ENV = "SPEEDTEST_DASHBOARD_DESKTOP_PLATFORM"
 DEFAULT_INTERVAL = 300
@@ -153,8 +153,24 @@ def ensure_service_output_streams() -> None:
             "a", encoding="utf-8", buffering=1
         )
         sys.stdout = _SERVICE_LOG_HANDLE
+    _configure_utf8_output(sys.stdout)
     if sys.stderr is None:
         sys.stderr = sys.stdout
+    elif sys.stderr is not sys.stdout:
+        _configure_utf8_output(sys.stderr)
+
+
+def _configure_utf8_output(stream: object) -> None:
+    """Use UTF-8 when a writable text stream supports reconfiguration."""
+    reconfigure = getattr(stream, "reconfigure", None)
+    if not callable(reconfigure):
+        return
+    try:
+        reconfigure(encoding="utf-8", errors="backslashreplace")
+    except (AttributeError, OSError, ValueError):
+        # Some embedded or test streams cannot be reconfigured.  Collector
+        # status text remains ASCII-safe as a second line of defence.
+        return
 
 
 def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
@@ -254,7 +270,7 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
 
     tk.Label(
         root,
-        text=f"Windows Pilot 3  |  Results folder: {data_dir}",
+        text=f"Windows Pilot 4  |  Results folder: {data_dir}",
         font=("Segoe UI", 9),
         foreground="#66788A",
         background="#F3F7FA",

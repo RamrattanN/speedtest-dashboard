@@ -1,3 +1,4 @@
+from io import BytesIO, TextIOWrapper
 from types import SimpleNamespace
 
 from speedtest_dashboard import macos_app, runner, windows_app
@@ -177,7 +178,7 @@ def test_windows_streamlit_options_disable_packaged_development_mode():
     assert options["server.port"] == 8600
     assert options["browser.serverAddress"] == "127.0.0.1"
     assert options["browser.serverPort"] == 8600
-    assert windows_app.APP_BUILD == "0.2.0-windows-pilot.3"
+    assert windows_app.APP_BUILD == "0.2.0-windows-pilot.4"
 
 
 def test_windows_log_directory_uses_local_app_data(tmp_path, monkeypatch):
@@ -202,6 +203,18 @@ def test_windows_windowed_service_restores_output_streams(tmp_path, monkeypatch)
     assert "collector output is available" in (
         tmp_path / "Ramrattan Speedtest Monitor" / "Logs" / "monitor.log"
     ).read_text(encoding="utf-8")
+
+
+def test_windows_service_reconfigures_redirected_output_as_utf8():
+    raw = BytesIO()
+    stream = TextIOWrapper(raw, encoding="cp1252")
+
+    windows_app._configure_utf8_output(stream)
+    stream.write("Unicode logging: \u2192")
+    stream.flush()
+
+    assert stream.encoding.lower() == "utf-8"
+    assert raw.getvalue().decode("utf-8") == "Unicode logging: \u2192"
 
 
 def test_windows_service_loads_options_before_starting_server(tmp_path, monkeypatch):

@@ -19,7 +19,7 @@ VSVersionInfo(
         StringStruct('LegalCopyright', 'Copyright (c) Nilesh Ramrattan'),
         StringStruct('OriginalFilename', 'Speedtest Monitor.exe'),
         StringStruct('ProductName', 'Speedtest Monitor'),
-        StringStruct('ProductVersion', '0.2.0-windows-pilot.3')
+        StringStruct('ProductVersion', '0.2.0-windows-pilot.4')
       ])
     ]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
