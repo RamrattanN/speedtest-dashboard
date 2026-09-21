@@ -42,6 +42,8 @@ jobs:
         run: pytest -q
       - name: Build unsigned Intel application and disk image
         run: bash scripts/build_macos_release.sh
+      - name: Verify optional macOS approval helper
+        run: test -x "dist/release/Allow and Open Speedtest Monitor.command"
       - name: Smoke-test packaged dashboard route
         shell: bash
         run: |

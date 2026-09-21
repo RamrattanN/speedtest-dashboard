@@ -628,7 +628,8 @@ def render_help_panel() -> None:
                     "<li>Quit any running copy of Speedtest Monitor.</li>",
                     "<li>Open the current disk image and drag Speedtest Monitor to Applications.</li>",
                     "<li>Choose Replace if macOS reports that an older copy is installed.</li>",
-                    "<li>If macOS blocks the unsigned application, use Privacy &amp; Security in System Settings to allow it, or follow the documented quarantine-removal command.</li>",
+                    "<li>If macOS blocks the unsigned application, first use Privacy &amp; Security in System Settings to allow it.</li>",
+                    "<li>If it remains blocked, run Allow and Open Speedtest Monitor.command from the disk image, or follow the documented Terminal commands.</li>",
                     f"<li>Confirm that the controller shows version {__version__}.</li>",
                 ]
             )

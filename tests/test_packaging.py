@@ -69,3 +69,25 @@ def test_production_version_is_consistent_across_platform_packages():
     for relative_path, expected in expected_references.items():
         contents = (project_root / relative_path).read_text(encoding="utf-8")
         assert expected in contents, relative_path
+
+
+def test_macos_approval_helper_is_scoped_to_installed_application():
+    project_root = Path(__file__).parents[1]
+    helper = (
+        project_root
+        / "installer"
+        / "macos"
+        / "Allow and Open Speedtest Monitor.command"
+    ).read_text(encoding="utf-8")
+
+    assert 'APP_PATH="/Applications/Speedtest Monitor.app"' in helper
+    assert 'sudo /usr/bin/xattr -dr com.apple.quarantine "$APP_PATH"' in helper
+    assert '/usr/bin/open "$APP_PATH"' in helper
+    assert 'read -r "reply?Continue? [y/N] "' in helper
+    assert "rm -rf" not in helper
+
+    build_script = (project_root / "scripts" / "build_macos_release.sh").read_text(
+        encoding="utf-8"
+    )
+    assert 'installer/macos/Allow and Open Speedtest Monitor.command' in build_script
+    assert 'chmod +x "$RELEASE_DIR/Allow and Open Speedtest Monitor.command"' in build_script

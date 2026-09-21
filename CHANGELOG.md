@@ -43,6 +43,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Connection Overview now follows Latest Result on every platform.
 - All desktop packages, controllers, artifacts, and user documentation use the
   same production version number, 1.0.0.
+- macOS disk images include an optional, confirmation-gated approval helper
+  that removes quarantine only from the installed application and opens it.
 
 ### Removed
 - Retired the legacy `RunSpeedTest.ps1` and `RunSpeedTest.bat` launchers.  The

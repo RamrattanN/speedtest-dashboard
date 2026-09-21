@@ -41,10 +41,11 @@ repository or VS Code.
 
 Because the application is unsigned, macOS may block the first launch.  Use
 **System Settings > Privacy & Security > Open Anyway** when it is offered.  If
-macOS still blocks the application, follow the quarantine-removal command in
-the [macOS Desktop Packaging](docs/Mac-Desktop-Packaging.md) guide.  This is a
-one-time installation step.  Everyday operation uses the small controller
-window to reopen the dashboard or quit the monitor safely.
+macOS still blocks the application, use the optional **Allow and Open Speedtest
+Monitor.command** helper included in the disk image, or follow the manual
+commands in the [macOS Desktop Packaging](docs/Mac-Desktop-Packaging.md) guide.
+This is a one-time installation step.  Everyday operation uses the small
+controller window to reopen the dashboard or quit the monitor safely.
 
 See [macOS Desktop Packaging](docs/Mac-Desktop-Packaging.md) for build, test, and
 distribution instructions.

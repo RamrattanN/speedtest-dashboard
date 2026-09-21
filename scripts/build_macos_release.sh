@@ -43,6 +43,8 @@ DMG_PATH="$ROOT/dist/Speedtest-Monitor-macOS-${PACKAGE_ARCH}-1.0.0.dmg"
 rm -rf "$RELEASE_DIR" "$DMG_PATH"
 mkdir -p "$RELEASE_DIR"
 cp -R "$ROOT/dist/Speedtest Monitor.app" "$RELEASE_DIR/"
+cp "$ROOT/installer/macos/Allow and Open Speedtest Monitor.command" "$RELEASE_DIR/"
+chmod +x "$RELEASE_DIR/Allow and Open Speedtest Monitor.command"
 ln -s /Applications "$RELEASE_DIR/Applications"
 
 hdiutil create \

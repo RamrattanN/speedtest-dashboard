@@ -13,6 +13,8 @@ Code, and a repository checkout are not required.
 3. Choose **Replace** if an older copy is installed.
 4. Complete the unsigned-application security step in the
    [macOS Desktop Packaging guide](../Mac-Desktop-Packaging.md).
+   If needed, use the optional **Allow and Open Speedtest Monitor.command**
+   helper included in the disk image.
 5. Open **Speedtest Monitor** and keep the controller open.
 
 The dashboard opens automatically when the service is ready.  Results are

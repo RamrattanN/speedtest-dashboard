@@ -41,13 +41,19 @@ verifies each packaged dashboard route before uploading artifacts for 14 days.
 3. Choose **Replace** when updating an existing installation.
 4. Open the application.  If macOS blocks it, use **System Settings > Privacy &
    Security > Open Anyway**.
-5. If the application is still blocked, run:
+5. If the application is still blocked, double-click **Allow and Open Speedtest
+   Monitor.command** in the disk image.  Review the explanation, enter the Mac
+   administrator password when prompted, and allow the helper to open the app.
+
+The helper runs only these commands against the installed Speedtest Monitor app:
 
 ```bash
 sudo xattr -dr com.apple.quarantine "/Applications/Speedtest Monitor.app"
+open "/Applications/Speedtest Monitor.app"
 ```
 
-Only use the security override for an artifact obtained from the project.
+The same commands can be run manually in Terminal.  Only use the security
+override for an artifact obtained from the project.
 
 ## Acceptance checks
 

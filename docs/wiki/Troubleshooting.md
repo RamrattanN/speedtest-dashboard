@@ -3,10 +3,17 @@
 ## macOS blocks the application
 
 Version 1.0.0 is unsigned and not notarized.  First try **System Settings >
-Privacy & Security > Open Anyway**.  If the application remains blocked, run:
+Privacy & Security > Open Anyway**.  If the application remains blocked,
+double-click **Allow and Open Speedtest Monitor.command** in the disk image.
+The helper explains the change, asks for confirmation, requests the Mac
+administrator password, removes quarantine only from the installed Speedtest
+Monitor application, and opens it.
+
+The same steps can be completed manually in Terminal:
 
 ```bash
 sudo xattr -dr com.apple.quarantine "/Applications/Speedtest Monitor.app"
+open "/Applications/Speedtest Monitor.app"
 ```
 
 Enter the Mac login password when prompted.  Terminal does not display the
