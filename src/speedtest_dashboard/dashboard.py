@@ -403,6 +403,50 @@ def apply_theme_css(theme: str) -> str:
         .stButton > button:hover {{
             background-color: {ACCENT_NAVY}0F !important;
         }}
+
+        /* Keyed controls need final, high-specificity rules because the key class
+           and Streamlit button wrapper are the same element in current releases. */
+        .st-key-open_help_panel button {{
+            width: 46px !important;
+            min-width: 46px !important;
+            height: 46px !important;
+            padding: 0 !important;
+            border: 1px solid rgba(255, 255, 255, 0.72) !important;
+            border-radius: 12px !important;
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+        }}
+
+        .st-key-open_help_panel button:hover,
+        .st-key-open_help_panel button:focus-visible {{
+            border-color: #ffffff !important;
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.18) !important;
+        }}
+
+        .st-key-open_help_panel button [data-testid="stMarkdownContainer"],
+        .st-key-open_help_panel button p {{
+            display: none !important;
+        }}
+
+        .st-key-open_help_panel button [data-testid="stIconMaterial"] {{
+            display: inline-flex !important;
+            color: #ffffff !important;
+            font-size: 1.45rem !important;
+        }}
+
+        .st-key-refresh_now_btn button {{
+            border-color: #173f63 !important;
+            color: #ffffff !important;
+            background: #173f63 !important;
+        }}
+
+        .st-key-refresh_now_btn button:hover,
+        .st-key-refresh_now_btn button:focus-visible {{
+            border-color: #2f78b8 !important;
+            color: #ffffff !important;
+            background: #2f78b8 !important;
+        }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -770,7 +814,7 @@ st.markdown(
     <div class="rr-section-heading">
       <p class="eyebrow">CONNECTION OVERVIEW</p>
       <h2>Internet performance at a glance</h2>
-      <p>Latest measurements first, with detailed trends and view controls below.</p>
+      <p>View controls, detailed trends, and the latest measurement in one place.</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -864,25 +908,6 @@ def render_dashboard() -> None:
         latest_server = f'{latest["server_id"]} · {latest_server}'
     latest_time_text = latest_local.strftime("%I:%M %p").lstrip("0")
     latest_date_text = latest_local.strftime("%b %d, %Y").replace(" 0", " ")
-
-    st.markdown(
-        """
-        <div class="rr-section-heading">
-          <p class="eyebrow">LATEST RESULT</p>
-          <h2>Most recent connection check</h2>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    metric_down, metric_up, metric_ping, metric_time = st.columns(4, gap="medium")
-    metric_down.metric("Download", f'{latest["download_mbps"]:.1f} Mbps')
-    metric_up.metric("Upload", f'{latest["upload_mbps"]:.1f} Mbps')
-    metric_ping.metric("Ping", f'{latest["ping_ms"]:.1f} ms')
-    metric_time.metric("Recorded", latest_time_text)
-    st.caption(
-        f"{latest_date_text} · {latest_server} · "
-        f'Display timezone: {tz_name}'
-    )
 
     sample_min = infer_sample_minutes(df)
     if sample_min is None:
@@ -1084,6 +1109,25 @@ def render_dashboard() -> None:
     )
     with st.container(border=True):
         st.plotly_chart(fig, width="stretch")
+
+    st.markdown(
+        """
+        <div class="rr-section-heading">
+          <p class="eyebrow">LATEST RESULT</p>
+          <h2>Most recent connection check</h2>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    metric_down, metric_up, metric_ping, metric_time = st.columns(4, gap="medium")
+    metric_down.metric("Download", f'{latest["download_mbps"]:.1f} Mbps')
+    metric_up.metric("Upload", f'{latest["upload_mbps"]:.1f} Mbps')
+    metric_ping.metric("Ping", f'{latest["ping_ms"]:.1f} ms')
+    metric_time.metric("Recorded", latest_time_text)
+    st.caption(
+        f"{latest_date_text} · {latest_server} · "
+        f'Display timezone: {tz_name}'
+    )
 
     stats = (
         current_window[["download_mbps", "upload_mbps", "ping_ms"]]

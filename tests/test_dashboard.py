@@ -47,6 +47,23 @@ def test_dashboard_renders_recorded_measurement(tmp_path, monkeypatch):
         "Ping",
         "Recorded",
     ]
+    rendered_markdown = [block.value for block in app.markdown]
+    trend_index = next(
+        index
+        for index, value in enumerate(rendered_markdown)
+        if "PERFORMANCE TREND" in value
+    )
+    latest_index = next(
+        index
+        for index, value in enumerate(rendered_markdown)
+        if "LATEST RESULT" in value
+    )
+    summary_index = next(
+        index
+        for index, value in enumerate(rendered_markdown)
+        if "WINDOW SUMMARY" in value
+    )
+    assert trend_index < latest_index < summary_index
     assert len(app.dataframe) == 1
 
 

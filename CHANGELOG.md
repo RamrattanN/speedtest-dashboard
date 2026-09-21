@@ -56,6 +56,9 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   enabled, so users can request an immediate CSV reload at any time.
 - The browser tab now uses the Ramrattan logo, Help is an icon in the branded
   header, and the manual refresh action uses a navy primary-button treatment.
+- The header Help control now renders as a compact, visible icon button across
+  packaged macOS and Windows apps.
+- Latest Result now appears between Performance Trend and Window Summary.
 - Packaged macOS builds now force Streamlit production mode so the dashboard
   and its static frontend are both served on the selected local port instead
   of incorrectly expecting a development frontend on port 3000.
