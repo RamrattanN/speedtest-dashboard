@@ -3,16 +3,29 @@
 Speedtest Monitor records ping, download, and upload measurements and presents
 them in a local Streamlit dashboard.  Results stay on the computer in CSV files.
 
+![Current Speedtest Monitor dashboard](../../assets/dashboard_preview.png?v=2026-09-21-2)
+
 ## Current release
 
-Version 1.1.0 is available as unsigned **macOS Intel**, **macOS Apple silicon**,
-and **Windows x64** desktop applications.  The Apple silicon release passes
-automated ARM64 validation but still awaits physical-device testing.  The applications
-include their own Python runtime and do not require the repository, VS Code, or
-a command line for everyday use.
+Version 1.0.0 is the current published production release.  Unsigned **macOS
+Intel**, **macOS Apple silicon**, and **Windows x64** installers are available
+from the stable latest-release page.  The applications include their own
+Python runtime and do not require the repository, VS Code, or a command line
+for everyday use.
 
 Download the installers from the
-[Speedtest Monitor 1.1.0 release](https://github.com/RamrattanN/speedtest-dashboard/releases/tag/v1.1.0).
+[latest Speedtest Monitor release](https://github.com/RamrattanN/speedtest-dashboard/releases/latest).
+
+Version 1.1.0 is the current QA candidate on `main`.  It adds safe on-demand
+measurements, duplicate-instance protection, one-year rolling retention,
+measurement-history controls, improved chart behavior, and expanded engine and
+server configuration.  It will replace 1.0.0 on the release page only after
+hands-on production approval.  The Apple silicon package passes automated ARM64
+validation but still awaits testing on a physical Apple silicon Mac.
+
+Unless a page explicitly says otherwise, this wiki documents the version 1.1.0
+QA candidate currently on `main`.  Temporary QA artifacts are shared directly
+with testers and are not presented as production downloads.
 
 1. Install **Speedtest Monitor** in Applications on macOS or with the per-user
    Windows installer.
