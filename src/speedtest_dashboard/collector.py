@@ -759,7 +759,11 @@ def main(argv: list[str] | None = None) -> bool:
             )
             wait_seconds = max(5, int(args.interval)) + jitter_offset
             if wait_for_collection_restart(wait_seconds, DEFAULT_CSV.parent):
-                print("[INFO] Data reset acknowledged.  Starting a fresh measurement cycle.", flush=True)
+                print(
+                    "[INFO] One-shot measurement request acknowledged.  "
+                    "Starting one measurement cycle.",
+                    flush=True,
+                )
 
     if args.daemon:
         try:

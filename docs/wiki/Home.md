@@ -3,7 +3,7 @@
 Speedtest Monitor records ping, download, and upload measurements and presents
 them in a local Streamlit dashboard.  Results stay on the computer in CSV files.
 
-![Current Speedtest Monitor dashboard](../../assets/dashboard_preview.png?v=2026-09-21-2)
+![Current Speedtest Monitor dashboard](https://raw.githubusercontent.com/RamrattanN/speedtest-dashboard/main/assets/dashboard_preview.png)
 
 ## Current release
 
@@ -16,10 +16,10 @@ for everyday use.
 Download the installers from the
 [latest Speedtest Monitor release](https://github.com/RamrattanN/speedtest-dashboard/releases/latest).
 
-Version 1.1.0 is the current QA candidate on `main`.  It adds safe on-demand
-measurements, duplicate-instance protection, one-year rolling retention,
-measurement-history controls, improved chart behavior, and expanded engine and
-server configuration.  It will replace 1.0.0 on the release page only after
+Version 1.1.0 is the current QA candidate on `main`.  It adds atomic one-shot
+measurements, upgrade-safe duplicate-instance protection, one-year rolling
+retention, measurement-history controls, improved chart behavior, and expanded
+engine and server configuration.  It will replace 1.0.0 on the release page only after
 hands-on production approval.  The Apple silicon package passes automated ARM64
 validation but still awaits testing on a physical Apple silicon Mac.
 
@@ -42,6 +42,9 @@ The collector normally records a measurement every five minutes.  The open
 dashboard checks for new results every 60 seconds.  Select **Run speed test**
 to request a new measurement, or **Refresh dashboard** to reload results that
 have already been recorded.
+
+Each **Run speed test** request is consumed once by the existing collector.  It
+does not create another timer, service, or recurring schedule.
 
 Server selection is automatic by default on every computer.  If public-IP
 geolocation chooses a distant region, use **Test server selection** to save a

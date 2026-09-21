@@ -15,10 +15,10 @@ if [ ! -x ".venv/bin/python" ]; then
   python3 -m venv .venv
 fi
 
-echo "Installing or updating Speedtest Dashboard..."
+echo "Installing or updating Speedtest Monitor..."
 ".venv/bin/python" -m pip install --upgrade pip
 ".venv/bin/python" -m pip install -e .
 
-echo "Starting Speedtest Dashboard..."
+echo "Starting Speedtest Monitor..."
 echo "Results will be saved in: $HOME/SpeedtestDashboard"
 exec ".venv/bin/python" -m speedtest_dashboard "$@"

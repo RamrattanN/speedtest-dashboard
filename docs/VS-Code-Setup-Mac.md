@@ -61,7 +61,7 @@ All tests should pass without performing a real internet speed test.
 For normal acceptance testing:
 
 1. Open **Terminal > Run Task**.
-2. Select **Start Speedtest Dashboard**.
+2. Select **Start Speedtest Monitor**.
 3. Wait for the browser to open <http://localhost:8501>.
 
 Stop it by selecting its Terminal and pressing **Control-C**.

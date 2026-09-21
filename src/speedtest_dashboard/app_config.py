@@ -194,10 +194,13 @@ def request_collection_restart(override: str | Path | None = None) -> Path:
     """
 
     path = restart_request_path(override)
-    path.write_text(
-        datetime.now(timezone.utc).isoformat().replace("+00:00", "Z") + "\n",
-        encoding="utf-8",
-    )
+    payload = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z") + "\n"
+    try:
+        descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError:
+        return path
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        handle.write(payload)
     return path
 
 

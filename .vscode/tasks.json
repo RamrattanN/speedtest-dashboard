@@ -20,7 +20,7 @@
       "dependsOn": "Setup project"
     },
     {
-      "label": "Start Speedtest Dashboard",
+      "label": "Start Speedtest Monitor",
       "type": "shell",
       "command": "./RunSpeedTest.command --interval 300",
       "problemMatcher": []

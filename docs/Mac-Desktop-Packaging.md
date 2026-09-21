@@ -89,6 +89,10 @@ required when the commands have been supplied during an earlier deployment.
   measurement without overlapping an active test.
 - A repeated application launch reports that the monitor is already running
   and does not create another service or collector.
+- If an older hidden service was orphaned during an upgrade, the new controller
+  stops it before starting its single owned service.
+- If the controller exits unexpectedly, its hidden service detects the loss
+  and exits instead of continuing to collect in the background.
 - The chart-type selector appears directly below the chart.
 - **Quit Monitor** stops the local server.
 - Automatic server selection remains the default.  A preferred city or region

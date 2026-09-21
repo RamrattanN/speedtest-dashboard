@@ -5,10 +5,13 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
+import re
+import signal
 import socket
 import subprocess
 import sys
 import threading
+import time
 import urllib.request
 import webbrowser
 
@@ -78,7 +81,12 @@ def available_port(preferred: int = DEFAULT_PORT) -> int:
             return int(probe.getsockname()[1])
 
 
-def service_command(port: int, interval: int, data_dir: Path) -> list[str]:
+def service_command(
+    port: int,
+    interval: int,
+    data_dir: Path,
+    controller_pid: int | None = None,
+) -> list[str]:
     """Build the child command for source or packaged execution."""
     args = [
         "--service",
@@ -89,12 +97,110 @@ def service_command(port: int, interval: int, data_dir: Path) -> list[str]:
         "--data-dir",
         str(data_dir),
     ]
+    if controller_pid:
+        args.extend(["--controller-pid", str(controller_pid)])
     if is_frozen():
         return [sys.executable, *args]
     return [sys.executable, "-m", "speedtest_dashboard.macos_app", *args]
 
 
-def run_services(port: int, interval: int, data_dir: Path) -> None:
+def _pid_is_running(pid: int) -> bool:
+    """Return whether a process still exists without changing it."""
+
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _exit_when_controller_stops(controller_pid: int, poll_seconds: float = 2.0) -> None:
+    """Prevent a hidden service from surviving its owning controller."""
+
+    if controller_pid <= 0:
+        return
+    while os.getppid() == controller_pid and _pid_is_running(controller_pid):
+        time.sleep(poll_seconds)
+    os._exit(0)
+
+
+def legacy_orphan_service_pids(
+    data_dir: Path,
+    process_table: str | None = None,
+) -> list[int]:
+    """Find reparented Speedtest Monitor services for this results folder."""
+
+    if process_table is None:
+        try:
+            process_table = subprocess.run(
+                ["ps", "-axo", "pid=,ppid=,command="],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            ).stdout
+        except (OSError, subprocess.SubprocessError):
+            return []
+
+    data_argument = re.compile(
+        rf"--data-dir(?:=|\s+)[\"']?{re.escape(str(data_dir.resolve()))}[\"']?(?:\s|$)"
+    )
+    matches: list[int] = []
+    for line in process_table.splitlines():
+        fields = line.strip().split(maxsplit=2)
+        if len(fields) != 3:
+            continue
+        raw_pid, raw_parent, command = fields
+        if raw_parent != "1" or "--service" not in command:
+            continue
+        if not (
+            "Speedtest Monitor.app/Contents/MacOS/Speedtest Monitor" in command
+            or "speedtest_dashboard.macos_app" in command
+        ):
+            continue
+        if not data_argument.search(command):
+            continue
+        try:
+            pid = int(raw_pid)
+        except ValueError:
+            continue
+        if pid != os.getpid():
+            matches.append(pid)
+    return matches
+
+
+def stop_legacy_orphan_services(data_dir: Path) -> list[int]:
+    """Stop legacy orphan services before starting the owned replacement."""
+
+    stopped: list[int] = []
+    for pid in legacy_orphan_service_pids(data_dir):
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            continue
+        except PermissionError:
+            continue
+
+        deadline = time.monotonic() + 5.0
+        while _pid_is_running(pid) and time.monotonic() < deadline:
+            time.sleep(0.1)
+        if _pid_is_running(pid):
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                pass
+        stopped.append(pid)
+    return stopped
+
+
+def run_services(
+    port: int,
+    interval: int,
+    data_dir: Path,
+    controller_pid: int = 0,
+) -> None:
     """Run the collector and Streamlit server inside the hidden child process."""
     print(f"[INFO] {APP_NAME} build {APP_BUILD} starting on port {port}", flush=True)
     os.environ[DATA_DIR_ENV] = str(data_dir)
@@ -103,6 +209,14 @@ def run_services(port: int, interval: int, data_dir: Path) -> None:
 
     from speedtest_dashboard import collector
     from streamlit.web import bootstrap
+
+    if controller_pid:
+        threading.Thread(
+            target=_exit_when_controller_stops,
+            args=(controller_pid,),
+            name="controller-lifecycle-monitor",
+            daemon=True,
+        ).start()
 
     collector_args = [
         "--daemon",
@@ -144,20 +258,26 @@ def _run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
     import tkinter as tk
     from tkinter import messagebox
 
+    data_dir.mkdir(parents=True, exist_ok=True)
     port = available_port(requested_port)
     url = f"http://127.0.0.1:{port}"
-    data_dir.mkdir(parents=True, exist_ok=True)
 
     log_dir = Path.home() / "Library" / "Logs" / "Ramrattan Speedtest Monitor"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_handle = (log_dir / "monitor.log").open("a", encoding="utf-8")
+    stopped_orphans = stop_legacy_orphan_services(data_dir)
+    for pid in stopped_orphans:
+        log_handle.write(
+            f"[INFO] Stopped orphaned Speedtest Monitor service PID {pid}.\n"
+        )
+    log_handle.flush()
 
     child_env = os.environ.copy()
     child_env[DATA_DIR_ENV] = str(data_dir)
     child_env[DESKTOP_MODE_ENV] = "1"
     child_env[DESKTOP_PLATFORM_ENV] = "macos"
     child = subprocess.Popen(
-        service_command(port, interval, data_dir),
+        service_command(port, interval, data_dir, os.getpid()),
         env=child_env,
         stdout=log_handle,
         stderr=subprocess.STDOUT,
@@ -293,12 +413,13 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--service", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--interval", type=int, default=DEFAULT_INTERVAL)
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
+    parser.add_argument("--controller-pid", type=int, default=0, help=argparse.SUPPRESS)
     parser.add_argument("--data-dir")
     args = parser.parse_args(argv)
 
     data_dir = get_data_dir(args.data_dir)
     if args.service:
-        run_services(args.port, args.interval, data_dir)
+        run_services(args.port, args.interval, data_dir, args.controller_pid)
     else:
         run_controller(args.interval, args.port, data_dir)
 

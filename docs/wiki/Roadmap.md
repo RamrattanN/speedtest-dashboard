@@ -15,10 +15,11 @@
   automatic recovery.
 - Automated package builds and installed-application smoke tests.
 - Automatic 60-second display refresh with an always-available manual reload.
-- Safe on-demand measurement requests that coalesce and never launch
-  overlapping collectors.
-- Cross-platform singleton protection for controllers and collectors sharing a
-  results folder.
+- Atomic, single-shot measurement requests that coalesce and never create a
+  second timer or collector.
+- Cross-platform singleton protection and controller-lifecycle monitoring for
+  services sharing a results folder, plus macOS legacy-orphan cleanup during
+  upgrades.
 - Plain-text macOS Gatekeeper instructions covering both the application and
   the optional approval helper.
 - Official-only production measurements with verified native CLI discovery,

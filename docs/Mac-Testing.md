@@ -69,6 +69,9 @@ Compatibility mode only when intentionally testing the Python engine.
   launching an overlapping collector.
 - Opening Speedtest Monitor a second time reports that it is already running
   and does not start another service or collector.
+- After launch, `ps -axo pid,ppid,command | grep -E '[S]peedtest Monitor|[s]peedtest_dashboard'`
+  shows one controller and one child service.  No service should have parent
+  PID 1.
 - The chart-type selector appears directly below the chart.
 - `~/SpeedtestDashboard/speedtest_results.csv` exists after collection.
 - Stopping the launcher with **Control-C** ends both processes.

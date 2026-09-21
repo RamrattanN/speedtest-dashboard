@@ -64,7 +64,8 @@ finishes about every five minutes, while the open dashboard checks the CSV every
 
 Select **Run speed test** only when you want to collect a new measurement.  It
 does not merely redraw the dashboard.  Repeated requests coalesce, and a
-requested test waits until any current measurement finishes.
+request is consumed once by the existing collector.  It does not start another
+timer or recurring collection sequence.
 
 On Windows, inspect recent rows with PowerShell:
 
@@ -83,8 +84,18 @@ Older builds allowed multiple application instances to start independent
 collectors against the same results folder.  Those tests competed for bandwidth
 and could produce misleading results several seconds apart.  Current builds
 allow one controller and one collector per results folder.  A repeated launch
-shows an already-running message, while the collector lock also protects
-against orphaned service processes.
+shows an already-running message.  Hidden services monitor their controller and
+exit if it stops unexpectedly.  On macOS, a new controller also removes a
+reparented legacy service for the same results folder before collection starts.
+
+On macOS, verify the expected controller and child service with:
+
+```bash
+ps -axo pid,ppid,lstart,command | grep -E '[S]peedtest Monitor|[s]peedtest_dashboard'
+```
+
+Exactly two rows should appear.  The controller has no `--service` argument,
+and the service is its child.  A service whose parent PID is 1 is orphaned.
 
 Existing paired rows remain in the CSV because the application does not delete
 measurements without confirmation.  After installing the corrected build, use
