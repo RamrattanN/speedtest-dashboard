@@ -6,7 +6,7 @@ on:
       version:
         description: Production version without the v prefix
         required: true
-        default: "1.0.0"
+        default: "1.1.0"
       macos_run_id:
         description: Successful Build macOS releases workflow run ID
         required: true

@@ -1,0 +1,57 @@
+SPEEDTEST MONITOR FOR macOS
+FIRST-LAUNCH SECURITY STEPS
+
+Speedtest Monitor 1.1.0 is not code-signed or notarized.  macOS may block the
+application and the optional approval helper the first time each is opened.
+
+Only continue if this disk image came from the official project release:
+https://github.com/RamrattanN/speedtest-dashboard/releases
+
+INSTALL AND OPEN THE APPLICATION
+
+1. Drag Speedtest Monitor to Applications.
+2. Open Speedtest Monitor from Applications.
+3. If macOS blocks it, select Done.
+4. Open System Settings, select Privacy & Security, and scroll to Security.
+5. Find the message about Speedtest Monitor and select Open Anyway.
+6. Authenticate when prompted, then confirm Open.
+
+OPTIONAL APPROVAL HELPER
+
+The disk image also contains Allow and Open Speedtest Monitor.command.  The
+helper removes the quarantine attribute only from the installed application
+and then opens it.  The helper is also unsigned, so macOS may block it on its
+first launch.
+
+If the helper is blocked:
+
+1. Select Done on the warning.
+2. Open System Settings, select Privacy & Security, and scroll to Security.
+3. Find the message about Allow and Open Speedtest Monitor.command.
+4. Select Open Anyway and authenticate.
+5. Double-click the helper again and follow its prompts.
+
+TERMINAL FALLBACK
+
+If Open Anyway is unavailable or the helper still does not run, open Terminal
+and run these two commands:
+
+sudo xattr -dr com.apple.quarantine "/Applications/Speedtest Monitor.app"
+open "/Applications/Speedtest Monitor.app"
+
+Enter the Mac login password when prompted.  Terminal does not display the
+password while it is typed.  This is expected.
+
+OFFICIAL MEASUREMENT ENGINE
+
+Production measurements require the official Ookla Speedtest CLI.  This disk
+image does not redistribute Ookla's executable.  Open Install Official Ookla
+CLI.webloc, or visit:
+
+https://www.speedtest.net/apps/cli
+
+After installing the matching Intel or Apple silicon CLI, open the dashboard,
+expand Connection Overview, and open Measurement engine.  Confirm that the
+official CLI is detected, or save its full executable path.  Compatibility
+mode permits the Python engine only after an explicit selection and can produce
+materially different results.

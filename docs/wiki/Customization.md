@@ -25,3 +25,8 @@ timezone is `America/Chicago`; any available IANA timezone can be selected.
 
 Filter the view by detected server ID and name.  Results without a server ID
 can be included or excluded separately.
+
+Filtering changes only what the chart displays.  To change where future tests
+run, open **Test server selection** in Connection Overview.  Automatic is the
+universal default.  A saved preferred city or region triggers provider-list
+matching and regional failover during collection.

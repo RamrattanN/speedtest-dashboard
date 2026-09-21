@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Speedtest collector with engine tagging, Ookla license handling, and safe fallbacks.
+Speedtest collector with engine tagging and an explicit production engine policy.
 
 Features:
-- Prefers Ookla CLI with explicit license/GDPR acceptance flags.  Falls back to Python speedtest-cli on failure or if CLI is missing.
+- Uses the official Ookla CLI by default with explicit license/GDPR acceptance flags.
+- Offers the Python speedtest-cli engine only through explicit compatibility mode.
 - Retries with exponential backoff on transient errors (e.g., 403) and rc=1 license prompts.
 - Records UTC timestamps.
 - Main CSV retains 30 days.  Monthly archives retain 12 months.
@@ -18,12 +19,13 @@ Usage:
   python collector.py --list-servers 10                # list 10 nearby servers and exit
 
 Optional flags:
-  --require-ookla    Error out if Ookla CLI is not installed.
+  --require-ookla    Require the official Ookla CLI.  This is the default.
+  --compatibility    Allow the Python fallback when the official CLI is unavailable.
   --no-ookla         Do not use Ookla CLI even if present.
 
 Prereqs:
   pip install pandas speedtest-cli
-  (Recommended) Install Ookla CLI and add to PATH.  If missing, this script will still run via Python fallback.
+  Install the official Ookla CLI from https://www.speedtest.net/apps/cli.
 """
 
 from __future__ import annotations
@@ -37,6 +39,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import re
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional, Dict, List, Tuple
@@ -44,7 +47,12 @@ from typing import Optional, Dict, List, Tuple
 import certifi
 import pandas as pd
 
-from speedtest_dashboard.app_config import configure_data_paths
+from speedtest_dashboard.app_config import (
+    configure_data_paths,
+    load_settings,
+    save_collector_status,
+    save_server_calibration,
+)
 
 # ---------- Paths / Config ----------
 DEFAULT_CSV, ARCHIVE_DIR = configure_data_paths()
@@ -52,6 +60,10 @@ DEFAULT_CSV, ARCHIVE_DIR = configure_data_paths()
 COLUMNS = ["timestamp", "ping_ms", "download_mbps", "upload_mbps", "server_id", "server_name", "engine"]
 MAIN_RETENTION_DAYS = 30
 ARCHIVE_RETENTION_MONTHS = 12
+NETWORK_TIMEOUT_SECONDS = 15
+MAX_AREA_CANDIDATES = 25
+OOKLA_PATH_ENV = "SPEEDTEST_OOKLA_CLI"
+OOKLA_DOWNLOAD_URL = "https://www.speedtest.net/apps/cli"
 
 # One-time info flag
 _ookla_guidance_printed = False
@@ -204,9 +216,87 @@ def sanitize_server_info(server_id: Optional[str], server_name: Optional[str]) -
 
 
 # ---------- Ookla CLI vs Python library ----------
-def have_ookla_cli() -> bool:
-    exe = shutil.which("speedtest")
-    return exe is not None
+def _ookla_candidates(configured_path: str = "") -> list[Path]:
+    """Return platform-appropriate CLI candidates in priority order."""
+
+    candidates: list[Path] = []
+    for value in (configured_path, os.environ.get(OOKLA_PATH_ENV, "")):
+        if value:
+            candidates.append(Path(value).expanduser())
+
+    discovered = shutil.which("speedtest")
+    if discovered:
+        candidates.append(Path(discovered))
+
+    if os.name == "nt":
+        for variable in ("LOCALAPPDATA", "ProgramFiles", "ProgramFiles(x86)"):
+            root = os.environ.get(variable)
+            if root:
+                candidates.extend(
+                    [
+                        Path(root) / "Ookla Speedtest CLI" / "speedtest.exe",
+                        Path(root) / "Speedtest CLI" / "speedtest.exe",
+                        Path(root) / "Ookla" / "speedtest.exe",
+                    ]
+                )
+        candidates.append(Path.home() / "Tools" / "OoklaSpeedtest" / "speedtest.exe")
+    else:
+        candidates.extend(
+            [
+                Path("/usr/local/bin/speedtest"),
+                Path("/opt/homebrew/bin/speedtest"),
+                Path.home() / ".local" / "bin" / "speedtest",
+                Path.home() / "bin" / "speedtest",
+            ]
+        )
+
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        normalized = str(candidate)
+        if normalized not in seen:
+            seen.add(normalized)
+            unique.append(candidate)
+    return unique
+
+
+def is_official_ookla_cli(path: Path) -> bool:
+    """Reject the similarly named Python command and accept only Ookla's CLI."""
+
+    if not path.is_file():
+        return False
+    try:
+        result = subprocess.run(
+            [str(path), "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    output = f"{result.stdout}\n{result.stderr}".casefold()
+    return result.returncode == 0 and "ookla" in output and "speedtest" in output
+
+
+def find_ookla_cli(configured_path: str = "") -> Path | None:
+    """Locate and verify the official CLI without relying only on GUI-app PATH."""
+
+    for candidate in _ookla_candidates(configured_path):
+        if is_official_ookla_cli(candidate):
+            return candidate.resolve()
+    return None
+
+
+def configured_ookla_cli(data_dir: Path | None = None) -> Path | None:
+    """Resolve the official CLI using the current per-user settings."""
+
+    configured_path = load_settings(data_dir)["measurement_engine"]["ookla_path"]
+    return find_ookla_cli(configured_path)
+
+
+def have_ookla_cli(configured_path: str = "") -> bool:
+    return find_ookla_cli(configured_path) is not None
 
 
 def print_ookla_install_guidance_once() -> None:
@@ -215,19 +305,22 @@ def print_ookla_install_guidance_once() -> None:
         return
     _ookla_guidance_printed = True
     print(
-        "\n[INFO] Ookla Speedtest CLI was not found on PATH.  Using the Python speedtest-cli fallback.\n"
-        "       The official Ookla CLI is more reliable and avoids 403 errors.\n"
-        "       Install it on Windows via ZIP: https://www.speedtest.net/apps/cli  -> extract to e.g. C:\\Tools\\OoklaSpeedtest\n"
-        "       Then add that folder to your PATH.  Verify with:  speedtest -V\n"
+        "\n[ATTENTION] The official Ookla Speedtest CLI was not found.\n"
+        "            Production measurements are paused to avoid mixing incompatible engines.\n"
+        f"            Download it from {OOKLA_DOWNLOAD_URL}, or select Compatibility mode in the dashboard.\n"
     )
 
 
-def _build_ookla_cmd(server_id: Optional[str], fmt_variant: str = "long") -> list[str]:
+def _build_ookla_cmd(
+    server_id: Optional[str],
+    fmt_variant: str = "long",
+    executable: str = "speedtest",
+) -> list[str]:
     """
     Build Ookla CLI command with license acceptance flags.
     fmt_variant: 'long' uses --format=json, 'short' uses -f json.
     """
-    cmd = ["speedtest", "--progress=no", "--accept-license", "--accept-gdpr"]
+    cmd = [executable, "--progress=no", "--accept-license", "--accept-gdpr"]
     if fmt_variant == "long":
         cmd += ["--format=json"]
     else:
@@ -237,14 +330,18 @@ def _build_ookla_cmd(server_id: Optional[str], fmt_variant: str = "long") -> lis
     return cmd
 
 
-def run_one_via_ookla(server_id: Optional[str] = None) -> Dict:
+def run_one_via_ookla(
+    server_id: Optional[str] = None,
+    executable: Path | str | None = None,
+) -> Dict:
     """
     Use Ookla CLI with acceptance flags.  Try both format variants.
     Tag engine='ookla-cli'.
     """
     last_err: Optional[Exception] = None
     for fmt in ("long", "short"):
-        cmd = _build_ookla_cmd(server_id, fmt_variant=fmt)
+        cli = str(executable or find_ookla_cli() or "speedtest")
+        cmd = _build_ookla_cmd(server_id, fmt_variant=fmt, executable=cli)
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
         if result.returncode == 0:
             try:
@@ -287,14 +384,20 @@ def run_one_via_ookla(server_id: Optional[str] = None) -> Dict:
     raise last_err
 
 
+def _new_python_speedtest():
+    """Create the fallback client with bounded individual network requests."""
+
+    configure_ssl_certificate_bundle()
+    import speedtest  # lazy import
+
+    return speedtest.Speedtest(timeout=NETWORK_TIMEOUT_SECONDS)
+
+
 def run_one_via_python(server_id: Optional[str] = None) -> Dict:
     """
     Use Python speedtest-cli.  Tag engine='python-lib'.
     """
-    configure_ssl_certificate_bundle()
-    import speedtest  # lazy import
-
-    st = speedtest.Speedtest()
+    st = _new_python_speedtest()
     if server_id:
         st.get_servers([int(server_id)])
         server = st.get_best_server()
@@ -321,23 +424,32 @@ def run_one_via_python(server_id: Optional[str] = None) -> Dict:
     }
 
 
-def run_one(server_id: Optional[str], prefer_ookla: bool, allow_python_fallback: bool) -> Dict:
+def run_one(
+    server_id: Optional[str],
+    prefer_ookla: bool,
+    allow_python_fallback: bool,
+    configured_path: str = "",
+) -> Dict:
     """
     Try Ookla first if requested/available.  Fall back to Python lib if allowed.
     Retried by caller on failure.
     """
     if prefer_ookla:
-        if have_ookla_cli():
+        executable = find_ookla_cli(configured_path)
+        if executable:
             try:
-                return run_one_via_ookla(server_id)
+                return run_one_via_ookla(server_id, executable)
             except Exception as exc:
                 if not allow_python_fallback:
                     raise
-                print(f"[WARN] Ookla CLI failed: {exc}.  Falling back to Python speedtest-cli.")
+                print(f"[WARN] Ookla CLI failed: {exc}.  Compatibility mode is using the Python engine.")
         else:
             print_ookla_install_guidance_once()
             if not allow_python_fallback:
-                raise RuntimeError("Ookla CLI is required by --require-ookla but was not found on PATH.")
+                raise RuntimeError(
+                    "Official Ookla CLI required but not found.  Install it from "
+                    f"{OOKLA_DOWNLOAD_URL} or configure its executable path in the dashboard."
+                )
 
     return run_one_via_python(server_id)
 
@@ -346,8 +458,7 @@ def run_one(server_id: Optional[str], prefer_ookla: bool, allow_python_fallback:
 def list_nearby_servers(n: int = 10):
     """List nearby servers via Python lib (sufficient for discovery)."""
     try:
-        import speedtest
-        st = speedtest.Speedtest()
+        st = _new_python_speedtest()
         st.get_servers()
         nearby = st.get_closest_servers()
         out = []
@@ -362,15 +473,101 @@ def list_nearby_servers(n: int = 10):
         return []
 
 
+def _area_terms(area: str) -> list[str]:
+    """Return normalized city/region terms used to match server metadata."""
+
+    return [term for term in re.findall(r"[a-z0-9]+", area.casefold()) if len(term) > 1]
+
+
+def calibrate_preferred_area(area: str) -> list[dict[str, str]]:
+    """Find and latency-rank servers whose metadata matches a city or region."""
+
+    terms = _area_terms(area)
+    if not terms:
+        raise ValueError("Enter a city and state, province, or country.")
+
+    st = _new_python_speedtest()
+    grouped = st.get_servers()
+    candidates = []
+    for distance in sorted(grouped):
+        for server in grouped[distance]:
+            searchable = " ".join(
+                str(server.get(key) or "")
+                for key in ("name", "sponsor", "country", "cc")
+            ).casefold()
+            if all(term in searchable for term in terms):
+                candidates.append(server)
+
+    if not candidates:
+        raise RuntimeError(f"No Speedtest servers matched '{area}'.")
+
+    candidates = candidates[:MAX_AREA_CANDIDATES]
+    best = st.get_best_server(candidates)
+    ordered = [best, *[server for server in candidates if str(server.get("id")) != str(best.get("id"))]]
+    calibrated = []
+    for server in ordered:
+        sid, name = sanitize_server_info(
+            str(server.get("id") or ""),
+            " - ".join(part for part in [server.get("sponsor"), server.get("name")] if part),
+        )
+        if sid:
+            calibrated.append({"id": sid, "label": f"{sid} - {name}"})
+    return calibrated
+
+
+def preferred_targets(data_dir: Path) -> tuple[list[Optional[str]], bool]:
+    """Return saved regional failover targets, calibrating when necessary."""
+
+    selection = load_settings(data_dir)["server_selection"]
+    if selection["mode"] != "preferred_area" or not selection["area"]:
+        return [None], False
+
+    area = selection["area"]
+    server_ids = selection["server_ids"]
+    if not server_ids:
+        print(f"[INFO] Calibrating Speedtest servers for preferred area: {area}", flush=True)
+        try:
+            servers = calibrate_preferred_area(area)
+        except Exception as exc:
+            message = str(exc) or type(exc).__name__
+            save_server_calibration(area, [], error=message, override=data_dir)
+            print(f"[WARN] Preferred-area calibration failed: {message}.  Using automatic selection this cycle.", flush=True)
+            return [None], False
+        save_server_calibration(
+            area,
+            servers,
+            calibrated_at=utc_now_iso(),
+            override=data_dir,
+        )
+        server_ids = [server["id"] for server in servers]
+        print(f"[INFO] Preferred area calibrated with {len(server_ids)} regional server candidates.", flush=True)
+
+    return [*server_ids, None], True
+
+
 # ---------- Main ----------
-def main(argv: list[str] | None = None):
+def main(argv: list[str] | None = None) -> bool:
     parser = argparse.ArgumentParser()
     parser.add_argument("--interval", type=int, default=120, help="Seconds between tests when --daemon is used.")
     parser.add_argument("--servers", type=str, help="Comma-separated Speedtest server IDs to test.")
     parser.add_argument("--list-servers", type=int, metavar="N", help="List N nearby servers and exit.")
     parser.add_argument("--daemon", action="store_true", help="Run continuously every --interval seconds.")
-    parser.add_argument("--require-ookla", action="store_true", help="Fail if Ookla CLI is not installed.")
-    parser.add_argument("--no-ookla", action="store_true", help="Do not use Ookla CLI even if present.")
+    engine_group = parser.add_mutually_exclusive_group()
+    engine_group.add_argument(
+        "--require-ookla",
+        action="store_true",
+        help="Require the official Ookla CLI.  This is the default.",
+    )
+    engine_group.add_argument(
+        "--compatibility",
+        action="store_true",
+        help="Allow the Python engine when the official Ookla CLI is unavailable.",
+    )
+    engine_group.add_argument(
+        "--no-ookla",
+        action="store_true",
+        help="Developer option: use only the Python compatibility engine.",
+    )
     parser.add_argument(
         "--data-dir",
         help="Folder for speedtest_results.csv and monthly archives. "
@@ -392,44 +589,104 @@ def main(argv: list[str] | None = None):
                 print(f"{s['id']:>6}  {s['label']}  ({s.get('country','')})  {s.get('host','')}")
         else:
             print("No server list available.")
-        return
+        return bool(near)
 
-    prefer_ookla = not args.no_ookla
-    allow_python_fallback = not args.require_ookla
-
-    if prefer_ookla and not have_ookla_cli():
-        print_ookla_install_guidance_once()
+    cli_engine_override = None
+    if args.no_ookla:
+        cli_engine_override = "python_only"
+    elif args.compatibility:
+        cli_engine_override = "compatibility"
+    elif args.require_ookla:
+        cli_engine_override = "official_only"
 
     server_ids = [sid.strip() for sid in args.servers.split(",")] if args.servers else []
 
-    def once():
+    def once() -> bool:
+        engine_settings = load_settings(DEFAULT_CSV.parent)["measurement_engine"]
+        engine_mode = cli_engine_override or engine_settings["mode"]
+        prefer_ookla = engine_mode != "python_only"
+        allow_python_fallback = engine_mode in {"compatibility", "python_only"}
+        configured_path = engine_settings["ookla_path"]
+        resolved_cli = find_ookla_cli(configured_path) if prefer_ookla else None
+        if prefer_ookla and not resolved_cli:
+            print_ookla_install_guidance_once()
+            if not allow_python_fallback:
+                save_collector_status(
+                    "setup_required",
+                    "Install or configure the official Ookla CLI to start production measurements.",
+                    utc_now_iso(),
+                    DEFAULT_CSV.parent,
+                )
+                return False
+        if resolved_cli or allow_python_fallback:
+            save_collector_status(
+                "testing",
+                (
+                    "Running a connection test with the official Ookla CLI."
+                    if resolved_cli
+                    else "Running a connection test in explicit compatibility mode."
+                ),
+                utc_now_iso(),
+                DEFAULT_CSV.parent,
+            )
+
         rows: List[Dict] = []
-        targets = server_ids or [None]
+        preferred_failover = False
+        if server_ids:
+            targets: list[Optional[str]] = server_ids
+        else:
+            targets, preferred_failover = preferred_targets(DEFAULT_CSV.parent)
         for sid in targets:
             delay = 2.0
             last_err: Optional[Exception] = None
-            for attempt in range(4):
+            attempt_limit = 1 if preferred_failover and sid else 4
+            for attempt in range(attempt_limit):
                 try:
-                    rows.append(run_one(sid, prefer_ookla=prefer_ookla, allow_python_fallback=allow_python_fallback))
+                    result = run_one(
+                        sid,
+                        prefer_ookla=prefer_ookla,
+                        allow_python_fallback=allow_python_fallback,
+                        configured_path=configured_path,
+                    )
+                    if preferred_failover and sid is None:
+                        result["server_name"] = (
+                            f"Automatic fallback - {result['server_name']}"
+                        ).rstrip(" -")
+                    rows.append(result)
                     last_err = None
                     break
                 except Exception as e:
                     last_err = e
                     msg = (str(e) or "").lower()
+                    retry_note = (
+                        f"  Backing off {delay:.0f}s before retry."
+                        if attempt + 1 < attempt_limit
+                        else ""
+                    )
                     if "403" in msg or "forbidden" in msg:
-                        print(f"[WARN] 403/Forbidden from speedtest backend (attempt {attempt+1}/4).  Backing off {delay:.0f}s...")
+                        print(f"[WARN] 403/Forbidden from speedtest backend (attempt {attempt+1}/{attempt_limit}).{retry_note}")
                     elif "license" in msg:
-                        print(f"[WARN] License acceptance needed or not persisted (attempt {attempt+1}/4).  Backing off {delay:.0f}s...")
+                        print(f"[WARN] License acceptance needed or not persisted (attempt {attempt+1}/{attempt_limit}).{retry_note}")
                     else:
-                        print(f"[WARN] Speedtest attempt {attempt+1}/4 failed: {e}.  Backing off {delay:.0f}s...")
-                    time.sleep(delay)
+                        print(f"[WARN] Speedtest attempt {attempt+1}/{attempt_limit} failed: {e}.{retry_note}")
+                    if attempt + 1 < attempt_limit:
+                        time.sleep(delay)
                     delay *= 2
             if last_err:
                 print(f"[ERROR] Giving up for this cycle for server {sid or '(best)'}: {last_err}")
                 continue
+            if preferred_failover and rows:
+                break
 
         if not rows:
-            return
+            if not (prefer_ookla and not resolved_cli and not allow_python_fallback):
+                save_collector_status(
+                    "error",
+                    "The measurement failed.  The monitor will retry on the next cycle.",
+                    utc_now_iso(),
+                    DEFAULT_CSV.parent,
+                )
+            return False
 
         main_df = load_existing(DEFAULT_CSV)
         if main_df.empty:
@@ -448,6 +705,13 @@ def main(argv: list[str] | None = None):
                 f"up={r['upload_mps'] if 'upload_mps' in r else r['upload_mbps']} Mbps, "
                 f"server={r['server_id']} {r['server_name']}, engine={r['engine']}  ->  {DEFAULT_CSV}"
             )
+        save_collector_status(
+            "healthy",
+            f"Last measurement completed with {rows[-1]['engine']}.",
+            rows[-1]["timestamp"],
+            DEFAULT_CSV.parent,
+        )
+        return True
 
     if args.daemon:
         while True:
@@ -455,7 +719,9 @@ def main(argv: list[str] | None = None):
             jitter = 5 if args.interval >= 20 else 0
             time.sleep(max(5, int(args.interval)) + (int(time.time()) % (2 * jitter) - jitter))
     else:
-        once()
+        return once()
+
+    return True
 
 
 if __name__ == "__main__":

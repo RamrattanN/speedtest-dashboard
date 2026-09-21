@@ -26,7 +26,13 @@ import streamlit as st
 from zoneinfo import ZoneInfo, available_timezones  # pip install tzdata on Windows
 
 from speedtest_dashboard import __version__
-from speedtest_dashboard.app_config import configure_data_paths
+from speedtest_dashboard.app_config import (
+    configure_data_paths,
+    load_settings,
+    set_measurement_engine,
+    set_server_preference,
+)
+from speedtest_dashboard.collector import OOKLA_DOWNLOAD_URL, find_ookla_cli
 
 # -------- PATHS / CONFIG --------
 DEFAULT_CSV, _ARCHIVE_DIR = configure_data_paths()
@@ -192,6 +198,16 @@ def apply_theme_css(theme: str) -> str:
             margin: 0;
             color: {fg};
             font-size: 1.45rem;
+        }}
+
+        .rr-subsection-heading {{
+            margin-top: 1rem;
+        }}
+
+        .rr-subsection-heading h3 {{
+            margin: 0;
+            color: {fg};
+            font-size: 1.08rem;
         }}
 
         .rr-section-heading p {{
@@ -488,10 +504,10 @@ def derive_overlay_color(base_hex: str, theme: str) -> str:
 # -------- DATA HELPERS --------
 def load_data(path: Path) -> pd.DataFrame:
     if not path.exists():
-        return pd.DataFrame(columns=["timestamp", "ping_ms", "download_mbps", "upload_mbps", "server_id", "server_name"])
+        return pd.DataFrame(columns=["timestamp", "ping_ms", "download_mbps", "upload_mbps", "server_id", "server_name", "engine"])
     df = pd.read_csv(path)
 
-    for c in ["timestamp", "ping_ms", "download_mbps", "upload_mbps", "server_id", "server_name"]:
+    for c in ["timestamp", "ping_ms", "download_mbps", "upload_mbps", "server_id", "server_name", "engine"]:
         if c not in df.columns:
             df[c] = pd.NA
 
@@ -505,6 +521,13 @@ def load_data(path: Path) -> pd.DataFrame:
 
     sname = df["server_name"].astype(str).replace(to_replace=r"^(nan|NaN|None)$", value="", regex=True).str.strip()
     df["server_name"] = sname
+
+    engine = df["engine"].astype(str).replace(
+        to_replace=r"^(nan|NaN|None)$",
+        value="",
+        regex=True,
+    ).str.strip()
+    df["engine"] = engine.replace("", "unknown")
 
     return df
 
@@ -614,6 +637,7 @@ def render_help_panel() -> None:
                     "<li>If an existing installation is detected, choose Repair to install the current application files.</li>",
                     "<li>If Microsoft Defender SmartScreen appears, select More info, then Run anyway.</li>",
                     "<li>Open Speedtest Monitor from the Start menu after installation.</li>",
+                    f'<li>Install the official Speedtest CLI from <a href="{OOKLA_DOWNLOAD_URL}" target="_blank">Ookla</a>, then confirm detection under Connection Overview &gt; Measurement engine.</li>',
                     f"<li>Confirm that the controller shows version {__version__}.</li>",
                 ]
             )
@@ -628,14 +652,17 @@ def render_help_panel() -> None:
                     "<li>Quit any running copy of Speedtest Monitor.</li>",
                     "<li>Open the current disk image and drag Speedtest Monitor to Applications.</li>",
                     "<li>Choose Replace if macOS reports that an older copy is installed.</li>",
-                    "<li>If macOS blocks the unsigned application, first use Privacy &amp; Security in System Settings to allow it.</li>",
-                    "<li>If it remains blocked, run Allow and Open Speedtest Monitor.command from the disk image, or follow the documented Terminal commands.</li>",
+                    "<li>If macOS blocks the unsigned application, select Done, then use Privacy &amp; Security in System Settings to select Open Anyway.</li>",
+                    "<li>If you use Allow and Open Speedtest Monitor.command and macOS blocks the helper itself, select Done, approve that helper with Open Anyway in Privacy &amp; Security, then run it again.</li>",
+                    "<li>Read Me First - macOS Security.txt in the disk image contains the full steps and documented Terminal fallback.</li>",
+                    f'<li>Install the official Speedtest CLI from <a href="{OOKLA_DOWNLOAD_URL}" target="_blank">Ookla</a>, then confirm detection under Connection Overview &gt; Measurement engine.</li>',
                     f"<li>Confirm that the controller shows version {__version__}.</li>",
                 ]
             )
             security_note = (
                 "The macOS release is not code-signed or notarized.  The first launch may "
-                "require explicit approval in macOS security settings."
+                "require explicit approval in macOS security settings.  The optional "
+                "approval helper is also unsigned and may require its own Open Anyway approval."
             )
         st.markdown(
             f"""
@@ -686,8 +713,12 @@ def render_help_panel() -> None:
           <h3>Use the dashboard</h3>
           <ol>
             <li>Review Performance Trend for changes across the selected reporting window.</li>
+            <li>Drag across Performance Trend to zoom into a time span.  Zooming is limited to the time axis so the speed and ping scales are not changed accidentally.</li>
             <li>Review Latest Result for the most recent connection check.</li>
             <li>Use Connection Overview to choose the chart style, servers, reporting window, and comparison overlay.</li>
+            <li>Use the Measurement engines filter to keep official Ookla, Python compatibility, and legacy samples separate.  The latest engine is selected by default.</li>
+            <li>Use Test server selection to keep tests in a preferred city or region when automatic selection chooses a distant location.</li>
+            <li>Use Measurement engine to confirm that the official Ookla CLI is active.  Production collection pauses rather than silently substituting another engine.</li>
             <li>Leave Refresh display every 60s enabled to see new CSV results automatically.</li>
             <li>Turn off Refresh display every 60s before selecting Refresh now for an immediate reload.</li>
             <li>Open Display settings to change timezone, theme, and chart colours.</li>
@@ -707,6 +738,7 @@ def render_help_panel() -> None:
             <li><strong>Upload</strong> measures how quickly data leaves this computer.  Higher is generally better.</li>
             <li><strong>Ping</strong> measures response time in milliseconds.  Lower is generally better.</li>
             <li><strong>Server</strong> identifies the test location selected for that sample.  Different servers can produce different results.</li>
+            <li><strong>Test engine</strong> identifies whether the official Ookla CLI or the Python fallback produced the sample.  The two engines can report materially different results and should not be treated as identical tests.</li>
           </ul>
           <p class="remember"><strong>Remember:</strong> Trends across several samples are more useful than one isolated result.</p>
         </section>
@@ -750,7 +782,10 @@ def render_help_panel() -> None:
           <ul>
             <li><strong>No data yet:</strong> Confirm the collector is running and wait for its first completed test.</li>
             <li><strong>Dashboard does not update:</strong> Confirm automatic display refresh is enabled.  To force an immediate reload, turn it off and then select Refresh now.</li>
-            <li><strong>Ookla warning:</strong> The monitor can fall back automatically to the Python speed-test engine.</li>
+            <li><strong>Official engine required:</strong> Production mode pauses measurements when the official Ookla CLI is unavailable.  Open Measurement engine in Connection Overview to install it or set its executable path.</li>
+            <li><strong>Compatibility mode:</strong> This explicit option permits the Python engine, but its results can differ materially from Ookla and should not be mixed into a like-for-like baseline.</li>
+            <li><strong>Wrong test region:</strong> Open Test server selection, choose Preferred city or region, enter a city plus state, province, or country, and save.  The next collection cycle calibrates regional candidates and retains automatic fallback.</li>
+            <li><strong>Automatic fallback row:</strong> All saved regional candidates were unavailable for that cycle, so the provider selected an unrestricted server.</li>
             <li><strong>Browser tab was closed:</strong> {browser_guidance}</li>
             <li><strong>Need to restart:</strong> {restart_guidance}</li>
           </ul>
@@ -826,6 +861,75 @@ def rerun_for_dashboard_control() -> None:
     st.rerun(scope="app")
 
 
+def render_engine_settings() -> None:
+    """Render the shared production engine policy and CLI discovery controls."""
+
+    engine_settings = load_settings(DEFAULT_CSV.parent)["measurement_engine"]
+    mode_options = [
+        "Official Ookla CLI only (recommended)",
+        "Compatibility mode (allow Python fallback)",
+    ]
+    configured_mode = (
+        mode_options[1]
+        if engine_settings["mode"] == "compatibility"
+        else mode_options[0]
+    )
+    detected = find_ookla_cli(engine_settings["ookla_path"])
+
+    with st.expander("Measurement engine", expanded=detected is None):
+        if detected:
+            st.success(f"Official Ookla CLI detected: {detected}")
+        else:
+            st.warning(
+                "The official Ookla CLI is not available.  Production measurements "
+                "are paused so the monitor does not silently mix incompatible engines."
+            )
+        st.link_button("Download official Ookla CLI", OOKLA_DOWNLOAD_URL)
+        selected_mode = st.selectbox(
+            "Engine policy",
+            mode_options,
+            index=mode_options.index(configured_mode),
+            key="measurement_engine_mode",
+            help=(
+                "Official-only mode preserves a comparable baseline.  Compatibility "
+                "mode uses the Python engine only when the official CLI is unavailable."
+            ),
+        )
+        configured_path = st.text_input(
+            "Official CLI executable path (optional)",
+            value=engine_settings["ookla_path"],
+            placeholder=(
+                r"C:\Tools\OoklaSpeedtest\speedtest.exe"
+                if DESKTOP_PLATFORM == "windows"
+                else "/usr/local/bin/speedtest"
+            ),
+            key="measurement_engine_path",
+            help="Leave blank to search PATH and standard installation locations.",
+        )
+        if st.button("Save measurement engine", key="save_measurement_engine"):
+            saved_mode = (
+                "compatibility" if selected_mode == mode_options[1] else "official_only"
+            )
+            set_measurement_engine(
+                saved_mode,
+                configured_path,
+                DEFAULT_CSV.parent,
+            )
+            resolved = find_ookla_cli(configured_path)
+            if resolved:
+                st.success(
+                    "Measurement engine saved.  The official CLI will be used on the next cycle."
+                )
+            elif saved_mode == "compatibility":
+                st.warning(
+                    "Compatibility mode saved.  The Python engine may be used until the official CLI is installed."
+                )
+            else:
+                st.warning(
+                    "Official-only mode saved.  Measurements remain paused until the CLI is available."
+                )
+
+
 autorefresh = bool(st.session_state.get("dashboard_auto_refresh", True))
 
 
@@ -858,6 +962,7 @@ def render_dashboard() -> None:
         with st.container(border=True):
             st.info(f"No data yet.  Waiting for the collector to write results to:\n{DEFAULT_CSV}")
             st.caption("The first completed speed test will appear here automatically.")
+        render_engine_settings()
         st.stop()
 
     latest = df.iloc[-1]
@@ -865,6 +970,12 @@ def render_dashboard() -> None:
     latest_server = latest["server_name"] or "Server name unavailable"
     if latest["server_id"]:
         latest_server = f'{latest["server_id"]} · {latest_server}'
+    latest_engine_code = str(latest.get("engine", "") or "").strip()
+    latest_engine = {
+        "ookla-cli": "Official Ookla CLI",
+        "python-lib": "Python fallback",
+        "unknown": "Legacy or unknown engine",
+    }.get(latest_engine_code, latest_engine_code or "Engine unavailable")
     latest_time_text = latest_local.strftime("%I:%M %p").lstrip("0")
     latest_date_text = latest_local.strftime("%b %d, %Y").replace(" 0", " ")
 
@@ -884,6 +995,31 @@ def render_dashboard() -> None:
         + servers_df["server_name"].replace("", "(no name)")
     )
     server_labels = sorted(servers_df["label"].unique())
+
+    engine_names = {
+        "ookla-cli": "Official Ookla CLI",
+        "python-lib": "Python compatibility",
+        "unknown": "Legacy or unknown",
+    }
+    engine_codes = sorted(
+        code for code in df["engine"].astype(str).unique() if code.strip()
+    )
+    selected_engines_key = "dashboard_selected_engines"
+    last_engine_key = "dashboard_last_engine"
+    previous_latest_engine = st.session_state.get(last_engine_key)
+    if selected_engines_key not in st.session_state or (
+        previous_latest_engine and previous_latest_engine != latest_engine_code
+    ):
+        st.session_state[selected_engines_key] = (
+            [latest_engine_code] if latest_engine_code else engine_codes
+        )
+    else:
+        st.session_state[selected_engines_key] = [
+            code
+            for code in st.session_state[selected_engines_key]
+            if code in engine_codes
+        ]
+    st.session_state[last_engine_key] = latest_engine_code
 
     selected_key = "dashboard_selected_servers"
     known_key = "dashboard_known_servers"
@@ -912,6 +1048,12 @@ def render_dashboard() -> None:
         range_choice = "Last 7 days"
     include_blank = bool(st.session_state.get("dashboard_include_blank", True))
     show_prev_overlay = bool(st.session_state.get("dashboard_previous_period", False))
+
+    selected_engines = st.session_state[selected_engines_key]
+    if selected_engines:
+        df = df[df["engine"].astype(str).isin(selected_engines)]
+    else:
+        df = df.iloc[0:0]
 
     if selected_labels:
         selected_ids = {label.split(" · ", 1)[0] for label in selected_labels}
@@ -1020,13 +1162,20 @@ def render_dashboard() -> None:
             xanchor="left",
             x=0,
         ),
-        xaxis_title=f"Time ({tz_name})",
-        yaxis_title="Speed (Mbps)",
+        xaxis=dict(
+            title=f"Time ({tz_name})",
+            fixedrange=False,
+        ),
+        yaxis=dict(
+            title="Speed (Mbps)",
+            fixedrange=True,
+        ),
         yaxis2=dict(
             title="Ping (ms)",
             overlaying="y",
             side="right",
             showgrid=False,
+            fixedrange=True,
         ),
         margin=dict(l=40, r=40, t=70, b=45),
         hovermode="x unified",
@@ -1062,8 +1211,34 @@ def render_dashboard() -> None:
     metric_time.metric("Recorded", latest_time_text)
     st.caption(
         f"{latest_date_text} · {latest_server} · "
-        f'Display timezone: {tz_name}'
+        f"Test engine: {latest_engine} · Display timezone: {tz_name}"
     )
+
+    stats = (
+        current_window[["download_mbps", "upload_mbps", "ping_ms"]]
+        .describe()
+        .T[["min", "mean", "max"]]
+        .round(2)
+    )
+    stats.index = ["Download (Mbps)", "Upload (Mbps)", "Ping (ms)"]
+    stats.columns = ["Minimum", "Average", "Peak"]
+
+    st.markdown(
+        """
+        <div class="rr-section-heading rr-subsection-heading">
+          <p class="eyebrow">SELECTED WINDOW</p>
+          <h3>Minimum, average, and peak</h3>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    with st.container(border=True):
+        st.dataframe(stats, width="stretch", height=180)
+        st.caption(
+            f"{len(current_window)} recorded "
+            f"{'sample' if len(current_window) == 1 else 'samples'} in this view.  "
+            "Peak is the highest recorded value.  For ping, the minimum is best."
+        )
 
     st.markdown(
         """
@@ -1151,13 +1326,86 @@ def render_dashboard() -> None:
                 key="color_ping",
             )
 
+    render_engine_settings()
+
+    server_settings = load_settings(DEFAULT_CSV.parent)["server_selection"]
+    server_mode_options = ["Automatic", "Preferred city or region"]
+    configured_mode = (
+        "Preferred city or region"
+        if server_settings["mode"] == "preferred_area"
+        else "Automatic"
+    )
+    with st.expander("Test server selection", expanded=False):
+        st.caption(
+            "Automatic uses the speed-test provider's public-IP location.  "
+            "Choose a preferred area if that location is inaccurate."
+        )
+        preference_mode = st.selectbox(
+            "Selection mode",
+            server_mode_options,
+            index=server_mode_options.index(configured_mode),
+            key="server_preference_mode",
+        )
+        preferred_area = st.text_input(
+            "Preferred city or region",
+            value=server_settings["area"],
+            placeholder="For example: Austin, TX",
+            disabled=preference_mode == "Automatic",
+            key="server_preference_area",
+            help="Use a city plus state, province, or country.  No street address is needed or stored.",
+        )
+        if st.button("Save test server preference", key="save_server_preference"):
+            if preference_mode != "Automatic" and not preferred_area.strip():
+                st.error("Enter a city and state, province, or country before saving.")
+            else:
+                saved_settings = set_server_preference(
+                    "preferred_area" if preference_mode != "Automatic" else "automatic",
+                    preferred_area,
+                    DEFAULT_CSV.parent,
+                )
+                server_settings = saved_settings["server_selection"]
+                if preference_mode == "Automatic":
+                    st.success("Automatic server selection is active.")
+                else:
+                    st.success(
+                        "Preference saved.  The next measurement will calibrate regional servers."
+                    )
+
+        if server_settings["mode"] == "preferred_area":
+            if server_settings["server_labels"]:
+                st.caption(
+                    f"Active area: {server_settings['area']}.  "
+                    f"Calibrated candidates: {len(server_settings['server_labels'])}."
+                )
+                st.caption(f"Primary server: {server_settings['server_labels'][0]}")
+            elif server_settings["last_error"]:
+                st.warning(
+                    f"Last calibration failed: {server_settings['last_error']}  "
+                    "Update the area or save again to retry."
+                )
+            else:
+                st.caption(
+                    f"Waiting to calibrate servers for {server_settings['area']} during the next measurement."
+                )
+
     with st.expander("View options", expanded=True):
-        filter_servers, filter_window = st.columns([2.25, 1], gap="large")
+        filter_servers, filter_engines, filter_window = st.columns(
+            [2.0, 1.1, 1],
+            gap="large",
+        )
         with filter_servers:
             st.multiselect(
                 "Servers",
                 server_labels,
                 key=selected_key,
+            )
+        with filter_engines:
+            st.multiselect(
+                "Measurement engines",
+                engine_codes,
+                key=selected_engines_key,
+                format_func=lambda code: engine_names.get(code, code),
+                help="The latest engine is selected by default so incompatible methods are not mixed.",
             )
         with filter_window:
             st.selectbox(
@@ -1183,32 +1431,6 @@ def render_dashboard() -> None:
                 key="dashboard_previous_period",
             )
         st.caption(f"{sample_caption}  Data retained for 30 days in the main CSV.")
-
-    stats = (
-        current_window[["download_mbps", "upload_mbps", "ping_ms"]]
-        .describe()
-        .T[["mean", "min", "max"]]
-        .round(2)
-    )
-    stats.index = ["Download (Mbps)", "Upload (Mbps)", "Ping (ms)"]
-    stats.columns = ["Average", "Minimum", "Maximum"]
-
-    st.markdown(
-        """
-        <div class="rr-section-heading">
-          <p class="eyebrow">WINDOW SUMMARY</p>
-          <h2>Average and range</h2>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    with st.container(border=True):
-        st.dataframe(stats, width="stretch", height=180)
-        st.caption(
-            f"{len(current_window)} recorded "
-            f"{'sample' if len(current_window) == 1 else 'samples'} in this view."
-        )
-
 
 render_dashboard()
 

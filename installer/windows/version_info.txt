@@ -14,12 +14,12 @@ VSVersionInfo(
       StringTable('040904B0', [
         StringStruct('CompanyName', 'Ramrattan Network Tools'),
         StringStruct('FileDescription', 'Speedtest Monitor'),
-        StringStruct('FileVersion', '1.0.0.0'),
+        StringStruct('FileVersion', '1.1.0.0'),
         StringStruct('InternalName', 'Speedtest Monitor'),
         StringStruct('LegalCopyright', 'Copyright (c) Nilesh Ramrattan'),
         StringStruct('OriginalFilename', 'Speedtest Monitor.exe'),
         StringStruct('ProductName', 'Speedtest Monitor'),
-        StringStruct('ProductVersion', '1.0.0')
+        StringStruct('ProductVersion', '1.1.0')
       ])
     ]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])

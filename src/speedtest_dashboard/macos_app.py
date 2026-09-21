@@ -13,7 +13,7 @@ import urllib.request
 import webbrowser
 
 from speedtest_dashboard import __version__
-from speedtest_dashboard.app_config import DATA_DIR_ENV, get_data_dir
+from speedtest_dashboard.app_config import DATA_DIR_ENV, get_data_dir, load_collector_status
 
 
 APP_NAME = "Speedtest Monitor"
@@ -188,6 +188,7 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
         font=("Helvetica Neue", 12),
         foreground="#2F78B8",
         background="#F3F7FA",
+        wraplength=470,
     )
     status.pack(pady=(20, 16))
 
@@ -248,7 +249,8 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
             status_text.set("The monitor stopped unexpectedly.  Review monitor.log for details.")
             return
         if service_is_ready(url):
-            status_text.set("The monitor is running.")
+            collector_status = load_collector_status(data_dir)
+            status_text.set(collector_status["message"])
             open_button.configure(state="normal")
             if not browser_opened:
                 browser_opened = True

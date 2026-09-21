@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/macos-release.yml"
       - "SpeedtestMonitor.spec"
+      - "installer/macos/**"
       - "scripts/build_macos_icon.py"
       - "scripts/build_macos_release.sh"
       - "pyproject.toml"
@@ -40,10 +41,13 @@ jobs:
         run: test "$(uname -m)" = "${{ matrix.machine_arch }}"
       - name: Run automated tests
         run: pytest -q
-      - name: Build unsigned Intel application and disk image
+      - name: Build unsigned macOS application and disk image
         run: bash scripts/build_macos_release.sh
       - name: Verify optional macOS approval helper
-        run: test -x "dist/release/Allow and Open Speedtest Monitor.command"
+        run: |
+          test -x "dist/release/Allow and Open Speedtest Monitor.command"
+          test -f "dist/release/Read Me First - macOS Security.txt"
+          test -f "dist/release/Install Official Ookla CLI.webloc"
       - name: Smoke-test packaged dashboard route
         shell: bash
         run: |
@@ -63,7 +67,7 @@ jobs:
             if curl --fail --silent --show-error http://127.0.0.1:8765/ \
               --output "$RUNNER_TEMP/dashboard.html"; then
               grep -qi '<!doctype html' "$RUNNER_TEMP/dashboard.html"
-              grep -q 'Speedtest Monitor build 1.0.0 starting' "$LOG"
+              grep -q 'Speedtest Monitor build 1.1.0 starting' "$LOG"
               exit 0
             fi
             if ! kill -0 "$PID" 2>/dev/null; then
@@ -77,7 +81,7 @@ jobs:
       - name: Upload production disk image
         uses: actions/upload-artifact@v4
         with:
-          name: Speedtest-Monitor-macOS-${{ matrix.package_arch }}-1.0.0
-          path: dist/Speedtest-Monitor-macOS-${{ matrix.package_arch }}-1.0.0.dmg
+          name: Speedtest-Monitor-macOS-${{ matrix.package_arch }}-1.1.0
+          path: dist/Speedtest-Monitor-macOS-${{ matrix.package_arch }}-1.1.0.dmg
           if-no-files-found: error
           retention-days: 14
