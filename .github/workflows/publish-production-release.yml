@@ -1,0 +1,71 @@
+name: Publish production release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Production version without the v prefix
+        required: true
+        default: "1.0.0"
+      macos_run_id:
+        description: Successful Build macOS releases workflow run ID
+        required: true
+      windows_run_id:
+        description: Successful Build Windows x64 release workflow run ID
+        required: true
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    name: Publish verified installers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download verified macOS installers
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          RUN_ID: ${{ inputs.macos_run_id }}
+        run: |
+          gh run download "$RUN_ID" \
+            --name "Speedtest-Monitor-macOS-Intel-$VERSION" \
+            --dir release
+          gh run download "$RUN_ID" \
+            --name "Speedtest-Monitor-macOS-Apple-Silicon-$VERSION" \
+            --dir release
+
+      - name: Download verified Windows installer
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          RUN_ID: ${{ inputs.windows_run_id }}
+        run: |
+          gh run download "$RUN_ID" \
+            --name "Speedtest-Monitor-Windows-x64-$VERSION" \
+            --dir release
+
+      - name: Verify release payload
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          test -f "release/Speedtest-Monitor-macOS-Intel-$VERSION.dmg"
+          test -f "release/Speedtest-Monitor-macOS-Apple-Silicon-$VERSION.dmg"
+          test -f "release/Speedtest-Monitor-Windows-x64-$VERSION.exe"
+          sha256sum release/* > release/SHA256SUMS.txt
+          cat release/SHA256SUMS.txt
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          gh release create "v$VERSION" release/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Speedtest Monitor $VERSION" \
+            --generate-notes \
+            --latest
