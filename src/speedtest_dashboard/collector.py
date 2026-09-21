@@ -7,7 +7,7 @@ Features:
 - Offers the Python speedtest-cli engine only through explicit compatibility mode.
 - Retries with exponential backoff on transient errors (e.g., 403) and rc=1 license prompts.
 - Records UTC timestamps.
-- Main CSV retains 30 days.  Monthly archives retain 12 months.
+- Main CSV and monthly archives use a rolling 365-day retention boundary.
 - Multi-server support (--servers "id1,id2").
 - Atomic writes with retries (Dropbox/Excel/AV friendly).
 - Engine column indicates 'ookla-cli' or 'python-lib'.
@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import shutil
 import ssl
@@ -48,19 +49,22 @@ import certifi
 import pandas as pd
 
 from speedtest_dashboard.app_config import (
+    MEASUREMENT_COLUMNS,
     configure_data_paths,
     load_settings,
+    measurement_data_lock,
     save_collector_status,
     save_server_calibration,
+    wait_for_collection_restart,
 )
 
 # ---------- Paths / Config ----------
 DEFAULT_CSV, ARCHIVE_DIR = configure_data_paths()
 
-COLUMNS = ["timestamp", "ping_ms", "download_mbps", "upload_mbps", "server_id", "server_name", "engine"]
-MAIN_RETENTION_DAYS = 30
-ARCHIVE_RETENTION_MONTHS = 12
+COLUMNS = MEASUREMENT_COLUMNS
+MAIN_RETENTION_DAYS = 365
 NETWORK_TIMEOUT_SECONDS = 15
+MAX_PING_MS = 60_000.0
 MAX_AREA_CANDIDATES = 25
 OOKLA_PATH_ENV = "SPEEDTEST_OOKLA_CLI"
 OOKLA_DOWNLOAD_URL = "https://www.speedtest.net/apps/cli"
@@ -191,15 +195,24 @@ def archive_append(row: Dict) -> None:
             df[c] = pd.NA
 
     append_row_inplace(df, row)
-    save_atomic(df, path)
+    retained = prune_main(df)
+    if retained.empty:
+        path.unlink(missing_ok=True)
+    else:
+        save_atomic(retained, path)
 
-    files = sorted(ARCHIVE_DIR.glob("speedtest_*.csv"))
-    if len(files) > ARCHIVE_RETENTION_MONTHS:
-        for f in files[: len(files) - ARCHIVE_RETENTION_MONTHS]:
-            try:
-                f.unlink()
-            except Exception:
-                pass
+    for archive in ARCHIVE_DIR.glob("speedtest_*.csv"):
+        if archive == path:
+            continue
+        try:
+            existing = load_existing(archive)
+            retained = prune_main(existing)
+            if retained.empty:
+                archive.unlink(missing_ok=True)
+            elif len(retained) != len(existing):
+                save_atomic(retained, archive)
+        except OSError:
+            pass
 
 
 # ---------- Server info sanitation ----------
@@ -213,6 +226,27 @@ def sanitize_server_info(server_id: Optional[str], server_name: Optional[str]) -
     if sname.lower() in {"nan", "none"}:
         sname = ""
     return sid, sname
+
+
+def validate_measurement(row: Dict) -> Dict:
+    """Reject corrupt or impossible measurements before they reach history."""
+
+    values = {
+        "ping_ms": float(row.get("ping_ms", math.nan)),
+        "download_mbps": float(row.get("download_mbps", math.nan)),
+        "upload_mbps": float(row.get("upload_mbps", math.nan)),
+    }
+    invalid = [
+        name
+        for name, value in values.items()
+        if not math.isfinite(value) or value < 0
+    ]
+    if values["ping_ms"] > MAX_PING_MS:
+        invalid.append("ping_ms")
+    if invalid:
+        fields = ", ".join(sorted(set(invalid)))
+        raise RuntimeError(f"Speedtest returned an invalid measurement ({fields}).")
+    return row
 
 
 # ---------- Ookla CLI vs Python library ----------
@@ -357,7 +391,7 @@ def run_one_via_ookla(
             sid = str(server.get("id") or "")
             sname = " - ".join([p for p in [server.get("name"), server.get("location")] if p])
             sid, sname = sanitize_server_info(sid, sname)
-            return {
+            return validate_measurement({
                 "timestamp": utc_now_iso(),
                 "ping_ms": round(ping_ms, 3),
                 "download_mbps": round(dl_bps / 1_000_000.0, 3),
@@ -365,7 +399,7 @@ def run_one_via_ookla(
                 "server_id": sid,
                 "server_name": sname,
                 "engine": "ookla-cli",
-            }
+            })
 
         # If license text still appears, surface a clear error
         lc_stderr = (result.stderr or "").lower()
@@ -413,7 +447,7 @@ def run_one_via_python(server_id: Optional[str] = None) -> Dict:
     sname = " - ".join([p for p in [server.get("sponsor"), server.get("name")] if p])
     sid, sname = sanitize_server_info(sid, sname)
 
-    return {
+    return validate_measurement({
         "timestamp": utc_now_iso(),
         "ping_ms": round(ping_ms, 3),
         "download_mbps": round(download_bps / 1_000_000.0, 3),
@@ -421,7 +455,7 @@ def run_one_via_python(server_id: Optional[str] = None) -> Dict:
         "server_id": sid,
         "server_name": sname,
         "engine": "python-lib",
-    }
+    })
 
 
 def run_one(
@@ -688,16 +722,17 @@ def main(argv: list[str] | None = None) -> bool:
                 )
             return False
 
-        main_df = load_existing(DEFAULT_CSV)
-        if main_df.empty:
-            main_df = pd.DataFrame(columns=COLUMNS)
-        for r in rows:
-            append_row_inplace(main_df, r)
-        main_df = prune_main(main_df)
-        save_atomic(main_df, DEFAULT_CSV)
+        with measurement_data_lock(DEFAULT_CSV.parent):
+            main_df = load_existing(DEFAULT_CSV)
+            if main_df.empty:
+                main_df = pd.DataFrame(columns=COLUMNS)
+            for r in rows:
+                append_row_inplace(main_df, r)
+            main_df = prune_main(main_df)
+            save_atomic(main_df, DEFAULT_CSV)
 
-        for r in rows:
-            archive_append(r)
+            for r in rows:
+                archive_append(r)
 
         for r in rows:
             print(
@@ -717,7 +752,12 @@ def main(argv: list[str] | None = None) -> bool:
         while True:
             once()
             jitter = 5 if args.interval >= 20 else 0
-            time.sleep(max(5, int(args.interval)) + (int(time.time()) % (2 * jitter) - jitter))
+            jitter_offset = (
+                int(time.time()) % (2 * jitter) - jitter if jitter else 0
+            )
+            wait_seconds = max(5, int(args.interval)) + jitter_offset
+            if wait_for_collection_restart(wait_seconds, DEFAULT_CSV.parent):
+                print("[INFO] Data reset acknowledged.  Starting a fresh measurement cycle.", flush=True)
     else:
         return once()
 

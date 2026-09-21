@@ -15,7 +15,12 @@ import urllib.request
 import webbrowser
 
 from speedtest_dashboard import __version__
-from speedtest_dashboard.app_config import DATA_DIR_ENV, get_data_dir, load_collector_status
+from speedtest_dashboard.app_config import (
+    DATA_DIR_ENV,
+    get_data_dir,
+    load_collector_status,
+    wait_for_collection_restart,
+)
 
 
 APP_NAME = "Speedtest Monitor"
@@ -179,7 +184,15 @@ def supervise_collector(
         elapsed = time.monotonic() - started
         wait_seconds = max(5.0, float(interval) - elapsed)
         print(f"[INFO] Next measurement cycle in {int(round(wait_seconds))} seconds.", flush=True)
-        stop_event.wait(wait_seconds)
+        if wait_for_collection_restart(
+            wait_seconds,
+            data_dir,
+            stop_event=stop_event,
+        ):
+            print(
+                "[INFO] Data reset acknowledged.  Starting a fresh measurement cycle.",
+                flush=True,
+            )
 
 
 def run_services(

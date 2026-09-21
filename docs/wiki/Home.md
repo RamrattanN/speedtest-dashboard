@@ -26,8 +26,8 @@ Download the installers from the
 6. Use **Quit Monitor** to stop both collection and the dashboard safely.
 
 The collector normally records a measurement every five minutes.  The open
-dashboard checks for new results every 60 seconds.  Turn off automatic refresh
-to enable **Refresh now** for an immediate reload.
+dashboard checks for new results every 60 seconds.  Select the refresh icon
+beside Help for an immediate reload.
 
 Server selection is automatic by default on every computer.  If public-IP
 geolocation chooses a distant region, use **Test server selection** to save a
@@ -56,5 +56,4 @@ Windows batch launchers have been retired.
 - Data folder: `~/SpeedtestDashboard` on macOS or
   `%USERPROFILE%\SpeedtestDashboard` on Windows
 - Dashboard address: selected and opened by the controller
-- Main CSV retention: approximately 30 days
-- Monthly archives: up to 12 files
+- Measurement retention: rolling 365 days in the main CSV and monthly archives

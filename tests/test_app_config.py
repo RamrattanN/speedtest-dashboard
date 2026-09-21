@@ -2,12 +2,17 @@ from pathlib import Path
 
 from speedtest_dashboard.app_config import (
     DATA_DIR_ENV,
+    MEASUREMENT_COLUMNS,
     configure_data_paths,
+    consume_collection_restart,
     get_data_dir,
     load_settings,
+    request_collection_restart,
+    reset_measurement_history,
     save_server_calibration,
     set_measurement_engine,
     set_server_preference,
+    wait_for_collection_restart,
 )
 
 
@@ -27,6 +32,37 @@ def test_environment_data_directory_is_used(tmp_path, monkeypatch):
     assert csv_path == configured.resolve() / "speedtest_results.csv"
     assert archive_dir == configured.resolve() / "archive"
     assert archive_dir.is_dir()
+
+
+def test_reset_measurement_history_clears_csv_and_archives_but_keeps_settings(
+    tmp_path,
+):
+    csv_path, archive_dir = configure_data_paths(tmp_path)
+    csv_path.write_text(
+        ",".join(MEASUREMENT_COLUMNS)
+        + "\n2026-09-21T00:00:00Z,10,20,30,1,Example,ookla-cli\n",
+        encoding="utf-8",
+    )
+    (archive_dir / "speedtest_2026-09.csv").write_text(
+        csv_path.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    set_server_preference("preferred_area", "Fort Worth, TX", tmp_path)
+
+    reset_measurement_history(tmp_path)
+
+    assert csv_path.read_text(encoding="utf-8") == ",".join(MEASUREMENT_COLUMNS) + "\n"
+    assert not list(archive_dir.glob("speedtest_*.csv"))
+    assert load_settings(tmp_path)["server_selection"]["area"] == "Fort Worth, TX"
+    assert consume_collection_restart(tmp_path)
+    assert not consume_collection_restart(tmp_path)
+
+
+def test_restart_request_wakes_collection_wait_immediately(tmp_path):
+    request_collection_restart(tmp_path)
+
+    assert wait_for_collection_restart(60, tmp_path)
+    assert not consume_collection_restart(tmp_path)
 
 
 def test_default_is_visible_folder_in_user_home(tmp_path, monkeypatch):

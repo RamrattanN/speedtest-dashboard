@@ -56,7 +56,8 @@ uninstall.  It can be removed separately only when the user no longer wants it.
 - Quit Monitor stops the dashboard service and any active measurement child.
 - Automatic server selection can be changed to a saved city-or-region
   preference without reinstalling.
-- **Refresh now** becomes available after automatic refresh is turned off.
+- The header refresh icon immediately reloads dashboard data.
+- The chart-type selector appears directly below the chart.
 - Repair preserves the application and measurement history.
 - Uninstall removes the application but preserves measurement history.
 - The controller reports setup required if the official Ookla CLI is absent.

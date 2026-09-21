@@ -1,4 +1,5 @@
 from io import BytesIO, TextIOWrapper
+import threading
 from types import SimpleNamespace
 
 from speedtest_dashboard import macos_app, runner, windows_app
@@ -207,6 +208,38 @@ def test_windows_collector_cycle_recovers_after_child_failure(tmp_path, monkeypa
     )
 
     assert not windows_app.run_collector_cycle(tmp_path)
+
+
+def test_windows_supervisor_restarts_immediately_after_data_reset(
+    tmp_path,
+    monkeypatch,
+):
+    stop_event = threading.Event()
+    cycles = []
+
+    def fake_cycle(data_dir, timeout):
+        cycles.append(data_dir)
+        if len(cycles) == 2:
+            stop_event.set()
+        return True
+
+    restart_checks = []
+
+    def fake_wait(wait_seconds, data_dir, stop_event=None):
+        restart_checks.append((wait_seconds, data_dir))
+        return len(restart_checks) == 1
+
+    monkeypatch.setattr(windows_app, "run_collector_cycle", fake_cycle)
+    monkeypatch.setattr(windows_app, "wait_for_collection_restart", fake_wait)
+
+    windows_app.supervise_collector(
+        300,
+        tmp_path,
+        stop_event=stop_event,
+    )
+
+    assert cycles == [tmp_path, tmp_path]
+    assert len(restart_checks) == 2
 
 
 def test_windows_dashboard_path_uses_pyinstaller_bundle(tmp_path, monkeypatch):

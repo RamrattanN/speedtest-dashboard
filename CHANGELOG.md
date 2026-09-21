@@ -8,6 +8,24 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- A sortable table of the latest 150 measurements in the selected dashboard
+  window.
+- A two-step data reset that clears the main CSV and monthly archives, preserves
+  application settings, and requests a fresh measurement cycle.
+
+### Changed
+- Measurement retention now uses a rolling 365-day boundary across the main
+  CSV and monthly archives.
+- Chart zoom gestures are limited to the time axis so speed and ping scales
+  cannot be changed accidentally.
+- The chart-type selector now sits directly below the chart it controls.
+- The visible refresh-schedule toggle has been removed.  The dashboard still
+  checks for new data every 60 seconds, while an always-available refresh icon
+  in the header provides an immediate reload.
+- Implausible or corrupt latency values are rejected before collection and
+  excluded from existing dashboard history so they cannot distort the chart.
+
 ## [1.1.0] - 2026-09-21
 ### Added
 - Production engine controls and official Ookla CLI discovery for Windows x64,

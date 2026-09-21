@@ -63,6 +63,7 @@ jobs:
           if ($version -ne "1.1.0") {
             throw "Unexpected installed product version: $version"
           }
+          $escapedVersion = [regex]::Escape($version)
 
           $service = Start-Process $app -PassThru -ArgumentList @(
             "--service",
@@ -90,7 +91,7 @@ jobs:
             }
             $serviceLog = Join-Path $env:LOCALAPPDATA "Ramrattan Speedtest Monitor\Logs\monitor.log"
             if ((-not (Test-Path $serviceLog)) -or
-                ((Get-Content $serviceLog -Raw) -notmatch "Speedtest Monitor build 1\.0\.1 starting")) {
+                ((Get-Content $serviceLog -Raw) -notmatch "Speedtest Monitor build $escapedVersion starting")) {
               throw "The packaged windowed service did not restore its output streams."
             }
           } finally {

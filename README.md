@@ -18,8 +18,9 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 ## Features
 
 - Configurable test interval, dashboard port, and data folder.
-- Approximately 30 days of results in the main CSV.
-- Up to 12 monthly archive files.
+- Rolling 365-day retention across the main CSV and monthly archives.
+- Sortable access to the latest 150 measurements in the selected view.
+- Two-step measurement-history reset with a fresh capture request.
 - Bar and line charts with previous-period comparison.
 - Automatic 60-second display refresh plus an independent manual refresh.
 - Timezone, theme, color, server, and date-window controls.
