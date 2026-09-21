@@ -23,7 +23,7 @@ If applicable, add screenshots or logs to help explain your problem.
 
 **Environment**
 - OS: [e.g., Windows 10, macOS 13]
-- Application version: [e.g., 0.2.0]
+- Application version: [e.g., 1.0.0]
 - Python version: [e.g., 3.12]
 - Launch method: [e.g., Windows installer, macOS application, developer command]
 
