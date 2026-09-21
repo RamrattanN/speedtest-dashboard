@@ -70,7 +70,8 @@ obtained from the official project release.
 - **Open Dashboard** opens the controller-selected address.
 - A completed test appears in `~/SpeedtestDashboard/speedtest_results.csv`.
 - The dashboard displays the latest recorded result.
-- **Refresh now** becomes available after automatic refresh is turned off.
+- The header refresh icon immediately reloads dashboard data.
+- The chart-type selector appears directly below the chart.
 - **Quit Monitor** stops the local server.
 - Automatic server selection remains the default.  A preferred city or region
   can be saved from Test server selection and is applied on the next cycle.

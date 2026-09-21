@@ -97,7 +97,7 @@ def test_run_one_does_not_fall_back_when_ookla_is_required(monkeypatch):
 def test_prune_main_removes_rows_older_than_retention_period():
     now = datetime.now(timezone.utc)
     frame = pd.DataFrame([
-        _row(now - timedelta(days=31)),
+        _row(now - timedelta(days=366)),
         _row(now - timedelta(days=1)),
     ])
 
@@ -107,20 +107,19 @@ def test_prune_main_removes_rows_older_than_retention_period():
     assert float(pruned.iloc[0]["download_mbps"]) == 100.0
 
 
-def test_archive_keeps_only_twelve_monthly_files(tmp_path, monkeypatch):
+def test_archive_uses_same_rolling_year_boundary(tmp_path, monkeypatch):
     archive_dir = tmp_path / "archive"
     archive_dir.mkdir()
     monkeypatch.setattr(collector, "ARCHIVE_DIR", archive_dir)
 
-    start = pd.Timestamp("2025-01-01", tz="UTC")
-    for offset in range(13):
-        timestamp = (start + pd.DateOffset(months=offset)).to_pydatetime()
-        collector.archive_append(_row(timestamp))
+    now = datetime.now(timezone.utc)
+    collector.archive_append(_row(now - timedelta(days=366)))
+    collector.archive_append(_row(now - timedelta(days=1)))
 
     archives = sorted(archive_dir.glob("speedtest_*.csv"))
-    assert len(archives) == 12
-    assert archives[0].name == "speedtest_2025-02.csv"
-    assert archives[-1].name == "speedtest_2026-01.csv"
+    assert len(archives) == 1
+    retained = pd.read_csv(archives[0])
+    assert len(retained) == 1
 
 
 def test_calibrate_preferred_area_matches_and_ranks_regional_servers(monkeypatch):

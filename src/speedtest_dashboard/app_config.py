@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+from datetime import datetime, timezone
 import json
 import os
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +15,17 @@ from typing import Any
 DATA_DIR_ENV = "SPEEDTEST_DASHBOARD_DATA_DIR"
 SETTINGS_FILENAME = "settings.json"
 STATUS_FILENAME = "collector_status.json"
+RESTART_REQUEST_FILENAME = "restart_collection.request"
+DATA_LOCK_FILENAME = ".measurement_data.lock"
+MEASUREMENT_COLUMNS = [
+    "timestamp",
+    "ping_ms",
+    "download_mbps",
+    "upload_mbps",
+    "server_id",
+    "server_name",
+    "engine",
+]
 DEFAULT_SETTINGS: dict[str, Any] = {
     "measurement_engine": {
         "mode": "official_only",
@@ -60,6 +74,129 @@ def collector_status_path(override: str | Path | None = None) -> Path:
     """Return the collector health file beside the measurement CSV."""
 
     return get_data_dir(override) / STATUS_FILENAME
+
+
+def restart_request_path(override: str | Path | None = None) -> Path:
+    """Return the cross-process request used to start a fresh collection cycle."""
+
+    return get_data_dir(override) / RESTART_REQUEST_FILENAME
+
+
+@contextmanager
+def measurement_data_lock(
+    override: str | Path | None = None,
+    *,
+    timeout: float = 15.0,
+):
+    """Serialize short CSV and archive mutations across dashboard and collector."""
+
+    lock_path = get_data_dir(override) / DATA_LOCK_FILENAME
+    deadline = time.monotonic() + timeout
+    descriptor: int | None = None
+    while descriptor is None:
+        try:
+            descriptor = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.write(descriptor, str(os.getpid()).encode("ascii", errors="ignore"))
+        except FileExistsError:
+            try:
+                stale = time.time() - lock_path.stat().st_mtime > 600
+            except OSError:
+                stale = False
+            if stale:
+                try:
+                    lock_path.unlink()
+                except OSError:
+                    pass
+                continue
+            if time.monotonic() >= deadline:
+                raise TimeoutError("Timed out waiting to update measurement data.")
+            time.sleep(0.1)
+    try:
+        yield
+    finally:
+        try:
+            os.close(descriptor)
+        finally:
+            try:
+                lock_path.unlink()
+            except FileNotFoundError:
+                pass
+
+
+def request_collection_restart(override: str | Path | None = None) -> Path:
+    """Request an immediate collector cycle after its current work completes."""
+
+    path = restart_request_path(override)
+    path.write_text(
+        datetime.now(timezone.utc).isoformat().replace("+00:00", "Z") + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def consume_collection_restart(override: str | Path | None = None) -> bool:
+    """Consume and acknowledge a pending collection restart request."""
+
+    path = restart_request_path(override)
+    try:
+        path.unlink()
+    except FileNotFoundError:
+        return False
+    return True
+
+
+def wait_for_collection_restart(
+    timeout: float,
+    override: str | Path | None = None,
+    *,
+    stop_event: Any = None,
+) -> bool:
+    """Wait for a restart request, returning early when one is received."""
+
+    deadline = time.monotonic() + max(0.0, timeout)
+    while True:
+        if consume_collection_restart(override):
+            return True
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return False
+        pause = min(1.0, remaining)
+        if stop_event is not None:
+            if stop_event.wait(pause):
+                return False
+        else:
+            time.sleep(pause)
+
+
+def reset_measurement_history(override: str | Path | None = None) -> Path:
+    """Delete recorded measurements while preserving application settings."""
+
+    csv_path, archive_dir = configure_data_paths(override)
+    with measurement_data_lock(csv_path.parent):
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            dir=csv_path.parent,
+            prefix="speedtest_results_",
+            suffix=".tmp",
+            mode="w",
+            encoding="utf-8",
+            newline="",
+        ) as handle:
+            handle.write(",".join(MEASUREMENT_COLUMNS) + "\n")
+            temporary = Path(handle.name)
+        os.replace(temporary, csv_path)
+        for archive in archive_dir.glob("speedtest_*.csv"):
+            archive.unlink(missing_ok=True)
+
+    request_collection_restart(csv_path.parent)
+    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    save_collector_status(
+        "starting",
+        "Measurement history reset.  Starting a fresh collection cycle...",
+        now,
+        csv_path.parent,
+    )
+    return csv_path
 
 
 def load_collector_status(override: str | Path | None = None) -> dict[str, str]:

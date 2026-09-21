@@ -69,10 +69,10 @@ def test_dashboard_renders_recorded_measurement(tmp_path, monkeypatch):
     range_index = next(
         index
         for index, value in enumerate(rendered_markdown)
-        if "SELECTED WINDOW" in value
+        if "WINDOW SUMMARY" in value
     )
     assert trend_index < latest_index < range_index < overview_index
-    assert len(app.dataframe) == 1
+    assert len(app.dataframe) == 2
     range_table = app.dataframe[0].value
     assert list(range_table.columns) == ["Minimum", "Average", "Peak"]
     assert list(range_table.index) == [
@@ -81,6 +81,17 @@ def test_dashboard_renders_recorded_measurement(tmp_path, monkeypatch):
         "Ping (ms)",
     ]
     assert range_table.loc["Download (Mbps)", "Peak"] == 181.2
+    recent_table = app.dataframe[1].value
+    assert list(recent_table.columns) == [
+        "Recorded (America/Chicago)",
+        "Download (Mbps)",
+        "Upload (Mbps)",
+        "Ping (ms)",
+        "Server ID",
+        "Server",
+        "Engine",
+    ]
+    assert len(recent_table) == 1
     assert any(
         "Test engine: Python fallback" in caption.value
         for caption in app.caption
@@ -104,20 +115,12 @@ def test_dashboard_redraw_includes_new_server(tmp_path, monkeypatch):
     app = AppTest.from_file(dashboard_path)
 
     app.run(timeout=20)
-    assert app.toggle[0].label == "Refresh display every 60s"
     refresh_button = next(
-        button for button in app.button if button.label == "Refresh now"
-    )
-    assert refresh_button.disabled
-    assert app.multiselect[0].value == ["1 · First Server"]
-
-    app.toggle[0].set_value(False).run(timeout=20)
-    assert not app.exception
-    assert app.toggle[0].value is False
-    refresh_button = next(
-        button for button in app.button if button.label == "Refresh now"
+        button for button in app.button if button.label == "Refresh dashboard now"
     )
     assert not refresh_button.disabled
+    assert not app.toggle
+    assert app.multiselect[0].value == ["1 · First Server"]
 
     second = {
         **first,
@@ -125,15 +128,16 @@ def test_dashboard_redraw_includes_new_server(tmp_path, monkeypatch):
         "server_name": "Second Server",
     }
     pd.DataFrame([first, second]).to_csv(csv_path, index=False)
-    app.run(timeout=20)
+    refresh_button.click().run(timeout=20)
 
+    assert not app.exception
     assert set(app.multiselect[0].value) == {
         "1 · First Server",
         "2 · Second Server",
     }
 
 
-def test_chart_type_redraws_chart_and_manual_refresh_tracks_auto_refresh(
+def test_chart_type_redraws_chart_and_header_refresh_is_always_available(
     tmp_path, monkeypatch
 ):
     monkeypatch.setenv("SPEEDTEST_DASHBOARD_DATA_DIR", str(tmp_path))
@@ -164,9 +168,13 @@ def test_chart_type_redraws_chart_and_manual_refresh_tracks_auto_refresh(
     assert bar_spec["layout"]["xaxis"]["fixedrange"] is False
     assert bar_spec["layout"]["yaxis"]["fixedrange"] is True
     assert bar_spec["layout"]["yaxis2"]["fixedrange"] is True
-    assert next(
-        button for button in app.button if button.label == "Refresh now"
-    ).disabled
+    refresh_button = next(
+        button
+        for button in app.button
+        if button.label == "Refresh dashboard now"
+    )
+    assert not refresh_button.disabled
+    assert not app.toggle
 
     app.radio[0].set_value("Line / Curve").run(timeout=20)
     line_spec = json.loads(app.get("plotly_chart")[0].proto.spec)
@@ -177,11 +185,6 @@ def test_chart_type_redraws_chart_and_manual_refresh_tracks_auto_refresh(
         "scatter",
     ]
 
-    app.toggle[0].set_value(False).run(timeout=20)
-    refresh_button = next(
-        button for button in app.button if button.label == "Refresh now"
-    )
-    assert not refresh_button.disabled
     refresh_button.click().run(timeout=20)
     assert not app.exception
 
@@ -288,6 +291,98 @@ def test_dashboard_defaults_chart_and_ranges_to_latest_engine(tmp_path, monkeypa
     assert range_table.loc["Download (Mbps)", "Average"] == 400.0
 
 
+def test_recent_measurements_are_limited_to_latest_150_rows(tmp_path, monkeypatch):
+    monkeypatch.setenv("SPEEDTEST_DASHBOARD_DATA_DIR", str(tmp_path))
+    now = datetime.now(timezone.utc)
+    rows = []
+    for index in range(175):
+        rows.append(
+            {
+                "timestamp": (now - pd.Timedelta(minutes=index)).isoformat().replace(
+                    "+00:00", "Z"
+                ),
+                "ping_ms": float(index),
+                "download_mbps": float(500 - index),
+                "upload_mbps": float(100 - index / 10),
+                "server_id": "1",
+                "server_name": "Example Server",
+                "engine": "ookla-cli",
+            }
+        )
+    pd.DataFrame(rows).to_csv(tmp_path / "speedtest_results.csv", index=False)
+    dashboard_path = Path(__file__).parents[1] / "src" / "speedtest_dashboard" / "dashboard.py"
+    app = AppTest.from_file(dashboard_path)
+
+    app.run(timeout=20)
+
+    recent_table = app.dataframe[1].value
+    assert len(recent_table) == 150
+    assert recent_table.iloc[0]["Download (Mbps)"] == 500.0
+    assert recent_table.iloc[-1]["Download (Mbps)"] == 351.0
+
+
+def test_data_reset_requires_two_confirmations_and_requests_fresh_capture(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setenv("SPEEDTEST_DASHBOARD_DATA_DIR", str(tmp_path))
+    csv_path = tmp_path / "speedtest_results.csv"
+    pd.DataFrame(
+        [
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat().replace(
+                    "+00:00", "Z"
+                ),
+                "ping_ms": 15.0,
+                "download_mbps": 400.0,
+                "upload_mbps": 100.0,
+                "server_id": "1",
+                "server_name": "Example Server",
+                "engine": "ookla-cli",
+            }
+        ]
+    ).to_csv(csv_path, index=False)
+    archive_dir = tmp_path / "archive"
+    archive_dir.mkdir()
+    (archive_dir / "speedtest_2026-09.csv").write_text(
+        csv_path.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    dashboard_path = Path(__file__).parents[1] / "src" / "speedtest_dashboard" / "dashboard.py"
+    app = AppTest.from_file(dashboard_path)
+
+    app.run(timeout=20)
+    next(
+        button for button in app.button if button.label == "Reset collected data"
+    ).click().run(timeout=20)
+
+    confirm = next(
+        button
+        for button in app.button
+        if button.label == "Confirm reset and restart capture"
+    )
+    assert confirm.disabled
+    assert len(pd.read_csv(csv_path)) == 1
+
+    next(
+        checkbox
+        for checkbox in app.checkbox
+        if checkbox.label.startswith("I understand")
+    ).check().run(timeout=20)
+    confirm = next(
+        button
+        for button in app.button
+        if button.label == "Confirm reset and restart capture"
+    )
+    assert not confirm.disabled
+    confirm.click().run(timeout=20)
+
+    assert pd.read_csv(csv_path).empty
+    assert not list(archive_dir.glob("speedtest_*.csv"))
+    assert (tmp_path / "restart_collection.request").is_file()
+    assert any("Collected data was reset" in item.value for item in app.success)
+
+
 def test_help_navigation_is_specific_to_speedtest(tmp_path, monkeypatch):
     monkeypatch.setenv("SPEEDTEST_DASHBOARD_DATA_DIR", str(tmp_path))
     dashboard_path = Path(__file__).parents[1] / "src" / "speedtest_dashboard" / "dashboard.py"
@@ -306,7 +401,7 @@ def test_help_navigation_is_specific_to_speedtest(tmp_path, monkeypatch):
         for block in app.markdown
     )
     assert any(
-        "Turn off Refresh display every 60s" in block.value
+        "refresh icon beside Help" in block.value
         for block in app.markdown
     )
     assert app.code[0].value == "./RunSpeedTest.command --interval 300"

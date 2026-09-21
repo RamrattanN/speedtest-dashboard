@@ -81,5 +81,8 @@ fallback** so it can be distinguished from the preferred-area baseline.
 
 ## Data retention
 
-- Main CSV: approximately 30 days of samples.
-- Archives: the latest 12 monthly CSV files.
+- Main CSV: samples from the latest rolling 365 days.
+- Archives: monthly files are pruned to the same rolling 365-day boundary.
+- Use **Data management** below Window Summary to reset all measurements.  The
+  two-step confirmation permanently clears both locations, preserves settings,
+  and requests a fresh collection cycle.

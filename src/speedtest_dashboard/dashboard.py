@@ -4,7 +4,7 @@ Speedtest dashboard (compact UI + navy accents):
 - Settings expander (Timezone, Theme, Color selection)
 - Full IANA timezone list, default America/Chicago
 - Default chart type = Bar
-- Manual refresh button when optional 60s auto-refresh is disabled
+- Automatic 60s display refresh with an always-available header refresh action
 - Robust server filter (handles blank IDs, string-normalizes)
 - Dynamic sampling caption
 - Window choices: Last Hour, Last 24 hours, Last 7 days, Last 30 days, Last 12 months
@@ -29,6 +29,7 @@ from speedtest_dashboard import __version__
 from speedtest_dashboard.app_config import (
     configure_data_paths,
     load_settings,
+    reset_measurement_history,
     set_measurement_engine,
     set_server_preference,
 )
@@ -144,12 +145,14 @@ def apply_theme_css(theme: str) -> str:
             color: #d9e8f3;
         }}
 
-        .st-key-open_help_panel {{
+        .st-key-open_help_panel,
+        .st-key-refresh_dashboard_header {{
             display: flex;
             justify-content: flex-end;
         }}
 
-        .st-key-open_help_panel .stButton > button {{
+        .st-key-open_help_panel .stButton > button,
+        .st-key-refresh_dashboard_header .stButton > button {{
             width: 46px !important;
             min-width: 46px !important;
             height: 46px !important;
@@ -161,25 +164,25 @@ def apply_theme_css(theme: str) -> str:
         }}
 
         .st-key-open_help_panel .stButton > button:hover,
-        .st-key-open_help_panel .stButton > button:focus-visible {{
+        .st-key-open_help_panel .stButton > button:focus-visible,
+        .st-key-refresh_dashboard_header .stButton > button:hover,
+        .st-key-refresh_dashboard_header .stButton > button:focus-visible {{
             border-color: #ffffff !important;
             background: rgba(255, 255, 255, 0.18) !important;
         }}
 
-        .st-key-open_help_panel .stButton > button p {{
+        .st-key-open_help_panel .stButton > button p,
+        .st-key-refresh_dashboard_header .stButton > button p {{
             display: none;
         }}
 
-        .st-key-refresh_now_btn .stButton > button {{
-            border-color: #173f63 !important;
-            color: #ffffff !important;
-            background: #173f63 !important;
+        .st-key-dashboard_chart_mode [data-testid="stWidgetLabel"] {{
+            width: 100%;
+            text-align: center;
         }}
 
-        .st-key-refresh_now_btn .stButton > button:hover,
-        .st-key-refresh_now_btn .stButton > button:focus-visible {{
-            border-color: #2f78b8 !important;
-            background: #2f78b8 !important;
+        .st-key-dashboard_chart_mode [role="radiogroup"] {{
+            justify-content: center;
         }}
 
         .rr-section-heading {{
@@ -423,7 +426,8 @@ def apply_theme_css(theme: str) -> str:
 
         /* Keyed controls need final, high-specificity rules because the key class
            and Streamlit button wrapper are the same element in current releases. */
-        .st-key-open_help_panel button {{
+        .st-key-open_help_panel button,
+        .st-key-refresh_dashboard_header button {{
             width: 46px !important;
             min-width: 46px !important;
             height: 46px !important;
@@ -435,34 +439,26 @@ def apply_theme_css(theme: str) -> str:
         }}
 
         .st-key-open_help_panel button:hover,
-        .st-key-open_help_panel button:focus-visible {{
+        .st-key-open_help_panel button:focus-visible,
+        .st-key-refresh_dashboard_header button:hover,
+        .st-key-refresh_dashboard_header button:focus-visible {{
             border-color: #ffffff !important;
             color: #ffffff !important;
             background: rgba(255, 255, 255, 0.18) !important;
         }}
 
         .st-key-open_help_panel button [data-testid="stMarkdownContainer"],
-        .st-key-open_help_panel button p {{
+        .st-key-open_help_panel button p,
+        .st-key-refresh_dashboard_header button [data-testid="stMarkdownContainer"],
+        .st-key-refresh_dashboard_header button p {{
             display: none !important;
         }}
 
-        .st-key-open_help_panel button [data-testid="stIconMaterial"] {{
+        .st-key-open_help_panel button [data-testid="stIconMaterial"],
+        .st-key-refresh_dashboard_header button [data-testid="stIconMaterial"] {{
             display: inline-flex !important;
             color: #ffffff !important;
             font-size: 1.45rem !important;
-        }}
-
-        .st-key-refresh_now_btn button {{
-            border-color: #173f63 !important;
-            color: #ffffff !important;
-            background: #173f63 !important;
-        }}
-
-        .st-key-refresh_now_btn button:hover,
-        .st-key-refresh_now_btn button:focus-visible {{
-            border-color: #2f78b8 !important;
-            color: #ffffff !important;
-            background: #2f78b8 !important;
         }}
         </style>
         """,
@@ -715,12 +711,14 @@ def render_help_panel() -> None:
             <li>Review Performance Trend for changes across the selected reporting window.</li>
             <li>Drag across Performance Trend to zoom into a time span.  Zooming is limited to the time axis so the speed and ping scales are not changed accidentally.</li>
             <li>Review Latest Result for the most recent connection check.</li>
-            <li>Use Connection Overview to choose the chart style, servers, reporting window, and comparison overlay.</li>
+            <li>Under Window Summary, review or sort the latest 150 measurements in the selected view.</li>
+            <li>Use the Chart type control directly below Performance Trend to switch between bar and line views.</li>
+            <li>Use Connection Overview to choose display settings, servers, reporting window, and comparison overlay.</li>
             <li>Use the Measurement engines filter to keep official Ookla, Python compatibility, and legacy samples separate.  The latest engine is selected by default.</li>
             <li>Use Test server selection to keep tests in a preferred city or region when automatic selection chooses a distant location.</li>
             <li>Use Measurement engine to confirm that the official Ookla CLI is active.  Production collection pauses rather than silently substituting another engine.</li>
-            <li>Leave Refresh display every 60s enabled to see new CSV results automatically.</li>
-            <li>Turn off Refresh display every 60s before selecting Refresh now for an immediate reload.</li>
+            <li>The open dashboard checks for new CSV results automatically every 60 seconds.</li>
+            <li>Select the refresh icon beside Help for an immediate dashboard reload.</li>
             <li>Open Display settings to change timezone, theme, and chart colours.</li>
           </ol>
           <p class="remember"><strong>Data location:</strong> {DEFAULT_CSV}</p>
@@ -748,7 +746,8 @@ def render_help_panel() -> None:
             <li>Measurements are stored locally on this computer as CSV files.</li>
             <li>The dashboard is served only from the local monitor application.</li>
             <li>Closing the browser does not delete results or stop collection.</li>
-            <li>The main CSV retains approximately 30 days of samples, with older monthly archives retained separately.</li>
+            <li>The main CSV and monthly archives use a rolling 365-day retention boundary.</li>
+            <li>Data management provides a two-step reset that permanently clears measurements, preserves settings, and requests a fresh capture cycle.</li>
           </ul>
           <p class="remember"><strong>Results file:</strong> {DEFAULT_CSV}</p>
         </section>
@@ -781,7 +780,7 @@ def render_help_panel() -> None:
           <h3>Resolve common issues</h3>
           <ul>
             <li><strong>No data yet:</strong> Confirm the collector is running and wait for its first completed test.</li>
-            <li><strong>Dashboard does not update:</strong> Confirm automatic display refresh is enabled.  To force an immediate reload, turn it off and then select Refresh now.</li>
+            <li><strong>Dashboard does not update:</strong> Select the refresh icon beside Help for an immediate reload.  If needed, reopen the dashboard from the controller.</li>
             <li><strong>Official engine required:</strong> Production mode pauses measurements when the official Ookla CLI is unavailable.  Open Measurement engine in Connection Overview to install it or set its executable path.</li>
             <li><strong>Compatibility mode:</strong> This explicit option permits the Python engine, but its results can differ materially from Ookla and should not be mixed into a like-for-like baseline.</li>
             <li><strong>Wrong test region:</strong> Open Test server selection, choose Preferred city or region, enter a city plus state, province, or country, and save.  The next collection cycle calibrates regional candidates and retains automatic fallback.</li>
@@ -808,11 +807,20 @@ def set_help_panel(open_panel: bool) -> None:
     st.session_state["help_panel_open"] = open_panel
 
 
+def rerun_for_dashboard_control() -> None:
+    """Apply interactive dashboard controls with a full application rerun."""
+    st.rerun(scope="app")
+
+
 if "help_panel_open" not in st.session_state:
     st.session_state["help_panel_open"] = False
 
 with st.container(key="hero"):
-    hero_copy, hero_action = st.columns([8, 1], vertical_alignment="center")
+    hero_copy, hero_refresh, hero_help = st.columns(
+        [8, 0.6, 0.6],
+        gap="small",
+        vertical_alignment="center",
+    )
     with hero_copy:
         st.markdown(
             f"""
@@ -827,7 +835,15 @@ with st.container(key="hero"):
             """,
             unsafe_allow_html=True,
         )
-    with hero_action:
+    with hero_refresh:
+        st.button(
+            "Refresh dashboard now",
+            icon=":material/refresh:",
+            help="Refresh dashboard now",
+            key="refresh_dashboard_header",
+            on_click=rerun_for_dashboard_control,
+        )
+    with hero_help:
         st.button(
             "Help with this page",
             icon=":material/help_outline:",
@@ -849,17 +865,6 @@ if st.session_state["help_panel_open"]:
                 args=(False,),
             )
         render_help_panel()
-
-
-def rerun_for_refresh_schedule() -> None:
-    """Rebuild the app when the fragment refresh schedule changes."""
-    st.rerun(scope="app")
-
-
-def rerun_for_dashboard_control() -> None:
-    """Apply interactive dashboard controls with a full application rerun."""
-    st.rerun(scope="app")
-
 
 def render_engine_settings() -> None:
     """Render the shared production engine policy and CLI discovery controls."""
@@ -930,11 +935,24 @@ def render_engine_settings() -> None:
                 )
 
 
-autorefresh = bool(st.session_state.get("dashboard_auto_refresh", True))
+def begin_history_reset() -> None:
+    """Open the second confirmation step for destructive data reset."""
+
+    st.session_state["dashboard_reset_stage"] = True
+    st.session_state["dashboard_reset_acknowledged"] = False
+
+
+def confirm_history_reset() -> None:
+    """Clear recorded history and request a fresh collector cycle."""
+
+    reset_measurement_history(DEFAULT_CSV.parent)
+    st.session_state["dashboard_reset_stage"] = False
+    st.session_state["dashboard_reset_acknowledged"] = False
+    st.session_state["dashboard_reset_complete"] = True
 
 
 @st.fragment(
-    run_every="60s" if autorefresh else None,
+    run_every="60s",
     key="dashboard_data",
 )
 def render_dashboard() -> None:
@@ -956,6 +974,11 @@ def render_dashboard() -> None:
     color_down = st.session_state.get("color_down", DEFAULT_COLOR_DOWNLOAD)
     color_up = st.session_state.get("color_up", DEFAULT_COLOR_UPLOAD)
     color_ping = st.session_state.get("color_ping", DEFAULT_COLOR_PING)
+
+    if st.session_state.pop("dashboard_reset_complete", False):
+        st.success(
+            "Collected data was reset.  A fresh measurement cycle has been requested."
+        )
 
     df = load_data(DEFAULT_CSV)
     if df.empty:
@@ -1194,6 +1217,19 @@ def render_dashboard() -> None:
     )
     with st.container(border=True):
         st.plotly_chart(fig, width="stretch")
+        chart_control_left, chart_control, chart_control_right = st.columns(
+            [1.6, 1, 1.6],
+            gap="small",
+        )
+        with chart_control:
+            st.radio(
+                "Chart type",
+                ["Bar", "Line / Curve"],
+                index=0,
+                horizontal=True,
+                key="dashboard_chart_mode",
+                on_change=rerun_for_dashboard_control,
+            )
 
     st.markdown(
         """
@@ -1226,8 +1262,8 @@ def render_dashboard() -> None:
     st.markdown(
         """
         <div class="rr-section-heading rr-subsection-heading">
-          <p class="eyebrow">SELECTED WINDOW</p>
-          <h3>Minimum, average, and peak</h3>
+          <p class="eyebrow">WINDOW SUMMARY</p>
+          <h2>Average and range</h2>
         </div>
         """,
         unsafe_allow_html=True,
@@ -1240,53 +1276,86 @@ def render_dashboard() -> None:
             "Peak is the highest recorded value.  For ping, the minimum is best."
         )
 
+    recent = current_window.sort_values("timestamp_local", ascending=False).head(150)
+    recent_table = recent[
+        [
+            "timestamp_local",
+            "download_mbps",
+            "upload_mbps",
+            "ping_ms",
+            "server_id",
+            "server_name",
+            "engine",
+        ]
+    ].copy()
+    recent_table["timestamp_local"] = recent_table["timestamp_local"].dt.strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+    recent_table.columns = [
+        f"Recorded ({tz_name})",
+        "Download (Mbps)",
+        "Upload (Mbps)",
+        "Ping (ms)",
+        "Server ID",
+        "Server",
+        "Engine",
+    ]
+
+    st.markdown("### Recent measurements")
+    st.caption(
+        "The latest 150 CSV records in the selected window are shown newest first.  "
+        "Select any column heading to sort the table."
+    )
+    st.dataframe(
+        recent_table,
+        width="stretch",
+        height=430,
+        hide_index=True,
+        column_config={
+            "Download (Mbps)": st.column_config.NumberColumn(format="%.3f"),
+            "Upload (Mbps)": st.column_config.NumberColumn(format="%.3f"),
+            "Ping (ms)": st.column_config.NumberColumn(format="%.3f"),
+        },
+    )
+
+    with st.expander("Data management", expanded=False):
+        st.caption(
+            "Measurements are retained on a rolling 365-day basis.  Resetting "
+            "permanently removes the main CSV history and all monthly archives."
+        )
+        st.button(
+            "Reset collected data",
+            key="begin_history_reset",
+            on_click=begin_history_reset,
+        )
+        if st.session_state.get("dashboard_reset_stage", False):
+            st.warning(
+                "This cannot be undone.  All collected measurements and archives "
+                "will be deleted.  Application settings will be preserved, and a "
+                "fresh measurement cycle will be requested."
+            )
+            acknowledged = st.checkbox(
+                "I understand that the collected measurement history will be permanently deleted.",
+                key="dashboard_reset_acknowledged",
+            )
+            st.button(
+                "Confirm reset and restart capture",
+                type="primary",
+                key="confirm_history_reset",
+                disabled=not acknowledged,
+                on_click=confirm_history_reset,
+            )
+
     st.markdown(
         """
         <div class="rr-section-heading">
           <p class="eyebrow">CONNECTION OVERVIEW</p>
           <h2>Internet performance controls</h2>
-          <p>Adjust the chart, refresh schedule, display, servers, and reporting window.</p>
+          <p>Adjust display settings, servers, and the reporting window.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-
-    with st.container(border=True):
-        control_chart, control_refresh, control_manual = st.columns(
-            [1.8, 1.35, 1],
-            gap="large",
-        )
-        with control_chart:
-            st.radio(
-                "Chart type",
-                ["Bar", "Line / Curve"],
-                index=0,
-                horizontal=True,
-                key="dashboard_chart_mode",
-                on_change=rerun_for_dashboard_control,
-            )
-        with control_refresh:
-            st.toggle(
-                "Refresh display every 60s",
-                value=True,
-                key="dashboard_auto_refresh",
-                on_change=rerun_for_refresh_schedule,
-            )
-        with control_manual:
-            st.write("")
-            st.button(
-                "Refresh now",
-                type="primary",
-                key="refresh_now_btn",
-                width="stretch",
-                disabled=autorefresh,
-                help=(
-                    "Turn off Refresh display every 60s to use manual refresh."
-                    if autorefresh
-                    else "Reload the dashboard data now."
-                ),
-                on_click=rerun_for_dashboard_control,
-            )
 
     with st.expander("Display settings", expanded=False):
         setting_timezone, setting_theme = st.columns(2, gap="large")
@@ -1430,7 +1499,7 @@ def render_dashboard() -> None:
                 help="Compare against the immediately preceding period of the same length.",
                 key="dashboard_previous_period",
             )
-        st.caption(f"{sample_caption}  Data retained for 30 days in the main CSV.")
+        st.caption(f"{sample_caption}  Data retained on a rolling 365-day basis.")
 
 render_dashboard()
 

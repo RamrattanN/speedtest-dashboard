@@ -33,6 +33,9 @@ The dashboard provides:
 - Latest download, upload, ping, and recorded-time cards.
 - Minimum, average, and peak rows directly under Latest Result, calculated
   from the selected reporting window and server filters.
+- A sortable table of the latest 150 CSV measurements in the selected window.
+- A two-step reset under **Data management** that clears collected history and
+  requests a fresh capture cycle while preserving application settings.
 - Bar or line charts.
 - Time-axis-only chart zooming, which protects the speed and ping scales from
   accidental vertical zoom changes.
@@ -40,7 +43,7 @@ The dashboard provides:
 - Previous-period comparison overlays.
 - Server filtering, custom colours, timezone, and theme controls.
 - Automatic display refresh every 60 seconds.
-- **Refresh now** for an immediate data reload after automatic refresh is
-  turned off.
+- An always-available header refresh icon for an immediate data reload.
+- A chart-type selector directly below the chart it controls.
 - **Test server selection** to keep measurements in a preferred city or region
   when public-IP geolocation selects a distant server.

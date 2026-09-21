@@ -64,7 +64,8 @@ Compatibility mode only when intentionally testing the Python engine.
 - **Light** and **Dark** themes both remain readable.
 - The timezone list includes `America/Chicago`.
 - Automatic refresh checks for new data every 60 seconds.
-- **Refresh now** becomes available after automatic refresh is turned off.
+- The header refresh icon immediately reloads dashboard data.
+- The chart-type selector appears directly below the chart.
 - `~/SpeedtestDashboard/speedtest_results.csv` exists after collection.
 - Stopping the launcher with **Control-C** ends both processes.
 
