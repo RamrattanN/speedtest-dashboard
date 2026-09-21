@@ -1,4 +1,4 @@
-"""Native Windows pilot controller for the local Speedtest Monitor."""
+"""Native Windows controller for the local Speedtest Monitor."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from speedtest_dashboard.app_config import DATA_DIR_ENV, get_data_dir
 
 
 APP_NAME = "Speedtest Monitor"
-APP_BUILD = "0.2.0-windows-pilot.4"
+APP_BUILD = "0.2.0"
 DESKTOP_MODE_ENV = "SPEEDTEST_DASHBOARD_DESKTOP"
 DESKTOP_PLATFORM_ENV = "SPEEDTEST_DASHBOARD_DESKTOP_PLATFORM"
 DEFAULT_INTERVAL = 300
@@ -166,7 +166,12 @@ def _configure_utf8_output(stream: object) -> None:
     if not callable(reconfigure):
         return
     try:
-        reconfigure(encoding="utf-8", errors="backslashreplace")
+        reconfigure(
+            encoding="utf-8",
+            errors="backslashreplace",
+            line_buffering=True,
+            write_through=True,
+        )
     except (AttributeError, OSError, ValueError):
         # Some embedded or test streams cannot be reconfigured.  Collector
         # status text remains ASCII-safe as a second line of defence.
@@ -270,7 +275,7 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
 
     tk.Label(
         root,
-        text=f"Windows Pilot 4  |  Results folder: {data_dir}",
+        text=f"Version {APP_BUILD}  |  Results folder: {data_dir}",
         font=("Segoe UI", 9),
         foreground="#66788A",
         background="#F3F7FA",

@@ -23,16 +23,16 @@ iconutil -c icns "$ICONSET" -o "$ICON_ROOT/SpeedtestMonitor.icns"
 
 python -m PyInstaller --clean --noconfirm SpeedtestMonitor.spec
 
-PILOT_DIR="$ROOT/dist/pilot"
-DMG_PATH="$ROOT/dist/Speedtest-Monitor-macOS-Intel-pilot-4.dmg"
-rm -rf "$PILOT_DIR" "$DMG_PATH"
-mkdir -p "$PILOT_DIR"
-cp -R "$ROOT/dist/Speedtest Monitor.app" "$PILOT_DIR/"
-ln -s /Applications "$PILOT_DIR/Applications"
+RELEASE_DIR="$ROOT/dist/release"
+DMG_PATH="$ROOT/dist/Speedtest-Monitor-macOS-Intel-0.2.0.dmg"
+rm -rf "$RELEASE_DIR" "$DMG_PATH"
+mkdir -p "$RELEASE_DIR"
+cp -R "$ROOT/dist/Speedtest Monitor.app" "$RELEASE_DIR/"
+ln -s /Applications "$RELEASE_DIR/Applications"
 
 hdiutil create \
-  -volname "Speedtest Monitor Pilot" \
-  -srcfolder "$PILOT_DIR" \
+  -volname "Speedtest Monitor" \
+  -srcfolder "$RELEASE_DIR" \
   -ov \
   -format UDZO \
   "$DMG_PATH"

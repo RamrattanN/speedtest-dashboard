@@ -15,13 +15,13 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Ramrattan-styled application header, latest-result cards, and compact content panels.
 - Non-modal Rentals-style right sidebar Help for setup, controls, result interpretation, and troubleshooting.
 - Packaged Ramrattan logo reused from the Rentals application.
-- Unsigned macOS Intel pilot packaging with a native controller, bundled
+- Unsigned macOS Intel 0.2.0 packaging with a native controller, bundled
   Python runtime, disk-image build script, and GitHub Actions artifact workflow.
-- Pilot packaging and acceptance guide for controlled distribution.
-- Unsigned Windows x64 Pilot 1 packaging with a native controller, per-user
+- Unsigned Windows x64 0.2.0 packaging with a native controller, per-user
   installer, Start menu shortcut, embedded version metadata, and GitHub Actions
   installed-app smoke test.
-- Windows pilot packaging and acceptance guide.
+- Windows installer maintenance choices for Repair and Uninstall completely.
+- Production packaging, acceptance, troubleshooting, and Wiki documentation.
 
 ### Changed
 - Consolidated the collector and dashboard into the installable Python package.
@@ -29,10 +29,11 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Interactive controls now use the Ramrattan navy and blue palette instead of Streamlit red.
 - Help now detects desktop packaging and replaces developer Terminal commands
   with Applications-folder, controller, browser, and safe-quit guidance.
-- Packaged Help now covers pilot installation and replacement, unsigned-app
+- Packaged Help now covers installation and replacement, unsigned-app
   security handling, local data privacy, and controller-based operation.
-- README and wiki documentation now identify macOS Intel Pilot 3 as the current
-  downloadable release and distinguish it from source-based developer use.
+- README and Wiki documentation identify unsigned macOS Intel and Windows x64
+  0.2.0 as the current downloadable applications and distinguish them from
+  source-based developer use.
 - Packaged Help now selects macOS or Windows installation, security, launch,
   and restart guidance at runtime.
 
@@ -44,17 +45,20 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Windows service logging now forces UTF-8 before the collector starts, avoiding
   a CP1252 encoding failure that stopped collection when status text contained
   Unicode characters.
+- Windows service logging is line-buffered so completed measurements appear in
+  `monitor.log` immediately during soak testing.
 - The windowed Windows service now restores writable output streams before
   starting the collector, preventing its background thread from stopping
   silently before the first measurement.
+- **Refresh now** remains available while automatic 60-second refresh is
+  enabled, so users can request an immediate CSV reload at any time.
 - Packaged macOS builds now force Streamlit production mode so the dashboard
   and its static frontend are both served on the selected local port instead
   of incorrectly expecting a development frontend on port 3000.
 - The macOS packaging workflow now launches the finished application and
   verifies the dashboard root route before publishing its disk image.
-- Pilot artifacts, disk images, application metadata, controller text, and
-  startup logs now carry an explicit Pilot 3 identifier to prevent stale-build
-  installation during acceptance testing.
+- Production artifacts, application metadata, controller text, and startup
+  logs now carry version 0.2.0 consistently.
 - Installed console commands no longer depend on missing repository-root files.
 - Removed the hardcoded personal Dropbox path from the application.
 - Collector startup now creates the configured data directory without referencing

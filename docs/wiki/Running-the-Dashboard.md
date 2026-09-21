@@ -1,40 +1,29 @@
 # Running the Dashboard
 
-## Installed macOS pilot
+## Installed desktop application
 
-Open **Speedtest Monitor** from Applications.  The controller starts the
-collector and local dashboard together, then opens the dashboard in the default
-browser.
+Open **Speedtest Monitor** from Applications on macOS or the Start menu on
+Windows.  The controller starts the collector and local dashboard together,
+then opens the dashboard in the default browser.
 
 - Keep the controller open while results should continue to be collected.
 - Closing the browser tab does not stop collection.
 - Select **Open Dashboard** to reopen the browser page.
 - Select **Quit Monitor** to stop the collector and dashboard safely.
 
-## macOS developer launcher
+## Developer launchers
+
+On macOS:
 
 ```bash
 ./RunSpeedTest.command --interval 300
 ```
 
-Stop the developer launcher with **Control-C**.
-
-## Installed Windows pilot
-
-Open **Speedtest Monitor** from the Start menu.  Its controller has the same
-**Open Dashboard** and **Quit Monitor** behavior as the macOS pilot.  Closing
-the browser tab does not stop collection.
-
-## Installed Python command
+Stop the launcher with **Control-C**.  With an installed Python package on any
+supported system:
 
 ```bash
 speedtest-dashboard --interval 300 --port 8501
-```
-
-On Windows after `setup_venv.bat`, use:
-
-```bat
-.venv\Scripts\speedtest-dashboard.exe --interval 300 --port 8501
 ```
 
 ## Dashboard controls
@@ -45,7 +34,7 @@ The dashboard provides:
 - Bar or line charts.
 - Hour, day, week, month, and year windows.
 - Previous-period comparison overlays.
-- Server filtering.
-- Custom colours.
-- Automatic or manual display refresh.
-- Timezone and theme selectors.
+- Server filtering, custom colours, timezone, and theme controls.
+- Automatic display refresh every 60 seconds.
+- **Refresh now** for an immediate data reload, whether automatic refresh is on
+  or off.

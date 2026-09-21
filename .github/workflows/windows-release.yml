@@ -1,14 +1,14 @@
-name: Build Windows x64 pilot
+name: Build Windows x64 release
 
 on:
   workflow_dispatch:
   pull_request:
     paths:
-      - ".github/workflows/windows-pilot.yml"
+      - ".github/workflows/windows-release.yml"
       - "SpeedtestMonitorWindows.spec"
       - "installer/windows/**"
       - "scripts/build_windows_icon.py"
-      - "scripts/build_windows_pilot.ps1"
+      - "scripts/build_windows_release.ps1"
       - "pyproject.toml"
       - "src/speedtest_dashboard/**"
 
@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  build-windows-pilot:
+  build-windows-release:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
@@ -24,20 +24,20 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - name: Install project, tests, and pilot builder
-        run: python -m pip install -e ".[test,windows-pilot]"
+      - name: Install project, tests, and release builder
+        run: python -m pip install -e ".[test,windows-release]"
       - name: Run automated tests
         run: pytest -q
       - name: Install Inno Setup
         run: choco install innosetup --yes --no-progress
       - name: Build unsigned Windows application and installer
         shell: pwsh
-        run: ./scripts/build_windows_pilot.ps1
+        run: ./scripts/build_windows_release.ps1
       - name: Install and smoke-test packaged dashboard
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $installer = Join-Path $PWD "dist\Speedtest-Monitor-Windows-x64-pilot-4.exe"
+          $installer = Join-Path $PWD "dist\Speedtest-Monitor-Windows-x64-0.2.0.exe"
           $installDir = Join-Path $env:RUNNER_TEMP "SpeedtestMonitor"
           $dataDir = Join-Path $env:RUNNER_TEMP "speedtest-monitor-data"
           $installerLog = Join-Path $env:RUNNER_TEMP "speedtest-monitor-install.log"
@@ -60,7 +60,7 @@ jobs:
             throw "Installed application was not found: $app"
           }
           $version = (Get-Item $app).VersionInfo.ProductVersion
-          if ($version -ne "0.2.0-windows-pilot.4") {
+          if ($version -ne "0.2.0") {
             throw "Unexpected installed product version: $version"
           }
 
@@ -90,7 +90,7 @@ jobs:
             }
             $serviceLog = Join-Path $env:LOCALAPPDATA "Ramrattan Speedtest Monitor\Logs\monitor.log"
             if ((-not (Test-Path $serviceLog)) -or
-                ((Get-Content $serviceLog -Raw) -notmatch "0\.2\.0-windows-pilot\.4 starting")) {
+                ((Get-Content $serviceLog -Raw) -notmatch "Speedtest Monitor build 0\.2\.0 starting")) {
               throw "The packaged windowed service did not restore its output streams."
             }
           } finally {
@@ -125,10 +125,10 @@ jobs:
           if (-not (Test-Path $historyMarker)) {
             throw "Maintenance uninstall removed user measurement history."
           }
-      - name: Upload private pilot installer
+      - name: Upload production installer
         uses: actions/upload-artifact@v4
         with:
-          name: Speedtest-Monitor-Windows-x64-pilot-4
-          path: dist/Speedtest-Monitor-Windows-x64-pilot-4.exe
+          name: Speedtest-Monitor-Windows-x64-0.2.0
+          path: dist/Speedtest-Monitor-Windows-x64-0.2.0.exe
           if-no-files-found: error
           retention-days: 14

@@ -1,4 +1,4 @@
-"""Native macOS pilot controller for the local Speedtest Monitor."""
+"""Native macOS controller for the local Speedtest Monitor."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from speedtest_dashboard.app_config import DATA_DIR_ENV, get_data_dir
 
 
 APP_NAME = "Speedtest Monitor"
-APP_BUILD = "0.2.0-pilot.4"
+APP_BUILD = "0.2.0"
 DESKTOP_MODE_ENV = "SPEEDTEST_DASHBOARD_DESKTOP"
 DESKTOP_PLATFORM_ENV = "SPEEDTEST_DASHBOARD_DESKTOP_PLATFORM"
 DEFAULT_INTERVAL = 300
@@ -231,7 +231,7 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
 
     data_label = tk.Label(
         root,
-        text=f"Pilot 3  |  Results folder: {data_dir}",
+        text=f"Version {APP_BUILD}  |  Results folder: {data_dir}",
         font=("Helvetica Neue", 10),
         foreground="#66788A",
         background="#F3F7FA",

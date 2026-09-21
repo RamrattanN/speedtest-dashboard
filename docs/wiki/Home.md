@@ -3,11 +3,11 @@
 Speedtest Monitor records ping, download, and upload measurements and presents
 them in a local Streamlit dashboard.  Results stay on the computer in CSV files.
 
-## Current release path
+## Current release
 
-The current downloadable builds are unsigned **macOS Intel Pilot 3** and
-**Windows x64 Pilot 1**.  Both include their own Python runtime and do not
-require the repository, VS Code, or Terminal for everyday use.
+Version 0.2.0 is available as unsigned **macOS Intel** and **Windows x64**
+desktop applications.  Both include their own Python runtime and do not require
+the repository, VS Code, or a command line for everyday use.
 
 1. Install **Speedtest Monitor** in Applications on macOS or with the per-user
    Windows installer.
@@ -16,7 +16,8 @@ require the repository, VS Code, or Terminal for everyday use.
 4. Use **Quit Monitor** to stop both collection and the dashboard safely.
 
 The collector normally records a measurement every five minutes.  The open
-dashboard checks for new results every 60 seconds.
+dashboard checks for new results every 60 seconds.  **Refresh now** is also
+available at any time, including while automatic refresh is enabled.
 
 Source-based developer operation remains available through the macOS launcher
 or the installed `speedtest-dashboard` command.  The legacy PowerShell and
@@ -34,9 +35,10 @@ Windows batch launchers have been retired.
 
 ## Defaults
 
-- Collection interval: five minutes in the desktop pilot
+- Collection interval: five minutes
 - Display refresh: 60 seconds
-- Data folder: `~/SpeedtestDashboard`
+- Data folder: `~/SpeedtestDashboard` on macOS or
+  `%USERPROFILE%\SpeedtestDashboard` on Windows
 - Dashboard address: selected and opened by the controller
 - Main CSV retention: approximately 30 days
 - Monthly archives: up to 12 files

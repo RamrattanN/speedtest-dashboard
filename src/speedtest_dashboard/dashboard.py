@@ -557,27 +557,28 @@ def render_help_panel() -> None:
             launch_location = "the Windows Start menu"
             install_steps = """
                 <li>Quit any running copy of Speedtest Monitor.</li>
-                <li>Run the current Windows x64 pilot installer.</li>
+                <li>Run the current Windows x64 installer.</li>
+                <li>If an existing installation is detected, choose Repair to install the current application files.</li>
                 <li>If Microsoft Defender SmartScreen appears, select More info, then Run anyway.</li>
                 <li>Open Speedtest Monitor from the Start menu after installation.</li>
-                <li>Confirm that the controller shows the expected Windows pilot number.</li>
+                <li>Confirm that the controller shows the expected version.</li>
             """
             security_note = (
-                "The Windows private pilot is not code-signed.  The first installer launch "
+                "The Windows release is not code-signed.  The first installer launch "
                 "may require explicit SmartScreen approval."
             )
         else:
             launch_location = "the Applications folder"
             install_steps = """
                 <li>Quit any running copy of Speedtest Monitor.</li>
-                <li>Open the current pilot disk image and drag Speedtest Monitor to Applications.</li>
+                <li>Open the current disk image and drag Speedtest Monitor to Applications.</li>
                 <li>Choose Replace if macOS reports that an older copy is installed.</li>
-                <li>If macOS blocks the unsigned pilot, use Privacy &amp; Security in System Settings to allow it, or follow the quarantine-removal command supplied with the pilot.</li>
-                <li>Confirm that the controller shows the expected pilot number before acceptance testing.</li>
+                <li>If macOS blocks the unsigned application, use Privacy &amp; Security in System Settings to allow it, or follow the documented quarantine-removal command.</li>
+                <li>Confirm that the controller shows the expected version.</li>
             """
             security_note = (
-                "The current application is not code-signed or notarized.  These extra "
-                "first-launch steps will be removed before public distribution."
+                "The macOS release is not code-signed or notarized.  The first launch may "
+                "require explicit approval in macOS security settings."
             )
         st.markdown(
             f"""
@@ -593,11 +594,11 @@ def render_help_panel() -> None:
               <p class="remember"><strong>Remember:</strong> Keep the Speedtest Monitor controller open while you want results collected.  A new test normally runs every five minutes, while this dashboard checks for new results every 60 seconds.</p>
             </section>
             <section class="rr-help-card">
-              <h3>Install or update the private pilot</h3>
+              <h3>Install or update the application</h3>
               <ol>
                 {install_steps}
               </ol>
-              <p class="remember"><strong>Private pilot:</strong> {security_note}</p>
+              <p class="remember"><strong>Unsigned release:</strong> {security_note}</p>
             </section>
             """,
             unsafe_allow_html=True,
@@ -766,7 +767,6 @@ with st.container(border=True):
         st.write("")
         st.button(
             "Refresh now",
-            disabled=autorefresh,
             key="refresh_now_btn",
             width="stretch",
         )

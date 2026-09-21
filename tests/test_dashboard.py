@@ -67,6 +67,10 @@ def test_dashboard_redraw_includes_new_server(tmp_path, monkeypatch):
 
     app.run(timeout=20)
     assert app.toggle[0].label == "Refresh display every 60s"
+    refresh_button = next(
+        button for button in app.button if button.label == "Refresh now"
+    )
+    assert not refresh_button.disabled
     assert app.multiselect[0].value == ["1 · First Server"]
 
     second = {
@@ -138,7 +142,7 @@ def test_packaged_help_uses_desktop_controller_instructions(tmp_path, monkeypatc
     assert "Open Speedtest Monitor from the Applications folder" in help_text
     assert "close the browser tab without stopping collection" in help_text
     assert "Quit Monitor" in help_text
-    assert "Install or update the private pilot" in help_text
+    assert "Install or update the application" in help_text
     assert "not code-signed or notarized" in help_text
     assert "Data and privacy" in help_text
     assert "Measurements are stored locally" in help_text
@@ -158,7 +162,7 @@ def test_windows_packaged_help_uses_installer_and_start_menu(tmp_path, monkeypat
     assert not app.exception
     help_text = "\n".join(block.value for block in app.markdown)
     assert "Open Speedtest Monitor from the Windows Start menu" in help_text
-    assert "Run the current Windows x64 pilot installer" in help_text
+    assert "Run the current Windows x64 installer" in help_text
     assert "Microsoft Defender SmartScreen" in help_text
     assert "not code-signed" in help_text
     assert "Applications folder" not in help_text

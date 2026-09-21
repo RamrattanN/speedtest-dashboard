@@ -26,10 +26,10 @@ test = [
     "build>=1.2",
     "pytest>=8",
 ]
-macos-pilot = [
+macos-release = [
     "pyinstaller>=6.22",
 ]
-windows-pilot = [
+windows-release = [
     "pyinstaller>=6.22",
 ]
 

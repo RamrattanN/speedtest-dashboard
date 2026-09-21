@@ -1,13 +1,13 @@
-name: Build macOS Intel pilot
+name: Build macOS Intel release
 
 on:
   workflow_dispatch:
   pull_request:
     paths:
-      - ".github/workflows/macos-pilot.yml"
+      - ".github/workflows/macos-release.yml"
       - "SpeedtestMonitor.spec"
       - "scripts/build_macos_icon.py"
-      - "scripts/build_macos_pilot.sh"
+      - "scripts/build_macos_release.sh"
       - "pyproject.toml"
       - "src/speedtest_dashboard/**"
 
@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 jobs:
-  build-macos-pilot:
+  build-macos-release:
     runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
@@ -23,12 +23,12 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - name: Install project, tests, and pilot builder
-        run: python -m pip install -e ".[test,macos-pilot]"
+      - name: Install project, tests, and release builder
+        run: python -m pip install -e ".[test,macos-release]"
       - name: Run automated tests
         run: pytest -q
       - name: Build unsigned Intel application and disk image
-        run: bash scripts/build_macos_pilot.sh
+        run: bash scripts/build_macos_release.sh
       - name: Smoke-test packaged dashboard route
         shell: bash
         run: |
@@ -48,7 +48,7 @@ jobs:
             if curl --fail --silent --show-error http://127.0.0.1:8765/ \
               --output "$RUNNER_TEMP/dashboard.html"; then
               grep -qi '<!doctype html' "$RUNNER_TEMP/dashboard.html"
-              grep -q '0.2.0-pilot.4' "$LOG"
+              grep -q 'Speedtest Monitor build 0.2.0 starting' "$LOG"
               exit 0
             fi
             if ! kill -0 "$PID" 2>/dev/null; then
@@ -59,10 +59,10 @@ jobs:
 
           cat "$LOG"
           exit 1
-      - name: Upload private pilot disk image
+      - name: Upload production disk image
         uses: actions/upload-artifact@v4
         with:
-          name: Speedtest-Monitor-macOS-Intel-pilot-4
-          path: dist/Speedtest-Monitor-macOS-Intel-pilot-4.dmg
+          name: Speedtest-Monitor-macOS-Intel-0.2.0
+          path: dist/Speedtest-Monitor-macOS-Intel-0.2.0.dmg
           if-no-files-found: error
           retention-days: 14
