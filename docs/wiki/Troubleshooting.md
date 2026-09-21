@@ -2,12 +2,21 @@
 
 ## macOS blocks the application
 
-Version 1.0.0 is unsigned and not notarized.  First try **System Settings >
-Privacy & Security > Open Anyway**.  If the application remains blocked,
-double-click **Allow and Open Speedtest Monitor.command** in the disk image.
-The helper explains the change, asks for confirmation, requests the Mac
-administrator password, removes quarantine only from the installed Speedtest
-Monitor application, and opens it.
+Version 1.1.0 is unsigned and not notarized.  When macOS blocks Speedtest
+Monitor, select **Done**, open **System Settings > Privacy & Security**, scroll
+to **Security**, and select **Open Anyway** beside the Speedtest Monitor
+message.  Authenticate and confirm **Open**.
+
+The disk image includes **Read Me First - macOS Security.txt** and the optional
+**Allow and Open Speedtest Monitor.command** helper.  The helper requests
+confirmation and the Mac administrator password, removes quarantine only from
+the installed Speedtest Monitor application, and opens it.
+
+The helper is also unsigned, so macOS may block it before it can run.  If that
+happens, select **Done**, return to **System Settings > Privacy & Security >
+Security**, select **Open Anyway** beside the helper message, authenticate, and
+run the helper again.  An unsigned helper cannot approve itself before macOS
+allows it to execute.
 
 The same steps can be completed manually in Terminal:
 
@@ -21,7 +30,7 @@ password while it is typed.
 
 ## Windows SmartScreen blocks the installer
 
-Version 1.0.0 is unsigned.  If the installer came from the project download,
+Version 1.1.0 is unsigned.  If the installer came from the project download,
 select **More info**, verify the filename, then select **Run anyway**.  Do not
 bypass SmartScreen for an installer received from another source.
 
@@ -77,17 +86,42 @@ On Windows:
 Get-Content "$env:LOCALAPPDATA\Ramrattan Speedtest Monitor\Logs\monitor.log" -Tail 100
 ```
 
-Version 1.0.0 configures Windows log output as UTF-8 and line-buffered so each
+Version 1.1.0 configures Windows log output as UTF-8 and line-buffered so each
 completed result is visible promptly.  Repeated browser connection-reset lines
 do not by themselves indicate a collector failure.
+
+Version 1.1.0 also runs each Windows measurement in a separate child process.
+The log records the cycle start, completion, failure, timeout, and next retry.
+If a backend call exceeds three minutes, the monitor terminates that process
+tree and continues on schedule instead of leaving the controller locked.
 
 ## Collector does not write data
 
 - Wait for the first speed test to complete.
 - Confirm that the data folder is writable.
 - Confirm that `speedtest_results.csv` is not locked by another application.
-- An Ookla warning is not necessarily fatal because the monitor can use the
-  Python speed-test fallback.
+- Open **Measurement engine** and confirm that the official Ookla CLI is
+  detected.  Production collection intentionally pauses when it is missing.
+- Download the CLI only from [Ookla](https://www.speedtest.net/apps/cli), or
+  save the full executable path in the dashboard.
+- Use Compatibility mode only as an explicit temporary exception.  It permits
+  the Python engine and creates results that may not be directly comparable to
+  official Ookla samples.
+
+## Tests use a distant server
+
+Automatic selection uses public-IP geolocation.  ISP records, carrier-grade
+NAT, VPNs, proxies, and security routing can make that location differ from the
+computer's physical location.
+
+Open **Test server selection**, choose **Preferred city or region**, enter a
+city plus state, province, or country, and save.  The next cycle calibrates
+matching regional servers.  If calibration fails, the dashboard shows the
+reason and the collector uses automatic selection for that cycle.  Save the
+preference again to retry, or return to **Automatic**.
+
+Do not select a remote server merely because it reports a higher peak speed.
+Use a stable nearby region so ping and throughput remain comparable over time.
 
 ## Information to capture
 

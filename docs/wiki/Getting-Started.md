@@ -2,8 +2,10 @@
 
 ## macOS application
 
-Intel users need `Speedtest-Monitor-macOS-Intel-1.0.0.dmg`.  Apple silicon
-users can use the `Speedtest-Monitor-macOS-Apple-Silicon-1.0.0.dmg` release
+Intel users need
+[`Speedtest-Monitor-macOS-Intel-1.1.0.dmg`](https://github.com/RamrattanN/speedtest-dashboard/releases/download/v1.1.0/Speedtest-Monitor-macOS-Intel-1.1.0.dmg).
+Apple silicon users can use
+[`Speedtest-Monitor-macOS-Apple-Silicon-1.1.0.dmg`](https://github.com/RamrattanN/speedtest-dashboard/releases/download/v1.1.0/Speedtest-Monitor-macOS-Apple-Silicon-1.1.0.dmg)
 after confirming that it came from the project workflow.  The ARM64 release
 still awaits validation on a physical Apple silicon Mac.  Python, Git, VS
 Code, and a repository checkout are not required.
@@ -11,30 +13,54 @@ Code, and a repository checkout are not required.
 1. Quit any older copy of Speedtest Monitor.
 2. Open the disk image and drag **Speedtest Monitor** to **Applications**.
 3. Choose **Replace** if an older copy is installed.
-4. Complete the unsigned-application security step in the
-   [macOS Desktop Packaging guide](../Mac-Desktop-Packaging.md).
-   If needed, use the optional **Allow and Open Speedtest Monitor.command**
-   helper included in the disk image.
-5. Open **Speedtest Monitor** and keep the controller open.
+4. If macOS blocks the application, select **Done**, open **System Settings >
+   Privacy & Security**, scroll to **Security**, and select **Open Anyway**.
+5. If needed, open **Read Me First - macOS Security.txt** and use the optional
+   **Allow and Open Speedtest Monitor.command** helper in the disk image.  If
+   macOS blocks the helper itself, select **Done**, approve the helper with
+   **Open Anyway** in Privacy & Security, and run it again.
+6. See the [macOS Desktop Packaging guide](../Mac-Desktop-Packaging.md) for the
+   Terminal fallback and complete security explanation.
+7. Open **Speedtest Monitor** and keep the controller open.
+8. Download the official Speedtest CLI directly from
+   [Ookla](https://www.speedtest.net/apps/cli), then open **Connection Overview
+   > Measurement engine** to confirm detection or save its executable path.
 
 The dashboard opens automatically when the service is ready.  Results are
 stored in `~/SpeedtestDashboard`.
 
 ## Windows x64 application
 
-Users need `Speedtest-Monitor-Windows-x64-1.0.0.exe`.  Python, Git, VS Code,
-and a repository checkout are not required.
+Users need
+[`Speedtest-Monitor-Windows-x64-1.1.0.exe`](https://github.com/RamrattanN/speedtest-dashboard/releases/download/v1.1.0/Speedtest-Monitor-Windows-x64-1.1.0.exe).
+Python, Git, VS Code, and a repository checkout are not required.
 
-1. Download and unzip the GitHub Actions artifact.
+1. Download the installer from the project Releases page.
 2. Run the installer.
 3. If SmartScreen appears, select **More info**, verify the download source,
    then select **Run anyway**.
 4. Open **Speedtest Monitor** from the Start menu and keep the controller open.
+5. Download the official Speedtest CLI directly from
+   [Ookla](https://www.speedtest.net/apps/cli).  Extract it to
+   `C:\Tools\OoklaSpeedtest\speedtest.exe`, or save its full location under
+   **Connection Overview > Measurement engine**.
 
 Running the installer again offers **Repair** and **Uninstall completely**.
 Uninstall removes the application, shortcuts, and logs but preserves measurement
 history in `%USERPROFILE%\SpeedtestDashboard`.  See the
 [Windows Desktop Packaging guide](../Windows-Desktop-Packaging.md) for details.
+
+Every installation starts with location-neutral **Automatic** server
+selection.  If the first results use an unexpectedly distant region, open
+**Test server selection**, choose **Preferred city or region**, enter a city
+plus state, province, or country, and save.  The next measurement calibrates
+regional candidates.  This control works the same way on macOS and Windows.
+
+Production collection does not silently substitute the Python engine when the
+official CLI is unavailable.  The controller and dashboard report that setup
+is required.  Python compatibility mode is available as an explicit temporary
+choice, but those samples should not be treated as directly comparable to
+official Ookla measurements.
 
 ## Developer setup
 

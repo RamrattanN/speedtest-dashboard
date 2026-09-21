@@ -16,7 +16,7 @@ if (-not (Test-Path $InnoCompiler)) {
 
 & $InnoCompiler "installer\windows\SpeedtestMonitor.iss"
 
-$Installer = Join-Path $ProjectRoot "dist\Speedtest-Monitor-Windows-x64-1.0.0.exe"
+$Installer = Join-Path $ProjectRoot "dist\Speedtest-Monitor-Windows-x64-1.1.0.exe"
 if (-not (Test-Path $Installer)) {
     throw "The installer was not created: $Installer"
 }

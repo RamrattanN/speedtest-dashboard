@@ -1,6 +1,7 @@
 #define AppName "Speedtest Monitor"
-#define AppVersion "1.0.0"
+#define AppVersion "1.1.0"
 #define AppExeName "Speedtest Monitor.exe"
+#define OoklaCliUrl "https://www.speedtest.net/apps/cli"
 
 [Setup]
 AppId={{A46EA70B-0898-40CD-A611-01C973787737}
@@ -14,7 +15,7 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\..\dist
-OutputBaseFilename=Speedtest-Monitor-Windows-x64-1.0.0
+OutputBaseFilename=Speedtest-Monitor-Windows-x64-1.1.0
 SetupIconFile=..\..\build\windows-icon\SpeedtestMonitor.ico
 Compression=lzma2
 SolidCompression=yes
@@ -27,6 +28,7 @@ Source: "..\..\dist\Speedtest Monitor\*"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
+Name: "{group}\Install Official Ookla CLI"; Filename: "{#OoklaCliUrl}"
 Name: "{userdesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Tasks]

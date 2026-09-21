@@ -9,6 +9,9 @@ echo "Use this helper only for Speedtest Monitor downloaded from the official pr
 echo "It will remove the macOS quarantine attribute only from:"
 echo "  $APP_PATH"
 echo "macOS will request an administrator password, then the application will open."
+echo "If macOS blocked this helper before this window opened, approve the helper in:"
+echo "  System Settings > Privacy & Security > Security > Open Anyway"
+echo "Then run the helper again.  Read Me First - macOS Security.txt has full steps."
 echo
 
 if [[ ! -d "$APP_PATH" ]]; then

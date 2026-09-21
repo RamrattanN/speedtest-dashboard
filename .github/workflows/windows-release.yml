@@ -37,7 +37,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $installer = Join-Path $PWD "dist\Speedtest-Monitor-Windows-x64-1.0.0.exe"
+          $installer = Join-Path $PWD "dist\Speedtest-Monitor-Windows-x64-1.1.0.exe"
           $installDir = Join-Path $env:RUNNER_TEMP "SpeedtestMonitor"
           $dataDir = Join-Path $env:RUNNER_TEMP "speedtest-monitor-data"
           $installerLog = Join-Path $env:RUNNER_TEMP "speedtest-monitor-install.log"
@@ -60,7 +60,7 @@ jobs:
             throw "Installed application was not found: $app"
           }
           $version = (Get-Item $app).VersionInfo.ProductVersion
-          if ($version -ne "1.0.0") {
+          if ($version -ne "1.1.0") {
             throw "Unexpected installed product version: $version"
           }
 
@@ -90,7 +90,7 @@ jobs:
             }
             $serviceLog = Join-Path $env:LOCALAPPDATA "Ramrattan Speedtest Monitor\Logs\monitor.log"
             if ((-not (Test-Path $serviceLog)) -or
-                ((Get-Content $serviceLog -Raw) -notmatch "Speedtest Monitor build 1\.0\.0 starting")) {
+                ((Get-Content $serviceLog -Raw) -notmatch "Speedtest Monitor build 1\.0\.1 starting")) {
               throw "The packaged windowed service did not restore its output streams."
             }
           } finally {
@@ -128,7 +128,7 @@ jobs:
       - name: Upload production installer
         uses: actions/upload-artifact@v4
         with:
-          name: Speedtest-Monitor-Windows-x64-1.0.0
-          path: dist/Speedtest-Monitor-Windows-x64-1.0.0.exe
+          name: Speedtest-Monitor-Windows-x64-1.1.0
+          path: dist/Speedtest-Monitor-Windows-x64-1.1.0.exe
           if-no-files-found: error
           retention-days: 14

@@ -39,11 +39,13 @@ SPEEDTEST_MACOS_TARGET_ARCH="$MACOS_ARCH" \
   python -m PyInstaller --clean --noconfirm SpeedtestMonitor.spec
 
 RELEASE_DIR="$ROOT/dist/release"
-DMG_PATH="$ROOT/dist/Speedtest-Monitor-macOS-${PACKAGE_ARCH}-1.0.0.dmg"
+DMG_PATH="$ROOT/dist/Speedtest-Monitor-macOS-${PACKAGE_ARCH}-1.1.0.dmg"
 rm -rf "$RELEASE_DIR" "$DMG_PATH"
 mkdir -p "$RELEASE_DIR"
 cp -R "$ROOT/dist/Speedtest Monitor.app" "$RELEASE_DIR/"
 cp "$ROOT/installer/macos/Allow and Open Speedtest Monitor.command" "$RELEASE_DIR/"
+cp "$ROOT/installer/macos/Read Me First - macOS Security.txt" "$RELEASE_DIR/"
+cp "$ROOT/installer/macos/Install Official Ookla CLI.webloc" "$RELEASE_DIR/"
 chmod +x "$RELEASE_DIR/Allow and Open Speedtest Monitor.command"
 ln -s /Applications "$RELEASE_DIR/Applications"
 

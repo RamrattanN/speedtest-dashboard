@@ -1,6 +1,14 @@
 from pathlib import Path
 
-from speedtest_dashboard.app_config import DATA_DIR_ENV, configure_data_paths, get_data_dir
+from speedtest_dashboard.app_config import (
+    DATA_DIR_ENV,
+    configure_data_paths,
+    get_data_dir,
+    load_settings,
+    save_server_calibration,
+    set_measurement_engine,
+    set_server_preference,
+)
 
 
 def test_explicit_data_directory_has_priority(tmp_path, monkeypatch):
@@ -26,3 +34,75 @@ def test_default_is_visible_folder_in_user_home(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
 
     assert get_data_dir() == (tmp_path / "SpeedtestDashboard").resolve()
+
+
+def test_server_preferences_default_to_automatic(tmp_path):
+    selection = load_settings(tmp_path)["server_selection"]
+
+    assert selection["mode"] == "automatic"
+    assert selection["server_ids"] == []
+
+
+def test_measurement_engine_defaults_to_official_only(tmp_path):
+    engine = load_settings(tmp_path)["measurement_engine"]
+
+    assert engine == {"mode": "official_only", "ookla_path": ""}
+
+
+def test_measurement_engine_compatibility_mode_is_explicit(tmp_path):
+    set_measurement_engine(
+        "compatibility",
+        "/opt/tools/speedtest",
+        tmp_path,
+    )
+
+    engine = load_settings(tmp_path)["measurement_engine"]
+    assert engine["mode"] == "compatibility"
+    assert engine["ookla_path"] == "/opt/tools/speedtest"
+
+
+def test_preferred_area_save_requests_and_records_calibration(tmp_path):
+    set_server_preference("preferred_area", "Austin, TX", tmp_path)
+
+    pending = load_settings(tmp_path)["server_selection"]
+    assert pending["area"] == "Austin, TX"
+    assert pending["server_ids"] == []
+
+    saved = save_server_calibration(
+        "Austin, TX",
+        [{"id": "123", "label": "123 - Example - Austin, TX"}],
+        calibrated_at="2026-09-21T00:00:00Z",
+        override=tmp_path,
+    )
+
+    assert saved
+    calibrated = load_settings(tmp_path)["server_selection"]
+    assert calibrated["server_ids"] == ["123"]
+    assert calibrated["calibrated_at"] == "2026-09-21T00:00:00Z"
+
+
+def test_stale_calibration_does_not_overwrite_new_area(tmp_path):
+    set_server_preference("preferred_area", "Austin, TX", tmp_path)
+
+    assert not save_server_calibration(
+        "Dallas, TX",
+        [{"id": "999", "label": "Wrong area"}],
+        override=tmp_path,
+    )
+    assert load_settings(tmp_path)["server_selection"]["server_ids"] == []
+
+
+def test_returning_to_automatic_removes_saved_regional_candidates(tmp_path):
+    set_server_preference("preferred_area", "Austin, TX", tmp_path)
+    save_server_calibration(
+        "Austin, TX",
+        [{"id": "123", "label": "123 - Example - Austin, TX"}],
+        override=tmp_path,
+    )
+
+    set_server_preference("automatic", "ignored", tmp_path)
+
+    selection = load_settings(tmp_path)["server_selection"]
+    assert selection["mode"] == "automatic"
+    assert selection["area"] == ""
+    assert selection["server_ids"] == []

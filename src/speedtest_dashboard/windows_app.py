@@ -3,17 +3,19 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import os
 from pathlib import Path
 import socket
 import subprocess
 import sys
 import threading
+import time
 import urllib.request
 import webbrowser
 
 from speedtest_dashboard import __version__
-from speedtest_dashboard.app_config import DATA_DIR_ENV, get_data_dir
+from speedtest_dashboard.app_config import DATA_DIR_ENV, get_data_dir, load_collector_status
 
 
 APP_NAME = "Speedtest Monitor"
@@ -22,6 +24,7 @@ DESKTOP_MODE_ENV = "SPEEDTEST_DASHBOARD_DESKTOP"
 DESKTOP_PLATFORM_ENV = "SPEEDTEST_DASHBOARD_DESKTOP_PLATFORM"
 DEFAULT_INTERVAL = 300
 DEFAULT_PORT = 8501
+COLLECTOR_TIMEOUT_SECONDS = 180
 _SERVICE_LOG_HANDLE = None
 
 
@@ -83,6 +86,102 @@ def service_command(port: int, interval: int, data_dir: Path) -> list[str]:
     return [sys.executable, "-m", "speedtest_dashboard.windows_app", *args]
 
 
+def collector_command(data_dir: Path) -> list[str]:
+    """Build a one-measurement child command for source or packaged execution."""
+
+    args = ["--collect-once", "--data-dir", str(data_dir)]
+    if is_frozen():
+        return [sys.executable, *args]
+    return [sys.executable, "-m", "speedtest_dashboard.windows_app", *args]
+
+
+def terminate_process_tree(process: subprocess.Popen) -> None:
+    """Terminate a child and descendants without leaving a frozen speed test behind."""
+
+    if process.poll() is not None:
+        return
+    if os.name == "nt":
+        try:
+            result = subprocess.run(
+                ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+            if result.returncode != 0 and process.poll() is None:
+                process.kill()
+        except (OSError, subprocess.SubprocessError):
+            process.kill()
+    else:
+        process.terminate()
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+
+
+def run_collector_cycle(
+    data_dir: Path,
+    *,
+    timeout: int = COLLECTOR_TIMEOUT_SECONDS,
+) -> bool:
+    """Run one speed test in an expendable child process."""
+
+    print(f"[INFO] Measurement cycle started with a {timeout}-second safety timeout.", flush=True)
+    popen_kwargs: dict[str, object] = {
+        "stdout": sys.stdout,
+        "stderr": sys.stderr,
+    }
+    if os.name == "nt":
+        popen_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
+    try:
+        child = subprocess.Popen(collector_command(data_dir), **popen_kwargs)
+    except OSError as exc:
+        print(f"[ERROR] Could not start measurement child: {exc}", flush=True)
+        return False
+    try:
+        return_code = child.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        print(
+            f"[ERROR] Measurement exceeded {timeout} seconds.  Terminating it and continuing on schedule.",
+            flush=True,
+        )
+        terminate_process_tree(child)
+        return False
+
+    if return_code != 0:
+        print(f"[WARN] Measurement child exited with code {return_code}.  The supervisor will retry next cycle.", flush=True)
+        return False
+    print("[INFO] Measurement cycle completed.", flush=True)
+    return True
+
+
+def supervise_collector(
+    interval: int,
+    data_dir: Path,
+    *,
+    timeout: int = COLLECTOR_TIMEOUT_SECONDS,
+    stop_event: threading.Event | None = None,
+) -> None:
+    """Keep measurements on schedule even when a backend call freezes."""
+
+    stop_event = stop_event or threading.Event()
+    while not stop_event.is_set():
+        started = time.monotonic()
+        try:
+            run_collector_cycle(data_dir, timeout=timeout)
+        except Exception as exc:
+            print(
+                f"[ERROR] Measurement supervisor recovered from an unexpected error: {exc}",
+                flush=True,
+            )
+        elapsed = time.monotonic() - started
+        wait_seconds = max(5.0, float(interval) - elapsed)
+        print(f"[INFO] Next measurement cycle in {int(round(wait_seconds))} seconds.", flush=True)
+        stop_event.wait(wait_seconds)
+
+
 def run_services(
     port: int,
     interval: int,
@@ -99,20 +198,14 @@ def run_services(
 
     from streamlit.web import bootstrap
 
-    if start_collector:
-        from speedtest_dashboard import collector
+    if os.name == "nt" and hasattr(asyncio, "WindowsSelectorEventLoopPolicy"):
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-        collector_args = [
-            "--daemon",
-            "--interval",
-            str(interval),
-            "--data-dir",
-            str(data_dir),
-        ]
+    if start_collector:
         threading.Thread(
-            target=collector.main,
-            args=(collector_args,),
-            name="speedtest-collector",
+            target=supervise_collector,
+            args=(interval, data_dir),
+            name="speedtest-collector-supervisor",
             daemon=True,
         ).start()
 
@@ -235,6 +328,7 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
         font=("Segoe UI", 11),
         foreground="#2F78B8",
         background="#F3F7FA",
+        wraplength=520,
     ).pack(pady=(22, 16))
 
     button_frame = tk.Frame(root, background="#F3F7FA")
@@ -250,12 +344,7 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
     open_button.grid(row=0, column=0, padx=8)
 
     def stop_child() -> None:
-        if child.poll() is None:
-            child.terminate()
-            try:
-                child.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                child.kill()
+        terminate_process_tree(child)
         log_handle.close()
 
     def quit_app() -> None:
@@ -291,7 +380,8 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
             status_text.set("The monitor stopped unexpectedly.  Review monitor.log for details.")
             return
         if service_is_ready(url):
-            status_text.set("The monitor is running.")
+            collector_status = load_collector_status(data_dir)
+            status_text.set(collector_status["message"])
             open_button.configure(state="normal")
             if not browser_opened:
                 browser_opened = True
@@ -306,6 +396,7 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog=APP_NAME)
     parser.add_argument("--service", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--collect-once", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--dashboard-only", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--interval", type=int, default=DEFAULT_INTERVAL)
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
@@ -313,7 +404,13 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     data_dir = get_data_dir(args.data_dir)
-    if args.service:
+    if args.collect_once:
+        ensure_service_output_streams()
+        from speedtest_dashboard import collector
+
+        if not collector.main(["--data-dir", str(data_dir)]):
+            raise SystemExit(1)
+    elif args.service:
         run_services(
             args.port,
             args.interval,

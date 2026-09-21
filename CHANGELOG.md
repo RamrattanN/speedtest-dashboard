@@ -8,6 +8,67 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-21
+### Added
+- Production engine controls and official Ookla CLI discovery for Windows x64,
+  macOS Intel, and macOS Apple silicon.
+- Verified executable detection that rejects the unrelated Python command with
+  the same `speedtest` filename.
+- Visible collector states for setup required, testing, healthy, and failed
+  measurement cycles.
+- A dedicated Measurement Engine Wiki page and aligned installation guidance.
+
+### Changed
+- The official Ookla CLI is now required by default for production
+  measurements.  Python fallback requires an explicit Compatibility mode
+  selection.
+- Packaged GUI applications search saved settings, an environment override,
+  `PATH`, and standard platform locations for the official executable.
+- Missing-engine conditions pause new measurements without stopping the
+  controller or local dashboard.
+- All Windows x64, macOS Intel, and macOS Apple silicon artifacts now use
+  version 1.1.0.
+
+### Security
+- Ookla's executable is not redistributed because an explicit redistribution
+  grant was not confirmed.  Users obtain it directly from Ookla and its terms
+  continue to apply.
+
+## [1.0.1] - 2026-09-21
+### Added
+- Both macOS disk images now include a plain-text first-launch security guide
+  that remains readable when Gatekeeper blocks executable files.
+- All platforms now provide optional preferred city-or-region server
+  calibration while retaining automatic selection as the universal default.
+- Regional calibration stores multiple local candidates so collection can
+  fail over without hardcoding a city for every user.
+- Windows runs each measurement in a disposable child process with a
+  three-minute safety timeout and automatic continuation on the next cycle.
+
+### Changed
+- macOS installation guidance now explains that the optional unsigned approval
+  helper may require its own **Open Anyway** approval before it can run.
+- README, packaged Help, packaging guides, and Wiki pages now use the same
+  macOS Gatekeeper sequence and identify version 1.0.1 as the current release.
+- Windows and both macOS packages now share patch version 1.0.1.
+- Preferred server settings are stored locally in the existing results folder.
+- Windows schedules measurement starts at the configured interval instead of
+  adding the full interval after test completion.
+- Latest Result now includes minimum, average, and peak rows for the active
+  time window and server filters.
+- Latest Result now identifies the measurement engine so official Ookla CLI
+  samples can be distinguished from Python fallback samples.
+
+### Fixed
+- Corrected first-launch instructions that previously implied the unsigned
+  macOS approval helper could always execute before Gatekeeper approval.
+- macOS release builds now rerun when installer guidance files change.
+- A frozen Windows speed-test backend can no longer indefinitely block later
+  measurements or require Task Manager to release its descendant processes.
+- Windows Quit Monitor now terminates the complete packaged service process
+  tree, including any active measurement child.
+- Python fallback requests now use bounded network timeouts on every platform.
+
 ## [1.0.0] - 2026-09-21
 ### Added
 - macOS launcher and step-by-step Mac acceptance guide.
@@ -131,7 +192,9 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/RamrattanN/speedtest-dashboard/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/RamrattanN/speedtest-dashboard/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/RamrattanN/speedtest-dashboard/compare/v1.0.1...v1.1.0
+[1.0.1]: https://github.com/RamrattanN/speedtest-dashboard/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/RamrattanN/speedtest-dashboard/compare/v0.1.1...v1.0.0
 [0.1.1]: https://github.com/RamrattanN/speedtest-dashboard/compare/v0.1.0...v0.1.1  
 [0.1.0]: https://github.com/RamrattanN/speedtest-dashboard/releases/tag/v0.1.0  

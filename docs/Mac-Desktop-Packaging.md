@@ -1,16 +1,16 @@
 # macOS Desktop Packaging
 
-Version 1.0.0 packages Speedtest Monitor as double-clickable Intel and Apple
+Version 1.1.0 packages Speedtest Monitor as double-clickable Intel and Apple
 silicon macOS applications.  Users do not need Python, Git, VS Code, Terminal,
 or a repository copy for everyday operation.
 
 ## Current artifact
 
-- Intel artifact: `Speedtest-Monitor-macOS-Intel-1.0.0`
-- Intel disk image: `Speedtest-Monitor-macOS-Intel-1.0.0.dmg`
-- Apple silicon artifact: `Speedtest-Monitor-macOS-Apple-Silicon-1.0.0`
-- Apple silicon disk image: `Speedtest-Monitor-macOS-Apple-Silicon-1.0.0.dmg`
-- Application version: `1.0.0`
+- Intel artifact: `Speedtest-Monitor-macOS-Intel-1.1.0`
+- Intel disk image: `Speedtest-Monitor-macOS-Intel-1.1.0.dmg`
+- Apple silicon artifact: `Speedtest-Monitor-macOS-Apple-Silicon-1.1.0`
+- Apple silicon disk image: `Speedtest-Monitor-macOS-Apple-Silicon-1.1.0.dmg`
+- Application version: `1.1.0`
 - Architectures: Intel x86_64 and Apple silicon ARM64
 - Signing status: unsigned and not notarized
 
@@ -39,11 +39,18 @@ verifies each packaged dashboard route before uploading artifacts for 14 days.
 1. Open the disk image.
 2. Drag **Speedtest Monitor** to **Applications**.
 3. Choose **Replace** when updating an existing installation.
-4. Open the application.  If macOS blocks it, use **System Settings > Privacy &
-   Security > Open Anyway**.
-5. If the application is still blocked, double-click **Allow and Open Speedtest
-   Monitor.command** in the disk image.  Review the explanation, enter the Mac
-   administrator password when prompted, and allow the helper to open the app.
+4. Open the application.  If macOS blocks it, select **Done**, open **System
+   Settings > Privacy & Security**, scroll to **Security**, and select **Open
+   Anyway** beside the Speedtest Monitor message.  Authenticate and confirm
+   **Open**.
+5. If needed, open **Read Me First - macOS Security.txt** in the disk image and
+   use the optional **Allow and Open Speedtest Monitor.command** helper.
+6. If macOS blocks the helper itself, select **Done**, return to **System
+   Settings > Privacy & Security > Security**, select **Open Anyway** beside the
+   helper message, authenticate, and run the helper again.
+7. Install the official Speedtest CLI directly from
+   `https://www.speedtest.net/apps/cli`.  Confirm it under **Connection
+   Overview > Measurement engine**, or save its full executable path there.
 
 The helper runs only these commands against the installed Speedtest Monitor app:
 
@@ -52,17 +59,23 @@ sudo xattr -dr com.apple.quarantine "/Applications/Speedtest Monitor.app"
 open "/Applications/Speedtest Monitor.app"
 ```
 
-The same commands can be run manually in Terminal.  Only use the security
-override for an artifact obtained from the project.
+The same commands can be run manually in Terminal.  The helper cannot approve
+itself before macOS allows it to run, which is why the disk image includes a
+plain-text instruction file.  Only use the security override for an artifact
+obtained from the official project release.
 
 ## Acceptance checks
 
-- The controller footer reports version 1.0.0.
+- The controller footer reports version 1.1.0.
 - **Open Dashboard** opens the controller-selected address.
 - A completed test appears in `~/SpeedtestDashboard/speedtest_results.csv`.
 - The dashboard displays the latest recorded result.
 - **Refresh now** becomes available after automatic refresh is turned off.
 - **Quit Monitor** stops the local server.
+- Automatic server selection remains the default.  A preferred city or region
+  can be saved from Test server selection and is applied on the next cycle.
+- The controller reports setup required when the official Ookla CLI is absent.
+- Compatibility mode uses the Python engine only after an explicit opt-in.
 
 ## Logs and removal
 

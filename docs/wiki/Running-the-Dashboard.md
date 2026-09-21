@@ -31,10 +31,16 @@ speedtest-dashboard --interval 300 --port 8501
 The dashboard provides:
 
 - Latest download, upload, ping, and recorded-time cards.
+- Minimum, average, and peak rows directly under Latest Result, calculated
+  from the selected reporting window and server filters.
 - Bar or line charts.
+- Time-axis-only chart zooming, which protects the speed and ping scales from
+  accidental vertical zoom changes.
 - Hour, day, week, month, and year windows.
 - Previous-period comparison overlays.
 - Server filtering, custom colours, timezone, and theme controls.
 - Automatic display refresh every 60 seconds.
 - **Refresh now** for an immediate data reload after automatic refresh is
   turned off.
+- **Test server selection** to keep measurements in a preferred city or region
+  when public-IP geolocation selects a distant server.

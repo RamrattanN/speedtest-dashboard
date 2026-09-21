@@ -1,23 +1,32 @@
 # Roadmap
 
-## Version 1.0.0
+## Version 1.1.0
 
 - Cross-platform Python collector and local CSV retention.
 - Ramrattan-branded dashboard with latest-result cards, trends, summaries, and
   right-side Help.
-- Unsigned macOS Intel disk image and Windows x64 per-user installer.
+- Unsigned macOS Intel and Apple silicon disk images, plus a Windows x64
+  per-user installer.
 - Automated Apple silicon ARM64 release.
 - Windows Repair and Uninstall maintenance choices.
+- Location-neutral automatic server selection with optional regional
+  calibration and failover candidates.
+- Timeout-protected Windows measurements with process-tree cleanup and
+  automatic recovery.
 - Automated package builds and installed-application smoke tests.
-- Automatic 60-second display refresh plus an independent manual refresh.
+- Automatic 60-second display refresh, with manual refresh available when
+  automatic refresh is off.
+- Plain-text macOS Gatekeeper instructions covering both the application and
+  the optional approval helper.
+- Official-only production measurements with verified native CLI discovery,
+  explicit compatibility mode, and visible collector health.
 
 ## Next
 
-- Complete post-release soak testing on representative macOS Intel and Windows x64 systems.
+- Complete post-release soak testing on representative macOS Intel and Windows
+  x64 systems.
 - Validate the ARM64 build on a physical Apple silicon Mac.
-- Add explicit collection-engine and last-success health status.
-- Reduce non-actionable Windows browser connection-reset log noise.
-- Publish validated 1.0.0 artifacts with checksums and release notes.
+- Continue publishing verified installers with checksums and release notes.
 
 ## Later releases
 

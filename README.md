@@ -8,8 +8,9 @@
 
 A local internet speed monitor with packaged macOS and Windows desktop
 applications, plus a portable Python developer mode.  It periodically
-collects ping, download, and upload results using the official Ookla Speedtest
-CLI when available, with the Python `speedtest-cli` library as a fallback.
+collects ping, download, and upload results using the separately installed
+official Ookla Speedtest CLI.  The Python `speedtest-cli` library remains
+available only through an explicit compatibility-mode choice.
 Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 
 ![Speedtest Dashboard Screenshot](assets/dashboard_preview.png?v=2025-09-04-1)
@@ -22,6 +23,12 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 - Bar and line charts with previous-period comparison.
 - Automatic 60-second display refresh plus an independent manual refresh.
 - Timezone, theme, color, server, and date-window controls.
+- Location-neutral server selection: automatic by default, with an optional
+  saved city-or-region preference and regional failover candidates.
+- Official-only production engine policy that prevents silent mixing of Ookla
+  and Python measurements, plus visible collector health and setup guidance.
+- Windows measurement isolation with a hard timeout, automatic recovery, and
+  process-tree cleanup if a speed-test backend freezes.
 - Unsigned macOS Intel and Apple silicon applications for
   users who do not use Terminal in everyday use.
 - Unsigned Windows x64 installer with a native controller and Start menu entry.
@@ -33,25 +40,29 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 
 ### Desktop application
 
-The unsigned macOS Intel 1.0.0 application is distributed as
-`Speedtest-Monitor-macOS-Intel-1.0.0.dmg`.  Open the disk image, drag
+The unsigned macOS Intel 1.1.0 application is distributed as
+[Speedtest-Monitor-macOS-Intel-1.1.0.dmg](https://github.com/RamrattanN/speedtest-dashboard/releases/download/v1.1.0/Speedtest-Monitor-macOS-Intel-1.1.0.dmg).
+Open the disk image, drag
 **Speedtest Monitor** to **Applications**, then open the application.  It
 includes Python and the required dependencies and does not require the
 repository or VS Code.
 
-Because the application is unsigned, macOS may block the first launch.  Use
-**System Settings > Privacy & Security > Open Anyway** when it is offered.  If
-macOS still blocks the application, use the optional **Allow and Open Speedtest
-Monitor.command** helper included in the disk image, or follow the manual
-commands in the [macOS Desktop Packaging](docs/Mac-Desktop-Packaging.md) guide.
-This is a one-time installation step.  Everyday operation uses the small
-controller window to reopen the dashboard or quit the monitor safely.
+Because the application is unsigned, macOS may block the first launch.  Select
+**Done**, then use **System Settings > Privacy & Security > Open Anyway**.  The
+disk image includes **Read Me First - macOS Security.txt** and the optional
+**Allow and Open Speedtest Monitor.command** helper.  macOS may also block the
+unsigned helper itself.  If that happens, select **Done**, approve the helper
+with **Open Anyway** in Privacy & Security, and run it again.  The plain-text
+instructions include the manual Terminal fallback.  This is a one-time
+installation step.  Everyday operation uses the small controller window to
+reopen the dashboard or quit the monitor safely.
 
 See [macOS Desktop Packaging](docs/Mac-Desktop-Packaging.md) for build, test, and
 distribution instructions.
 
 An unsigned Apple silicon release is also produced as
-`Speedtest-Monitor-macOS-Apple-Silicon-1.0.0.dmg`.  Its automated package and
+[Speedtest-Monitor-macOS-Apple-Silicon-1.1.0.dmg](https://github.com/RamrattanN/speedtest-dashboard/releases/download/v1.1.0/Speedtest-Monitor-macOS-Apple-Silicon-1.1.0.dmg).
+Its automated package and
 dashboard smoke tests run on an ARM64 GitHub Actions runner, but it remains
 unvalidated on a physical Apple silicon Mac.
 
@@ -67,6 +78,13 @@ chmod +x RunSpeedTest.command
 The dashboard opens at <http://localhost:8501>.  Results are stored in
 `~/SpeedtestDashboard` by default.
 
+Production measurements require the official Ookla Speedtest CLI, obtained
+directly from [Ookla](https://www.speedtest.net/apps/cli).  The application
+does not redistribute Ookla's executable.  After installing it, open
+**Connection Overview > Measurement engine** to confirm detection or save its
+full executable path.  Compatibility mode must be selected explicitly if the
+Python engine is required temporarily.
+
 See the [Mac Testing Guide](docs/Mac-Testing.md) for complete installation and
 acceptance steps.  The [VS Code Setup Guide](docs/VS-Code-Setup-Mac.md) explains
 how to work on the project without memorizing Terminal commands.
@@ -75,8 +93,9 @@ how to work on the project without memorizing Terminal commands.
 
 ### Desktop application
 
-Download and unzip the `Speedtest-Monitor-Windows-x64-1.0.0` GitHub Actions
-artifact, then run `Speedtest-Monitor-Windows-x64-1.0.0.exe`.  The per-user
+Download
+[Speedtest-Monitor-Windows-x64-1.1.0.exe](https://github.com/RamrattanN/speedtest-dashboard/releases/download/v1.1.0/Speedtest-Monitor-Windows-x64-1.1.0.exe),
+then run it.  The per-user
 installer adds **Speedtest Monitor** to the Start menu and does not require
 Python or the repository.
 
@@ -101,6 +120,18 @@ setup_venv.bat
 ```
 
 Results are stored in `%USERPROFILE%\SpeedtestDashboard` by default.
+
+Install the official CLI directly from
+[Ookla](https://www.speedtest.net/apps/cli).  If it is not on `PATH`, extract
+it to `C:\Tools\OoklaSpeedtest\speedtest.exe` or save its full path under
+**Connection Overview > Measurement engine**.  Production collection remains
+paused until the official engine is detected.
+
+Server selection remains automatic for every new installation.  If the
+provider places your public IP in the wrong region, open **Test server
+selection**, choose **Preferred city or region**, enter a city plus state,
+province, or country, and save.  The next cycle calibrates matching servers.
+Only that general area is stored locally.
 
 ## Command-line use
 
@@ -158,6 +189,7 @@ PyInstaller builds for the system on which it runs.
 - [VS Code Setup on Mac](docs/VS-Code-Setup-Mac.md)
 - [Getting Started](docs/wiki/Getting-Started.md)
 - [Configuration](docs/wiki/Configuration.md)
+- [Measurement Engine](docs/wiki/Measurement-Engine.md)
 - [Running the Dashboard](docs/wiki/Running-the-Dashboard.md)
 - [Troubleshooting](docs/wiki/Troubleshooting.md)
 - [Roadmap](docs/wiki/Roadmap.md)

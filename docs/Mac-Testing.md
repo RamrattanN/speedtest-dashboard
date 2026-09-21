@@ -16,14 +16,13 @@ The version must be Python 3.11 or newer.  If the command is missing or the
 version is older, install a current Python 3 release from
 <https://www.python.org/downloads/macos/> and reopen Terminal.
 
-## 2. Download the recovery branch
+## 2. Download the current source
 
 In Terminal, run:
 
 ```bash
 cd ~/Desktop
-git clone --branch recovery/cross-platform-streamlit --single-branch \
-  https://github.com/RamrattanN/speedtest-dashboard.git
+git clone https://github.com/RamrattanN/speedtest-dashboard.git
 cd speedtest-dashboard
 ```
 
@@ -51,19 +50,21 @@ Expected results:
 5. Finder shows `speedtest_results.csv` inside your home folder under
    `SpeedtestDashboard`.
 
-The collector may report that the official Ookla CLI is unavailable and use
-the Python fallback.  That message is informational.  Record any repeated
-`403`, `Forbidden`, or connection error because it means the collection engine
-needs separate attention.
+The collector may report that the official Ookla CLI is unavailable.  In
+production mode this pauses new measurements while leaving the dashboard
+available.  Install the CLI from `https://www.speedtest.net/apps/cli`, then
+confirm its path under **Connection Overview > Measurement engine**.  Select
+Compatibility mode only when intentionally testing the Python engine.
 
 ## 4. Complete the acceptance checklist
 
 - The dashboard opens without a Python traceback.
-- The **Settings** section expands.
+- The **Display settings** section expands.
 - **Bar** and **Line / Curve** views both render.
 - **Light** and **Dark** themes both remain readable.
 - The timezone list includes `America/Chicago`.
-- Refreshing the browser preserves the recorded data.
+- Automatic refresh checks for new data every 60 seconds.
+- **Refresh now** becomes available after automatic refresh is turned off.
 - `~/SpeedtestDashboard/speedtest_results.csv` exists after collection.
 - Stopping the launcher with **Control-C** ends both processes.
 

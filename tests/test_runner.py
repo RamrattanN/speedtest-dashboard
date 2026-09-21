@@ -104,7 +104,7 @@ def test_macos_streamlit_options_disable_packaged_development_mode():
     assert options["server.port"] == 8600
     assert options["browser.serverAddress"] == "127.0.0.1"
     assert options["browser.serverPort"] == 8600
-    assert macos_app.APP_BUILD == "1.0.0"
+    assert macos_app.APP_BUILD == "1.1.0"
 
 
 def test_macos_service_loads_options_before_starting_server(tmp_path, monkeypatch):
@@ -162,6 +162,53 @@ def test_windows_service_command_uses_module_in_source_mode(tmp_path, monkeypatc
     ]
 
 
+def test_windows_collector_command_uses_isolated_one_shot_process(tmp_path, monkeypatch):
+    monkeypatch.setattr(windows_app, "is_frozen", lambda: False)
+
+    assert windows_app.collector_command(tmp_path) == [
+        windows_app.sys.executable,
+        "-m",
+        "speedtest_dashboard.windows_app",
+        "--collect-once",
+        "--data-dir",
+        str(tmp_path),
+    ]
+
+
+def test_windows_collector_cycle_terminates_frozen_measurement(tmp_path, monkeypatch):
+    class FrozenProcess:
+        def wait(self, timeout):
+            raise windows_app.subprocess.TimeoutExpired("collector", timeout)
+
+    frozen = FrozenProcess()
+    terminated = []
+    monkeypatch.setattr(windows_app.subprocess, "Popen", lambda *args, **kwargs: frozen)
+    monkeypatch.setattr(
+        windows_app,
+        "terminate_process_tree",
+        lambda process: terminated.append(process),
+    )
+
+    completed = windows_app.run_collector_cycle(tmp_path, timeout=180)
+
+    assert not completed
+    assert terminated == [frozen]
+
+
+def test_windows_collector_cycle_recovers_after_child_failure(tmp_path, monkeypatch):
+    class FailedProcess:
+        def wait(self, timeout):
+            return 7
+
+    monkeypatch.setattr(
+        windows_app.subprocess,
+        "Popen",
+        lambda *args, **kwargs: FailedProcess(),
+    )
+
+    assert not windows_app.run_collector_cycle(tmp_path)
+
+
 def test_windows_dashboard_path_uses_pyinstaller_bundle(tmp_path, monkeypatch):
     monkeypatch.setattr(windows_app.sys, "_MEIPASS", str(tmp_path), raising=False)
 
@@ -178,7 +225,7 @@ def test_windows_streamlit_options_disable_packaged_development_mode():
     assert options["server.port"] == 8600
     assert options["browser.serverAddress"] == "127.0.0.1"
     assert options["browser.serverPort"] == 8600
-    assert windows_app.APP_BUILD == "1.0.0"
+    assert windows_app.APP_BUILD == "1.1.0"
 
 
 def test_windows_log_directory_uses_local_app_data(tmp_path, monkeypatch):
