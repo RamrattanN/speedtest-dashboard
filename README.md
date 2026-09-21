@@ -22,8 +22,8 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 - Bar and line charts with previous-period comparison.
 - Automatic 60-second display refresh plus an independent manual refresh.
 - Timezone, theme, color, server, and date-window controls.
-- Unsigned macOS Intel application for users who do not use Terminal in
-  everyday use.
+- Unsigned macOS Intel application and an Apple silicon build candidate for
+  users who do not use Terminal in everyday use.
 - Unsigned Windows x64 installer with a native controller and Start menu entry.
 - macOS developer launcher using an isolated local Python environment.
 - Installable command-line package.
@@ -48,6 +48,11 @@ window to reopen the dashboard or quit the monitor safely.
 
 See [macOS Desktop Packaging](docs/Mac-Desktop-Packaging.md) for build, test, and
 distribution instructions.
+
+An unsigned Apple silicon build candidate is also produced as
+`Speedtest-Monitor-macOS-Apple-Silicon-0.2.0.dmg`.  Its automated package and
+dashboard smoke tests run on an ARM64 GitHub Actions runner, but it remains
+unvalidated on a physical Apple silicon Mac.
 
 ### Developer launcher
 
@@ -139,10 +144,10 @@ CI verifies Python 3.11 and 3.12 on Linux, Python 3.12 on macOS, source
 compilation, tests, the Mac launcher, wheel creation, isolated installation,
 and installed command entry points.
 
-Separate release workflows build and smoke-test the unsigned macOS Intel disk
-image and Windows x64 installer.  Each packaged application is built on its
-target operating system because PyInstaller builds for the system on which it
-runs.
+Separate release workflows build and smoke-test the unsigned macOS Intel and
+Apple silicon disk images and the Windows x64 installer.  Each packaged
+application is built on its target operating system and architecture because
+PyInstaller builds for the system on which it runs.
 
 ## Documentation
 

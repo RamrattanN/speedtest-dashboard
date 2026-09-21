@@ -1,9 +1,12 @@
 # Getting Started
 
-## macOS Intel application
+## macOS application
 
-Users need an Intel Mac and `Speedtest-Monitor-macOS-Intel-0.2.0.dmg`.  Python,
-Git, VS Code, and a repository checkout are not required.
+Intel users need `Speedtest-Monitor-macOS-Intel-0.2.0.dmg`.  Apple silicon
+users can use the `Speedtest-Monitor-macOS-Apple-Silicon-0.2.0.dmg` candidate
+after confirming that it came from the project workflow.  The ARM64 candidate
+still requires validation on a physical Apple silicon Mac.  Python, Git, VS
+Code, and a repository checkout are not required.
 
 1. Quit any older copy of Speedtest Monitor.
 2. Open the disk image and drag **Speedtest Monitor** to **Applications**.

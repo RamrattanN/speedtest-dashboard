@@ -1,20 +1,27 @@
-# macOS Intel Desktop Packaging
+# macOS Desktop Packaging
 
-Version 0.2.0 packages Speedtest Monitor as a double-clickable Intel macOS
-application.  Users do not need Python, Git, VS Code, Terminal, or a repository
-copy for everyday operation.
+Version 0.2.0 packages Speedtest Monitor as double-clickable Intel and Apple
+silicon macOS applications.  Users do not need Python, Git, VS Code, Terminal,
+or a repository copy for everyday operation.
 
 ## Current artifact
 
-- GitHub Actions artifact: `Speedtest-Monitor-macOS-Intel-0.2.0`
-- Disk image: `Speedtest-Monitor-macOS-Intel-0.2.0.dmg`
+- Intel artifact: `Speedtest-Monitor-macOS-Intel-0.2.0`
+- Intel disk image: `Speedtest-Monitor-macOS-Intel-0.2.0.dmg`
+- Apple silicon artifact: `Speedtest-Monitor-macOS-Apple-Silicon-0.2.0`
+- Apple silicon disk image: `Speedtest-Monitor-macOS-Apple-Silicon-0.2.0.dmg`
 - Application version: `0.2.0`
-- Architecture: Intel x86_64
+- Architectures: Intel x86_64 and Apple silicon ARM64
 - Signing status: unsigned and not notarized
+
+The Intel build has been manually validated.  The Apple silicon build runs its
+automated package and dashboard smoke tests on an ARM64 runner but remains a
+candidate until it is tested on a physical Apple silicon Mac.
 
 ## Build locally
 
-Use an Intel Mac with Python 3.11 or newer and Xcode command-line tools:
+Use a Mac of the target architecture with Python 3.11 or newer and Xcode
+command-line tools:
 
 ```bash
 python3 -m venv .venv
@@ -23,9 +30,9 @@ python3 -m venv .venv
 bash scripts/build_macos_release.sh
 ```
 
-The disk image is written to `dist/Speedtest-Monitor-macOS-Intel-0.2.0.dmg`.
-The **Build macOS Intel release** workflow performs the same build and verifies
-the packaged dashboard route before uploading the artifact for 14 days.
+The build script detects `x86_64` or `arm64` and uses the matching package name.
+The **Build macOS releases** workflow builds both architectures natively and
+verifies each packaged dashboard route before uploading artifacts for 14 days.
 
 ## Install and update
 

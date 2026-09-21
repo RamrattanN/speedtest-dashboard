@@ -1,8 +1,11 @@
+import os
+
 from PyInstaller.utils.hooks import collect_all
 
 
 streamlit_datas, streamlit_binaries, streamlit_hiddenimports = collect_all("streamlit")
 plotly_datas, plotly_binaries, plotly_hiddenimports = collect_all("plotly")
+target_arch = os.environ.get("SPEEDTEST_MACOS_TARGET_ARCH", "x86_64")
 
 a = Analysis(
     ["src/speedtest_dashboard/macos_app.py"],
@@ -51,7 +54,7 @@ exe = EXE(
     console=False,
     argv_emulation=False,
     icon="build/macos-icon/SpeedtestMonitor.icns",
-    target_arch="x86_64",
+    target_arch=target_arch,
 )
 
 coll = COLLECT(

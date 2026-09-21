@@ -6,8 +6,10 @@ them in a local Streamlit dashboard.  Results stay on the computer in CSV files.
 ## Current release
 
 Version 0.2.0 is available as unsigned **macOS Intel** and **Windows x64**
-desktop applications.  Both include their own Python runtime and do not require
-the repository, VS Code, or a command line for everyday use.
+desktop applications.  An automated **macOS Apple silicon** build candidate is
+also produced but still requires physical-device validation.  The applications
+include their own Python runtime and do not require the repository, VS Code, or
+a command line for everyday use.
 
 1. Install **Speedtest Monitor** in Applications on macOS or with the per-user
    Windows installer.

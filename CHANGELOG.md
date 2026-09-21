@@ -17,6 +17,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Packaged Ramrattan logo reused from the Rentals application.
 - Unsigned macOS Intel 0.2.0 packaging with a native controller, bundled
   Python runtime, disk-image build script, and GitHub Actions artifact workflow.
+- Native Apple silicon ARM64 build candidate with architecture-specific disk
+  image naming and a packaged dashboard smoke test.
 - Unsigned Windows x64 0.2.0 packaging with a native controller, per-user
   installer, Start menu shortcut, embedded version metadata, and GitHub Actions
   installed-app smoke test.
@@ -52,6 +54,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   silently before the first measurement.
 - **Refresh now** remains available while automatic 60-second refresh is
   enabled, so users can request an immediate CSV reload at any time.
+- The browser tab now uses the Ramrattan logo, Help is an icon in the branded
+  header, and the manual refresh action uses a navy primary-button treatment.
 - Packaged macOS builds now force Streamlit production mode so the dashboard
   and its static frontend are both served on the selected local port instead
   of incorrectly expecting a development frontend on port 3000.

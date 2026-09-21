@@ -4,7 +4,7 @@ Speedtest dashboard (compact UI + navy accents):
 - Settings expander (Timezone, Theme, Color selection)
 - Full IANA timezone list, default America/Chicago
 - Default chart type = Bar
-- Manual refresh button (disabled when auto-refresh is ON), optional 60s auto-refresh
+- Independent manual refresh button and optional 60s auto-refresh
 - Robust server filter (handles blank IDs, string-normalizes)
 - Dynamic sampling caption
 - Window choices: Last Hour, Last 24 hours, Last 7 days, Last 30 days, Last 12 months
@@ -13,11 +13,14 @@ Speedtest dashboard (compact UI + navy accents):
 - Force Streamlit UI accents (radios/toggles/checkboxes/select & server tags) to navy #001F54
 """
 
+import base64
 from datetime import datetime, timedelta
+from io import BytesIO
 import os
 from pathlib import Path
 import numpy as np
 import pandas as pd
+from PIL import Image
 import plotly.graph_objects as go
 import streamlit as st
 from zoneinfo import ZoneInfo, available_timezones  # pip install tzdata on Windows
@@ -41,10 +44,9 @@ DESKTOP_MODE = os.environ.get("SPEEDTEST_DASHBOARD_DESKTOP") == "1"
 DESKTOP_PLATFORM = os.environ.get("SPEEDTEST_DASHBOARD_DESKTOP_PLATFORM", "macos")
 
 LOGO_B64_PATH = Path(__file__).parent / "assets" / "ramrattan-logo.png.b64"
-RAMRATTAN_LOGO_URI = (
-    "data:image/png;base64,"
-    + "".join(LOGO_B64_PATH.read_text(encoding="utf-8").split())
-)
+RAMRATTAN_LOGO_B64 = "".join(LOGO_B64_PATH.read_text(encoding="utf-8").split())
+RAMRATTAN_LOGO_URI = "data:image/png;base64," + RAMRATTAN_LOGO_B64
+RAMRATTAN_FAVICON = Image.open(BytesIO(base64.b64decode(RAMRATTAN_LOGO_B64)))
 
 # -------- THEME HELPERS --------
 def detect_windows_theme() -> str:
@@ -88,17 +90,17 @@ def apply_theme_css(theme: str) -> str:
             background: transparent;
         }}
 
-        .rr-hero {{
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 24px;
+        .st-key-hero {{
             margin-bottom: 0.8rem;
             padding: 26px 30px;
             border-radius: 20px;
             color: #ffffff;
             background: linear-gradient(135deg, #0d2942, #173f63);
             box-shadow: 0 18px 44px rgba(13, 41, 66, 0.18);
+        }}
+
+        .st-key-hero [data-testid="stHorizontalBlock"] {{
+            align-items: center;
         }}
 
         .rr-hero-main {{
@@ -115,7 +117,7 @@ def apply_theme_css(theme: str) -> str:
             flex: 0 0 auto;
         }}
 
-        .rr-hero .eyebrow {{
+        .st-key-hero .eyebrow {{
             margin: 0 0 4px;
             color: #9fc8e8;
             font-size: 0.76rem;
@@ -123,27 +125,54 @@ def apply_theme_css(theme: str) -> str:
             letter-spacing: 0.12em;
         }}
 
-        .rr-hero h1 {{
+        .st-key-hero h1 {{
             margin: 0;
             color: #ffffff;
             font-size: clamp(1.7rem, 3vw, 2.35rem);
             line-height: 1.08;
         }}
 
-        .rr-hero p:last-child {{
+        .st-key-hero .rr-hero-copy p:last-child {{
             margin: 7px 0 0;
             color: #d9e8f3;
         }}
 
-        .rr-status {{
-            padding: 8px 12px;
-            border: 1px solid rgba(255, 255, 255, 0.42);
-            border-radius: 999px;
-            color: #eaf3fa;
-            font-size: 0.74rem;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            white-space: nowrap;
+        .st-key-open_help_panel {{
+            display: flex;
+            justify-content: flex-end;
+        }}
+
+        .st-key-open_help_panel .stButton > button {{
+            width: 46px !important;
+            min-width: 46px !important;
+            height: 46px !important;
+            padding: 0 !important;
+            border: 1px solid rgba(255, 255, 255, 0.72) !important;
+            border-radius: 12px !important;
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+        }}
+
+        .st-key-open_help_panel .stButton > button:hover,
+        .st-key-open_help_panel .stButton > button:focus-visible {{
+            border-color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.18) !important;
+        }}
+
+        .st-key-open_help_panel .stButton > button p {{
+            display: none;
+        }}
+
+        .st-key-refresh_now_btn .stButton > button {{
+            border-color: #173f63 !important;
+            color: #ffffff !important;
+            background: #173f63 !important;
+        }}
+
+        .st-key-refresh_now_btn .stButton > button:hover,
+        .st-key-refresh_now_btn .stButton > button:focus-visible {{
+            border-color: #2f78b8 !important;
+            background: #2f78b8 !important;
         }}
 
         .rr-section-heading {{
@@ -299,12 +328,8 @@ def apply_theme_css(theme: str) -> str:
         }}
 
         @media (max-width: 760px) {{
-            .rr-hero {{
-                align-items: flex-start;
+            .st-key-hero {{
                 padding: 22px;
-            }}
-            .rr-status {{
-                display: none;
             }}
             .rr-logo {{
                 height: 62px;
@@ -513,31 +538,13 @@ def previous_period_overlay(current_window: pd.DataFrame, full_df_local: pd.Data
 # -------- PAGE --------
 st.set_page_config(
     page_title="Ramrattan Speedtest Monitor",
-    page_icon="R",
+    page_icon=RAMRATTAN_FAVICON,
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
 # Apply the shared shell immediately.  The selected chart theme can override it below.
 apply_theme_css("light")
-
-st.markdown(
-    f"""
-    <header class="rr-hero">
-      <div class="rr-hero-main">
-        <img class="rr-logo" src="{RAMRATTAN_LOGO_URI}" alt="Ramrattan logo">
-        <div>
-          <p class="eyebrow">RAMRATTAN NETWORK TOOLS</p>
-          <h1>Speedtest Monitor</h1>
-          <p>Clear, local visibility into connection speed, responsiveness, and reliability.</p>
-        </div>
-      </div>
-      <div class="rr-status">LOCAL MONITOR</div>
-    </header>
-    """,
-    unsafe_allow_html=True,
-)
-
 
 def render_help_panel() -> None:
     """Render speed-test guidance in a right-side Help panel."""
@@ -631,6 +638,7 @@ def render_help_panel() -> None:
             <li>Choose Bar or Line / Curve for the chart style.</li>
             <li>Use View options to select servers, the time window, and comparison overlay.</li>
             <li>Leave Refresh display every 60s enabled to see new CSV results automatically.</li>
+            <li>Select Refresh now for an immediate reload.  It works whether automatic refresh is on or off.</li>
             <li>Open Display settings to change timezone, theme, and chart colours.</li>
           </ol>
           <p class="remember"><strong>Data location:</strong> {DEFAULT_CSV}</p>
@@ -717,15 +725,31 @@ def set_help_panel(open_panel: bool) -> None:
 if "help_panel_open" not in st.session_state:
     st.session_state["help_panel_open"] = False
 
-help_space, help_action = st.columns([6.6, 1.4])
-with help_action:
-    st.button(
-        "Help with this page",
-        key="open_help_panel",
-        width="stretch",
-        on_click=set_help_panel,
-        args=(True,),
-    )
+with st.container(key="hero"):
+    hero_copy, hero_action = st.columns([8, 1], vertical_alignment="center")
+    with hero_copy:
+        st.markdown(
+            f"""
+            <div class="rr-hero-main">
+              <img class="rr-logo" src="{RAMRATTAN_LOGO_URI}" alt="Ramrattan logo">
+              <div class="rr-hero-copy">
+                <p class="eyebrow">RAMRATTAN NETWORK TOOLS</p>
+                <h1>Speedtest Monitor</h1>
+                <p>Clear, local visibility into connection speed, responsiveness, and reliability.</p>
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with hero_action:
+        st.button(
+            "Help with this page",
+            icon=":material/help_outline:",
+            help="Help with this page",
+            key="open_help_panel",
+            on_click=set_help_panel,
+            args=(True,),
+        )
 
 if st.session_state["help_panel_open"]:
     with st.container(key="help_panel"):
@@ -767,6 +791,7 @@ with st.container(border=True):
         st.write("")
         st.button(
             "Refresh now",
+            type="primary",
             key="refresh_now_btn",
             width="stretch",
         )

@@ -21,10 +21,25 @@ done
 
 iconutil -c icns "$ICONSET" -o "$ICON_ROOT/SpeedtestMonitor.icns"
 
-python -m PyInstaller --clean --noconfirm SpeedtestMonitor.spec
+MACOS_ARCH="$(uname -m)"
+case "$MACOS_ARCH" in
+  x86_64)
+    PACKAGE_ARCH="Intel"
+    ;;
+  arm64)
+    PACKAGE_ARCH="Apple-Silicon"
+    ;;
+  *)
+    echo "Unsupported macOS architecture: $MACOS_ARCH" >&2
+    exit 1
+    ;;
+esac
+
+SPEEDTEST_MACOS_TARGET_ARCH="$MACOS_ARCH" \
+  python -m PyInstaller --clean --noconfirm SpeedtestMonitor.spec
 
 RELEASE_DIR="$ROOT/dist/release"
-DMG_PATH="$ROOT/dist/Speedtest-Monitor-macOS-Intel-0.2.0.dmg"
+DMG_PATH="$ROOT/dist/Speedtest-Monitor-macOS-${PACKAGE_ARCH}-0.2.0.dmg"
 rm -rf "$RELEASE_DIR" "$DMG_PATH"
 mkdir -p "$RELEASE_DIR"
 cp -R "$ROOT/dist/Speedtest Monitor.app" "$RELEASE_DIR/"

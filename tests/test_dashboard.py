@@ -16,6 +16,7 @@ def test_dashboard_renders_without_data(tmp_path, monkeypatch):
 
     assert not app.exception
     assert any("Speedtest Monitor" in block.value for block in app.markdown)
+    assert not any("LOCAL MONITOR" in block.value for block in app.markdown)
     assert any("No data yet" in message.value for message in app.info)
 
 
@@ -102,6 +103,10 @@ def test_help_navigation_is_specific_to_speedtest(tmp_path, monkeypatch):
     assert any("Using the Speedtest Monitor" in block.value for block in app.markdown)
     assert any(
         "collector normally records a result every five minutes" in block.value
+        for block in app.markdown
+    )
+    assert any(
+        "works whether automatic refresh is on or off" in block.value
         for block in app.markdown
     )
     assert app.code[0].value == "./RunSpeedTest.command --interval 300"
