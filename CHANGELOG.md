@@ -23,6 +23,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The visible refresh-schedule toggle has been removed.  The dashboard still
   checks for new data every 60 seconds, while an always-available refresh icon
   in the header provides an immediate reload.
+- Implausible or corrupt latency values are rejected before collection and
+  excluded from existing dashboard history so they cannot distort the chart.
 
 ## [1.1.0] - 2026-09-21
 ### Added

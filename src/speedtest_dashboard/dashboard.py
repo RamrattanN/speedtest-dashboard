@@ -33,7 +33,7 @@ from speedtest_dashboard.app_config import (
     set_measurement_engine,
     set_server_preference,
 )
-from speedtest_dashboard.collector import OOKLA_DOWNLOAD_URL, find_ookla_cli
+from speedtest_dashboard.collector import MAX_PING_MS, OOKLA_DOWNLOAD_URL, find_ookla_cli
 
 # -------- PATHS / CONFIG --------
 DEFAULT_CSV, _ARCHIVE_DIR = configure_data_paths()
@@ -508,7 +508,15 @@ def load_data(path: Path) -> pd.DataFrame:
             df[c] = pd.NA
 
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
-    df = df.dropna(subset=["timestamp"]).sort_values("timestamp")
+    metric_columns = ["ping_ms", "download_mbps", "upload_mbps"]
+    for column in metric_columns:
+        df[column] = pd.to_numeric(df[column], errors="coerce")
+    valid_measurements = (
+        df[metric_columns].notna().all(axis=1)
+        & (df[metric_columns] >= 0).all(axis=1)
+        & (df["ping_ms"] <= MAX_PING_MS)
+    )
+    df = df[df["timestamp"].notna() & valid_measurements].sort_values("timestamp")
 
     sid = df["server_id"].astype(str)
     sid = sid.replace(to_replace=r"^(nan|NaN|None)$", value="", regex=True)

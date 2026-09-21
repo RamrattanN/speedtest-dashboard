@@ -23,6 +23,25 @@ def test_sanitize_server_information():
     assert collector.sanitize_server_info("nan", "None") == ("", "")
 
 
+def test_validate_measurement_rejects_impossible_ping():
+    row = _row(datetime.now(timezone.utc))
+    row["ping_ms"] = 1_800_000.0
+
+    try:
+        collector.validate_measurement(row)
+    except RuntimeError as exc:
+        assert "ping_ms" in str(exc)
+    else:
+        raise AssertionError("Expected an impossible ping measurement to be rejected")
+
+
+def test_validate_measurement_accepts_high_but_finite_latency():
+    row = _row(datetime.now(timezone.utc))
+    row["ping_ms"] = collector.MAX_PING_MS
+
+    assert collector.validate_measurement(row) is row
+
+
 def test_ensure_paths_creates_configured_data_directories(tmp_path, monkeypatch):
     csv_path = tmp_path / "configured" / "speedtest_results.csv"
     archive_dir = csv_path.parent / "archive"

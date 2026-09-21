@@ -98,6 +98,43 @@ def test_dashboard_renders_recorded_measurement(tmp_path, monkeypatch):
     )
 
 
+def test_dashboard_ignores_corrupt_ping_measurements(tmp_path, monkeypatch):
+    monkeypatch.setenv("SPEEDTEST_DASHBOARD_DATA_DIR", str(tmp_path))
+    now = datetime.now(timezone.utc)
+    rows = [
+        {
+            "timestamp": (now - pd.Timedelta(minutes=5)).isoformat().replace("+00:00", "Z"),
+            "ping_ms": 18.0,
+            "download_mbps": 300.0,
+            "upload_mbps": 80.0,
+            "server_id": "1",
+            "server_name": "Valid Server",
+            "engine": "ookla-cli",
+        },
+        {
+            "timestamp": now.isoformat().replace("+00:00", "Z"),
+            "ping_ms": 1_800_000.0,
+            "download_mbps": 275.0,
+            "upload_mbps": 70.0,
+            "server_id": "1",
+            "server_name": "Corrupt Server",
+            "engine": "ookla-cli",
+        },
+    ]
+    pd.DataFrame(rows).to_csv(tmp_path / "speedtest_results.csv", index=False)
+    dashboard_path = Path(__file__).parents[1] / "src" / "speedtest_dashboard" / "dashboard.py"
+    app = AppTest.from_file(dashboard_path)
+
+    app.run(timeout=20)
+
+    assert not app.exception
+    ping_metric = next(metric for metric in app.metric if metric.label == "Ping")
+    assert ping_metric.value == "18.0 ms"
+    recent_table = app.dataframe[1].value
+    assert len(recent_table) == 1
+    assert recent_table.iloc[0]["Server"] == "Valid Server"
+
+
 def test_dashboard_redraw_includes_new_server(tmp_path, monkeypatch):
     monkeypatch.setenv("SPEEDTEST_DASHBOARD_DATA_DIR", str(tmp_path))
     csv_path = tmp_path / "speedtest_results.csv"

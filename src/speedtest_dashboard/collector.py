@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import shutil
 import ssl
@@ -63,6 +64,7 @@ DEFAULT_CSV, ARCHIVE_DIR = configure_data_paths()
 COLUMNS = MEASUREMENT_COLUMNS
 MAIN_RETENTION_DAYS = 365
 NETWORK_TIMEOUT_SECONDS = 15
+MAX_PING_MS = 60_000.0
 MAX_AREA_CANDIDATES = 25
 OOKLA_PATH_ENV = "SPEEDTEST_OOKLA_CLI"
 OOKLA_DOWNLOAD_URL = "https://www.speedtest.net/apps/cli"
@@ -226,6 +228,27 @@ def sanitize_server_info(server_id: Optional[str], server_name: Optional[str]) -
     return sid, sname
 
 
+def validate_measurement(row: Dict) -> Dict:
+    """Reject corrupt or impossible measurements before they reach history."""
+
+    values = {
+        "ping_ms": float(row.get("ping_ms", math.nan)),
+        "download_mbps": float(row.get("download_mbps", math.nan)),
+        "upload_mbps": float(row.get("upload_mbps", math.nan)),
+    }
+    invalid = [
+        name
+        for name, value in values.items()
+        if not math.isfinite(value) or value < 0
+    ]
+    if values["ping_ms"] > MAX_PING_MS:
+        invalid.append("ping_ms")
+    if invalid:
+        fields = ", ".join(sorted(set(invalid)))
+        raise RuntimeError(f"Speedtest returned an invalid measurement ({fields}).")
+    return row
+
+
 # ---------- Ookla CLI vs Python library ----------
 def _ookla_candidates(configured_path: str = "") -> list[Path]:
     """Return platform-appropriate CLI candidates in priority order."""
@@ -368,7 +391,7 @@ def run_one_via_ookla(
             sid = str(server.get("id") or "")
             sname = " - ".join([p for p in [server.get("name"), server.get("location")] if p])
             sid, sname = sanitize_server_info(sid, sname)
-            return {
+            return validate_measurement({
                 "timestamp": utc_now_iso(),
                 "ping_ms": round(ping_ms, 3),
                 "download_mbps": round(dl_bps / 1_000_000.0, 3),
@@ -376,7 +399,7 @@ def run_one_via_ookla(
                 "server_id": sid,
                 "server_name": sname,
                 "engine": "ookla-cli",
-            }
+            })
 
         # If license text still appears, surface a clear error
         lc_stderr = (result.stderr or "").lower()
@@ -424,7 +447,7 @@ def run_one_via_python(server_id: Optional[str] = None) -> Dict:
     sname = " - ".join([p for p in [server.get("sponsor"), server.get("name")] if p])
     sid, sname = sanitize_server_info(sid, sname)
 
-    return {
+    return validate_measurement({
         "timestamp": utc_now_iso(),
         "ping_ms": round(ping_ms, 3),
         "download_mbps": round(download_bps / 1_000_000.0, 3),
@@ -432,7 +455,7 @@ def run_one_via_python(server_id: Optional[str] = None) -> Dict:
         "server_id": sid,
         "server_name": sname,
         "engine": "python-lib",
-    }
+    })
 
 
 def run_one(

@@ -72,6 +72,15 @@ Import-Csv "$env:USERPROFILE\SpeedtestDashboard\speedtest_results.csv" |
 If the CSV has new rows but the page does not, the collector is healthy and the
 problem is limited to display refresh.
 
+## Ping is implausibly high or nearly static
+
+Values such as `1800000 ms` are invalid measurements, not normal connection
+latency.  Current builds reject implausible ping values before saving them and
+exclude corrupt legacy rows from dashboard calculations and charts.  The next
+valid sample becomes the latest result automatically.  Review the application
+log if invalid measurements continue, because the selected test engine or its
+server response may require attention.
+
 ## Review application logs
 
 On macOS:
