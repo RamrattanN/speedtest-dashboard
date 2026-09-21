@@ -51,6 +51,10 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   installable Python command remains available for Windows development.
 
 ### Fixed
+- Chart-type changes now force a full dashboard redraw so Bar and Line / Curve
+  selections apply reliably in packaged desktop applications.
+- **Refresh now** is disabled while automatic 60-second refresh is enabled and
+  becomes available when automatic refresh is turned off.
 - Windows service logging now forces UTF-8 before the collector starts, avoiding
   a CP1252 encoding failure that stopped collection when status text contained
   Unicode characters.
@@ -59,8 +63,6 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The windowed Windows service now restores writable output streams before
   starting the collector, preventing its background thread from stopping
   silently before the first measurement.
-- **Refresh now** remains available while automatic 60-second refresh is
-  enabled, so users can request an immediate CSV reload at any time.
 - The browser tab now uses the Ramrattan logo, Help is an icon in the branded
   header, and the manual refresh action uses a navy primary-button treatment.
 - The header Help control now renders as a compact, visible icon button across

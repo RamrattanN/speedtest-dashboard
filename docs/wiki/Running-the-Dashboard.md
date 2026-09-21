@@ -36,5 +36,5 @@ The dashboard provides:
 - Previous-period comparison overlays.
 - Server filtering, custom colours, timezone, and theme controls.
 - Automatic display refresh every 60 seconds.
-- **Refresh now** for an immediate data reload, whether automatic refresh is on
-  or off.
+- **Refresh now** for an immediate data reload after automatic refresh is
+  turned off.

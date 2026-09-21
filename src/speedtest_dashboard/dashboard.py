@@ -4,7 +4,7 @@ Speedtest dashboard (compact UI + navy accents):
 - Settings expander (Timezone, Theme, Color selection)
 - Full IANA timezone list, default America/Chicago
 - Default chart type = Bar
-- Independent manual refresh button and optional 60s auto-refresh
+- Manual refresh button when optional 60s auto-refresh is disabled
 - Robust server filter (handles blank IDs, string-normalizes)
 - Dynamic sampling caption
 - Window choices: Last Hour, Last 24 hours, Last 7 days, Last 30 days, Last 12 months
@@ -689,7 +689,7 @@ def render_help_panel() -> None:
             <li>Review Latest Result for the most recent connection check.</li>
             <li>Use Connection Overview to choose the chart style, servers, reporting window, and comparison overlay.</li>
             <li>Leave Refresh display every 60s enabled to see new CSV results automatically.</li>
-            <li>Select Refresh now for an immediate reload.  It works whether automatic refresh is on or off.</li>
+            <li>Turn off Refresh display every 60s before selecting Refresh now for an immediate reload.</li>
             <li>Open Display settings to change timezone, theme, and chart colours.</li>
           </ol>
           <p class="remember"><strong>Data location:</strong> {DEFAULT_CSV}</p>
@@ -749,7 +749,7 @@ def render_help_panel() -> None:
           <h3>Resolve common issues</h3>
           <ul>
             <li><strong>No data yet:</strong> Confirm the collector is running and wait for its first completed test.</li>
-            <li><strong>Dashboard does not update:</strong> Confirm automatic display refresh is enabled, then use Refresh now once if needed.</li>
+            <li><strong>Dashboard does not update:</strong> Confirm automatic display refresh is enabled.  To force an immediate reload, turn it off and then select Refresh now.</li>
             <li><strong>Ookla warning:</strong> The monitor can fall back automatically to the Python speed-test engine.</li>
             <li><strong>Browser tab was closed:</strong> {browser_guidance}</li>
             <li><strong>Need to restart:</strong> {restart_guidance}</li>
@@ -818,7 +818,12 @@ if st.session_state["help_panel_open"]:
 
 def rerun_for_refresh_schedule() -> None:
     """Rebuild the app when the fragment refresh schedule changes."""
-    st.rerun()
+    st.rerun(scope="app")
+
+
+def rerun_for_dashboard_control() -> None:
+    """Apply interactive dashboard controls with a full application rerun."""
+    st.rerun(scope="app")
 
 
 autorefresh = bool(st.session_state.get("dashboard_auto_refresh", True))
@@ -1083,6 +1088,7 @@ def render_dashboard() -> None:
                 index=0,
                 horizontal=True,
                 key="dashboard_chart_mode",
+                on_change=rerun_for_dashboard_control,
             )
         with control_refresh:
             st.toggle(
@@ -1098,6 +1104,13 @@ def render_dashboard() -> None:
                 type="primary",
                 key="refresh_now_btn",
                 width="stretch",
+                disabled=autorefresh,
+                help=(
+                    "Turn off Refresh display every 60s to use manual refresh."
+                    if autorefresh
+                    else "Reload the dashboard data now."
+                ),
+                on_click=rerun_for_dashboard_control,
             )
 
     with st.expander("Display settings", expanded=False):

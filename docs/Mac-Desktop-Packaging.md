@@ -61,7 +61,7 @@ override for an artifact obtained from the project.
 - **Open Dashboard** opens the controller-selected address.
 - A completed test appears in `~/SpeedtestDashboard/speedtest_results.csv`.
 - The dashboard displays the latest recorded result.
-- **Refresh now** works with automatic refresh either on or off.
+- **Refresh now** becomes available after automatic refresh is turned off.
 - **Quit Monitor** stops the local server.
 
 ## Logs and removal

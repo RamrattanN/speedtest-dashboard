@@ -48,7 +48,7 @@ finishes about every five minutes, while the open dashboard checks the CSV every
 60 seconds.
 
 1. Compare the **Recorded** card with the last CSV row.
-2. Select **Refresh now**.  It remains available when automatic refresh is on.
+2. Turn off **Refresh display every 60s**, then select **Refresh now**.
 3. If needed, press **F5** once to confirm that the browser still has a live
    connection to the local dashboard.
 
