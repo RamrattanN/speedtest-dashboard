@@ -24,6 +24,8 @@ The `main` branch may contain changes that have passed automated packaging but
 are still awaiting hands-on release QA.  Those changes are published on the
 release page only after production approval.
 
+![Current Speedtest Monitor dashboard](assets/dashboard_preview.png?v=2026-09-21-2)
+
 ## Features
 
 - Configurable test interval, dashboard port, and data folder.
