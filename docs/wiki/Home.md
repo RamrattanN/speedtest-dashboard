@@ -57,14 +57,14 @@ Windows batch launchers have been retired.
 
 ## Documentation
 
-- [Getting Started](Getting-Started.md)
-- [Configuration](Configuration.md)
-- [Measurement Engine](Measurement-Engine.md)
-- [Running the Dashboard](Running-the-Dashboard.md)
-- [Customization](Customization.md)
-- [Troubleshooting](Troubleshooting.md)
-- [Roadmap](Roadmap.md)
-- [Credits](Credits.md)
+- [Getting Started](https://github.com/RamrattanN/speedtest-dashboard/wiki/Getting-Started)
+- [Configuration](https://github.com/RamrattanN/speedtest-dashboard/wiki/Configuration)
+- [Measurement Engine](https://github.com/RamrattanN/speedtest-dashboard/wiki/Measurement-Engine)
+- [Running the Dashboard](https://github.com/RamrattanN/speedtest-dashboard/wiki/Running-the-Dashboard)
+- [Customization](https://github.com/RamrattanN/speedtest-dashboard/wiki/Customization)
+- [Troubleshooting](https://github.com/RamrattanN/speedtest-dashboard/wiki/Troubleshooting)
+- [Roadmap](https://github.com/RamrattanN/speedtest-dashboard/wiki/Roadmap)
+- [Credits](https://github.com/RamrattanN/speedtest-dashboard/wiki/Credits)
 
 ## Defaults
 
