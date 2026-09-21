@@ -1,4 +1,4 @@
-# Speedtest Dashboard
+# Speedtest Monitor
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
@@ -13,7 +13,16 @@ official Ookla Speedtest CLI.  The Python `speedtest-cli` library remains
 available only through an explicit compatibility-mode choice.
 Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 
-![Speedtest Dashboard Screenshot](assets/dashboard_preview.png?v=2025-09-04-1)
+## Download
+
+Download the current production installers from the
+[latest Speedtest Monitor release](https://github.com/RamrattanN/speedtest-dashboard/releases/latest).
+The release page includes separate packages for macOS Intel, macOS Apple
+silicon, and Windows x64, plus SHA-256 checksums.
+
+The `main` branch may contain changes that have passed automated packaging but
+are still awaiting hands-on release QA.  Those changes are published on the
+release page only after production approval.
 
 ## Features
 
@@ -21,8 +30,8 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 - Rolling 365-day retention across the main CSV and monthly archives.
 - Sortable access to the latest 150 measurements in the selected view.
 - Two-step measurement-history reset with a fresh capture request.
-- Bar and line charts with previous-period comparison.
-- Automatic 60-second display refresh plus an independent manual refresh.
+- Bar and line charts with previous-period comparison and time-axis-only zoom.
+- Automatic 60-second display refresh plus an independent header refresh.
 - A header **Run speed test** action that safely requests one immediate new
   measurement without starting a competing collector.
 - Timezone, theme, color, server, and date-window controls.
@@ -34,8 +43,7 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
   process-tree cleanup if a speed-test backend freezes.
 - Controller and collector singleton locks that prevent repeated launches or
   orphaned services from recording overlapping measurements.
-- Unsigned macOS Intel and Apple silicon applications for
-  users who do not use Terminal in everyday use.
+- Unsigned macOS Intel and Apple silicon applications with native controllers.
 - Unsigned Windows x64 installer with a native controller and Start menu entry.
 - macOS developer launcher using an isolated local Python environment.
 - Installable command-line package.
@@ -45,9 +53,9 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 
 ### Desktop application
 
-The unsigned macOS Intel 1.1.0 application is distributed as
-[Speedtest-Monitor-macOS-Intel-1.1.0.dmg](https://github.com/RamrattanN/speedtest-dashboard/releases/download/v1.1.0/Speedtest-Monitor-macOS-Intel-1.1.0.dmg).
-Open the disk image, drag
+Open the
+[latest production release](https://github.com/RamrattanN/speedtest-dashboard/releases/latest),
+download the macOS Intel disk image, and open it.  Drag
 **Speedtest Monitor** to **Applications**, then open the application.  It
 includes Python and the required dependencies and does not require the
 repository or VS Code.
@@ -65,9 +73,8 @@ reopen the dashboard or quit the monitor safely.
 See [macOS Desktop Packaging](docs/Mac-Desktop-Packaging.md) for build, test, and
 distribution instructions.
 
-An unsigned Apple silicon release is also produced as
-[Speedtest-Monitor-macOS-Apple-Silicon-1.1.0.dmg](https://github.com/RamrattanN/speedtest-dashboard/releases/download/v1.1.0/Speedtest-Monitor-macOS-Apple-Silicon-1.1.0.dmg).
-Its automated package and
+The release page also includes a separate Apple silicon disk image.  Its
+automated package and
 dashboard smoke tests run on an ARM64 GitHub Actions runner, but it remains
 unvalidated on a physical Apple silicon Mac.
 
@@ -98,9 +105,9 @@ how to work on the project without memorizing Terminal commands.
 
 ### Desktop application
 
-Download
-[Speedtest-Monitor-Windows-x64-1.1.0.exe](https://github.com/RamrattanN/speedtest-dashboard/releases/download/v1.1.0/Speedtest-Monitor-Windows-x64-1.1.0.exe),
-then run it.  The per-user
+Open the
+[latest production release](https://github.com/RamrattanN/speedtest-dashboard/releases/latest),
+download the Windows x64 installer, then run it.  The per-user
 installer adds **Speedtest Monitor** to the Start menu and does not require
 Python or the repository.
 
