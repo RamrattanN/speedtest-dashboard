@@ -26,8 +26,9 @@ Download the installers from the
 6. Use **Quit Monitor** to stop both collection and the dashboard safely.
 
 The collector normally records a measurement every five minutes.  The open
-dashboard checks for new results every 60 seconds.  Select the refresh icon
-beside Help for an immediate reload.
+dashboard checks for new results every 60 seconds.  Select **Run speed test**
+to request a new measurement, or **Refresh dashboard** to reload results that
+have already been recorded.
 
 Server selection is automatic by default on every computer.  If public-IP
 geolocation chooses a distant region, use **Test server selection** to save a

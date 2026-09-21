@@ -49,9 +49,11 @@ import certifi
 import pandas as pd
 
 from speedtest_dashboard.app_config import (
+    InstanceAlreadyRunningError,
     MEASUREMENT_COLUMNS,
     configure_data_paths,
     load_settings,
+    instance_lock,
     measurement_data_lock,
     save_collector_status,
     save_server_calibration,
@@ -748,7 +750,7 @@ def main(argv: list[str] | None = None) -> bool:
         )
         return True
 
-    if args.daemon:
+    def run_daemon() -> bool:
         while True:
             once()
             jitter = 5 if args.interval >= 20 else 0
@@ -758,10 +760,16 @@ def main(argv: list[str] | None = None) -> bool:
             wait_seconds = max(5, int(args.interval)) + jitter_offset
             if wait_for_collection_restart(wait_seconds, DEFAULT_CSV.parent):
                 print("[INFO] Data reset acknowledged.  Starting a fresh measurement cycle.", flush=True)
-    else:
-        return once()
 
-    return True
+    if args.daemon:
+        try:
+            with instance_lock("collector", DEFAULT_CSV.parent):
+                return run_daemon()
+        except InstanceAlreadyRunningError as exc:
+            print(f"[INFO] {exc}  This collector will not start.", flush=True)
+            return False
+
+    return once()
 
 
 if __name__ == "__main__":

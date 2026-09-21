@@ -57,9 +57,14 @@ finishes about every five minutes, while the open dashboard checks the CSV every
 60 seconds.
 
 1. Compare the **Recorded** card with the last CSV row.
-2. Select the refresh icon beside Help for an immediate reload.
+2. Select **Refresh dashboard** in the header for an immediate reload of
+   measurements already present in the CSV.
 3. If needed, press **F5** once to confirm that the browser still has a live
    connection to the local dashboard.
+
+Select **Run speed test** only when you want to collect a new measurement.  It
+does not merely redraw the dashboard.  Repeated requests coalesce, and a
+requested test waits until any current measurement finishes.
 
 On Windows, inspect recent rows with PowerShell:
 
@@ -71,6 +76,19 @@ Import-Csv "$env:USERPROFILE\SpeedtestDashboard\speedtest_results.csv" |
 
 If the CSV has new rows but the page does not, the collector is healthy and the
 problem is limited to display refresh.
+
+## Measurements appear in closely spaced pairs
+
+Older builds allowed multiple application instances to start independent
+collectors against the same results folder.  Those tests competed for bandwidth
+and could produce misleading results several seconds apart.  Current builds
+allow one controller and one collector per results folder.  A repeated launch
+shows an already-running message, while the collector lock also protects
+against orphaned service processes.
+
+Existing paired rows remain in the CSV because the application does not delete
+measurements without confirmation.  After installing the corrected build, use
+the two-step reset under **Data management** if a clean baseline is required.
 
 ## Ping is implausibly high or nearly static
 

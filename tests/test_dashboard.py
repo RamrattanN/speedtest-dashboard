@@ -204,7 +204,11 @@ def test_chart_type_redraws_chart_and_header_refresh_is_always_available(
     ]
     assert bar_spec["layout"]["xaxis"]["fixedrange"] is False
     assert bar_spec["layout"]["yaxis"]["fixedrange"] is True
+    assert bar_spec["layout"]["yaxis"]["rangemode"] == "tozero"
     assert bar_spec["layout"]["yaxis2"]["fixedrange"] is True
+    assert bar_spec["layout"]["yaxis2"]["rangemode"] == "tozero"
+    assert bar_spec["data"][2]["line"]["dash"] == "dash"
+    assert bar_spec["data"][2]["marker"]["symbol"] == "diamond"
     refresh_button = next(
         button
         for button in app.button
@@ -221,9 +225,87 @@ def test_chart_type_redraws_chart_and_header_refresh_is_always_available(
         "scatter",
         "scatter",
     ]
+    assert line_spec["data"][0]["marker"]["symbol"] == "circle"
+    assert line_spec["data"][0]["line"]["shape"] == "linear"
+    assert line_spec["data"][1]["marker"]["symbol"] == "square"
+    assert line_spec["data"][1]["line"]["shape"] == "linear"
+    assert line_spec["data"][2]["line"]["dash"] == "dash"
+    assert line_spec["data"][2]["line"]["shape"] == "linear"
+    assert line_spec["data"][2]["marker"]["symbol"] == "diamond"
 
     refresh_button.click().run(timeout=20)
     assert not app.exception
+
+
+def test_manual_speed_test_queues_one_measurement_request(tmp_path, monkeypatch):
+    monkeypatch.setenv("SPEEDTEST_DASHBOARD_DATA_DIR", str(tmp_path))
+    from speedtest_dashboard.app_config import set_measurement_engine
+
+    set_measurement_engine("compatibility", "", tmp_path)
+    pd.DataFrame(
+        [
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "ping_ms": 25.0,
+                "download_mbps": 200.0,
+                "upload_mbps": 75.0,
+                "server_id": "1",
+                "server_name": "Example Server",
+                "engine": "python-lib",
+            }
+        ]
+    ).to_csv(tmp_path / "speedtest_results.csv", index=False)
+    dashboard_path = Path(__file__).parents[1] / "src" / "speedtest_dashboard" / "dashboard.py"
+    app = AppTest.from_file(dashboard_path)
+
+    app.run(timeout=20)
+    run_button = next(
+        button for button in app.button if button.label == "Run speed test"
+    )
+    run_button.click().run(timeout=20)
+
+    request_path = tmp_path / "restart_collection.request"
+    assert request_path.is_file()
+    first_request = request_path.read_text(encoding="utf-8")
+    assert any("Speed test requested" in item.value for item in app.success)
+
+    run_button = next(
+        button for button in app.button if button.label == "Run speed test"
+    )
+    run_button.click().run(timeout=20)
+
+    assert request_path.read_text(encoding="utf-8") == first_request
+    assert any("already queued" in item.value for item in app.info)
+
+
+def test_manual_speed_test_explains_missing_required_engine(tmp_path, monkeypatch):
+    monkeypatch.setenv("SPEEDTEST_DASHBOARD_DATA_DIR", str(tmp_path))
+    pd.DataFrame(
+        [
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "ping_ms": 25.0,
+                "download_mbps": 200.0,
+                "upload_mbps": 75.0,
+                "server_id": "1",
+                "server_name": "Example Server",
+                "engine": "ookla-cli",
+            }
+        ]
+    ).to_csv(tmp_path / "speedtest_results.csv", index=False)
+    dashboard_path = Path(__file__).parents[1] / "src" / "speedtest_dashboard" / "dashboard.py"
+    app = AppTest.from_file(dashboard_path)
+
+    app.run(timeout=20)
+    next(
+        button for button in app.button if button.label == "Run speed test"
+    ).click().run(timeout=20)
+
+    assert not (tmp_path / "restart_collection.request").exists()
+    assert any(
+        "cannot start until the official Ookla CLI is available" in item.value
+        for item in app.warning
+    )
 
 
 def test_dashboard_saves_location_neutral_server_preference(tmp_path, monkeypatch):
@@ -437,10 +519,9 @@ def test_help_navigation_is_specific_to_speedtest(tmp_path, monkeypatch):
         "collector normally records a result every five minutes" in block.value
         for block in app.markdown
     )
-    assert any(
-        "refresh icon beside Help" in block.value
-        for block in app.markdown
-    )
+    assert any("Run speed test" in block.value for block in app.markdown)
+    assert any("Refresh dashboard" in block.value for block in app.markdown)
+    assert any("Application opened twice" in block.value for block in app.markdown)
     assert app.code[0].value == "./RunSpeedTest.command --interval 300"
 
     close_button = next(button for button in app.button if button.label == "Close X")

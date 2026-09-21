@@ -65,6 +65,10 @@ Compatibility mode only when intentionally testing the Python engine.
 - The timezone list includes `America/Chicago`.
 - Automatic refresh checks for new data every 60 seconds.
 - The header refresh icon immediately reloads dashboard data.
+- The header **Run speed test** action requests one new measurement without
+  launching an overlapping collector.
+- Opening Speedtest Monitor a second time reports that it is already running
+  and does not start another service or collector.
 - The chart-type selector appears directly below the chart.
 - `~/SpeedtestDashboard/speedtest_results.csv` exists after collection.
 - Stopping the launcher with **Control-C** ends both processes.

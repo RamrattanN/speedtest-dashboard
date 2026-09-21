@@ -17,6 +17,10 @@ SETTINGS_FILENAME = "settings.json"
 STATUS_FILENAME = "collector_status.json"
 RESTART_REQUEST_FILENAME = "restart_collection.request"
 DATA_LOCK_FILENAME = ".measurement_data.lock"
+INSTANCE_LOCK_FILENAMES = {
+    "controller": ".speedtest_controller.lock",
+    "collector": ".speedtest_collector.lock",
+}
 MEASUREMENT_COLUMNS = [
     "timestamp",
     "ping_ms",
@@ -40,6 +44,10 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         "last_error": "",
     }
 }
+
+
+class InstanceAlreadyRunningError(RuntimeError):
+    """Raised when another process already owns an application role."""
 
 
 def get_data_dir(override: str | Path | None = None) -> Path:
@@ -74,6 +82,61 @@ def collector_status_path(override: str | Path | None = None) -> Path:
     """Return the collector health file beside the measurement CSV."""
 
     return get_data_dir(override) / STATUS_FILENAME
+
+
+@contextmanager
+def instance_lock(
+    role: str,
+    override: str | Path | None = None,
+):
+    """Hold a non-blocking, process-scoped lock for a controller or collector.
+
+    The operating system releases the lock automatically if the process exits
+    unexpectedly.  The small lock file may remain on disk, but an unlocked file
+    never prevents a later launch.
+    """
+
+    try:
+        filename = INSTANCE_LOCK_FILENAMES[role]
+    except KeyError as exc:
+        raise ValueError(f"Unsupported instance-lock role: {role}") from exc
+
+    path = get_data_dir(override) / filename
+    handle = path.open("a+b")
+    handle.seek(0, os.SEEK_END)
+    if handle.tell() == 0:
+        handle.write(b"\0")
+        handle.flush()
+    handle.seek(0)
+
+    try:
+        if os.name == "nt":
+            import msvcrt
+
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except (OSError, BlockingIOError) as exc:
+        handle.close()
+        raise InstanceAlreadyRunningError(
+            f"Another {role} instance is already active for {path.parent}."
+        ) from exc
+
+    try:
+        yield path
+    finally:
+        handle.seek(0)
+        if os.name == "nt":
+            import msvcrt
+
+            msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        handle.close()
 
 
 def restart_request_path(override: str | Path | None = None) -> Path:
@@ -124,7 +187,11 @@ def measurement_data_lock(
 
 
 def request_collection_restart(override: str | Path | None = None) -> Path:
-    """Request an immediate collector cycle after its current work completes."""
+    """Request one immediate collector cycle after any current work completes.
+
+    Repeated requests coalesce into the same file, so the dashboard cannot
+    queue multiple overlapping measurements.
+    """
 
     path = restart_request_path(override)
     path.write_text(
@@ -132,6 +199,12 @@ def request_collection_restart(override: str | Path | None = None) -> Path:
         encoding="utf-8",
     )
     return path
+
+
+def collection_restart_pending(override: str | Path | None = None) -> bool:
+    """Return whether an immediate collector cycle is already queued."""
+
+    return restart_request_path(override).is_file()
 
 
 def consume_collection_restart(override: str | Path | None = None) -> bool:

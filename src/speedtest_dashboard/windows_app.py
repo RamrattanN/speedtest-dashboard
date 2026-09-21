@@ -17,7 +17,9 @@ import webbrowser
 from speedtest_dashboard import __version__
 from speedtest_dashboard.app_config import (
     DATA_DIR_ENV,
+    InstanceAlreadyRunningError,
     get_data_dir,
+    instance_lock,
     load_collector_status,
     wait_for_collection_restart,
 )
@@ -162,7 +164,7 @@ def run_collector_cycle(
     return True
 
 
-def supervise_collector(
+def _supervise_collector(
     interval: int,
     data_dir: Path,
     *,
@@ -193,6 +195,27 @@ def supervise_collector(
                 "[INFO] Data reset acknowledged.  Starting a fresh measurement cycle.",
                 flush=True,
             )
+
+
+def supervise_collector(
+    interval: int,
+    data_dir: Path,
+    *,
+    timeout: int = COLLECTOR_TIMEOUT_SECONDS,
+    stop_event: threading.Event | None = None,
+) -> None:
+    """Run one Windows collector supervisor per results folder."""
+
+    try:
+        with instance_lock("collector", data_dir):
+            _supervise_collector(
+                interval,
+                data_dir,
+                timeout=timeout,
+                stop_event=stop_event,
+            )
+    except InstanceAlreadyRunningError as exc:
+        print(f"[INFO] {exc}  This collector will not start.", flush=True)
 
 
 def run_services(
@@ -285,7 +308,7 @@ def _configure_utf8_output(stream: object) -> None:
         return
 
 
-def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
+def _run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
     """Show the Windows controller and supervise the hidden service process."""
     import tkinter as tk
     from tkinter import messagebox
@@ -404,6 +427,26 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
     root.protocol("WM_DELETE_WINDOW", quit_app)
     root.after(250, poll_service)
     root.mainloop()
+
+
+def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
+    """Run one controller per results folder and reject duplicate launches."""
+
+    try:
+        with instance_lock("controller", data_dir):
+            _run_controller(interval, requested_port, data_dir)
+    except InstanceAlreadyRunningError:
+        import tkinter as tk
+        from tkinter import messagebox
+
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showinfo(
+            APP_NAME,
+            "Speedtest Monitor is already running.  Use the existing controller "
+            "window to open the dashboard or quit the monitor.",
+        )
+        root.destroy()
 
 
 def main(argv: list[str] | None = None) -> None:

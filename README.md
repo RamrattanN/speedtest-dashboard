@@ -23,6 +23,8 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 - Two-step measurement-history reset with a fresh capture request.
 - Bar and line charts with previous-period comparison.
 - Automatic 60-second display refresh plus an independent manual refresh.
+- A header **Run speed test** action that safely requests one immediate new
+  measurement without starting a competing collector.
 - Timezone, theme, color, server, and date-window controls.
 - Location-neutral server selection: automatic by default, with an optional
   saved city-or-region preference and regional failover candidates.
@@ -30,6 +32,8 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
   and Python measurements, plus visible collector health and setup guidance.
 - Windows measurement isolation with a hard timeout, automatic recovery, and
   process-tree cleanup if a speed-test backend freezes.
+- Controller and collector singleton locks that prevent repeated launches or
+  orphaned services from recording overlapping measurements.
 - Unsigned macOS Intel and Apple silicon applications for
   users who do not use Terminal in everyday use.
 - Unsigned Windows x64 installer with a native controller and Start menu entry.
