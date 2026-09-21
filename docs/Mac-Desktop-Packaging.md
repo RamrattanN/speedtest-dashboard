@@ -64,6 +64,20 @@ itself before macOS allows it to run, which is why the disk image includes a
 plain-text instruction file.  Only use the security override for an artifact
 obtained from the official project release.
 
+## Post-deployment handoff
+
+Every macOS QA or production deployment handoff must remind the tester to run
+these commands after replacing the application:
+
+```bash
+sudo xattr -dr com.apple.quarantine "/Applications/Speedtest Monitor.app"
+open "/Applications/Speedtest Monitor.app"
+```
+
+The first command may request the Mac administrator password.  Terminal does
+not display password characters while they are typed.  This reminder is still
+required when the commands have been supplied during an earlier deployment.
+
 ## Acceptance checks
 
 - The controller footer reports version 1.1.0.
