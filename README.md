@@ -34,8 +34,8 @@ release page only after production approval.
 - Two-step measurement-history reset with a fresh capture request.
 - Bar and line charts with previous-period comparison and time-axis-only zoom.
 - Automatic 60-second display refresh plus an independent header refresh.
-- A header **Run speed test** action that safely requests one immediate new
-  measurement without starting a competing collector.
+- A header **Run speed test** action that atomically requests one immediate new
+  measurement without starting another timer or collector.
 - Timezone, theme, color, server, and date-window controls.
 - Location-neutral server selection: automatic by default, with an optional
   saved city-or-region preference and regional failover candidates.
@@ -43,8 +43,8 @@ release page only after production approval.
   and Python measurements, plus visible collector health and setup guidance.
 - Windows measurement isolation with a hard timeout, automatic recovery, and
   process-tree cleanup if a speed-test backend freezes.
-- Controller and collector singleton locks that prevent repeated launches or
-  orphaned services from recording overlapping measurements.
+- Controller and collector singleton locks, controller-lifecycle monitoring,
+  and macOS legacy-orphan cleanup that prevent overlapping measurements.
 - Unsigned macOS Intel and Apple silicon applications with native controllers.
 - Unsigned Windows x64 installer with a native controller and Start menu entry.
 - macOS developer launcher using an isolated local Python environment.

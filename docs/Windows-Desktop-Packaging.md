@@ -61,6 +61,7 @@ uninstall.  It can be removed separately only when the user no longer wants it.
   timeout-protected measurement without overlapping an active test.
 - A repeated application launch reports that the monitor is already running
   and does not create another service or collector.
+- The hidden service exits if its owning controller stops unexpectedly.
 - The chart-type selector appears directly below the chart.
 - Repair preserves the application and measurement history.
 - Uninstall removes the application but preserves measurement history.

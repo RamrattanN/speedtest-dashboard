@@ -632,7 +632,7 @@ st.set_page_config(
 apply_theme_css("light")
 
 def render_help_panel() -> None:
-    """Render speed-test guidance in a right-side Help panel."""
+    """Render speed-test guidance in the non-modal Help panel."""
     st.markdown(
         """
         <div class="rr-section-heading">
@@ -739,7 +739,7 @@ def render_help_panel() -> None:
             <li>Use Test server selection to keep tests in a preferred city or region when automatic selection chooses a distant location.</li>
             <li>Use Measurement engine to confirm that the official Ookla CLI is active.  Production collection pauses rather than silently substituting another engine.</li>
             <li>The open dashboard checks for new CSV results automatically every 60 seconds.</li>
-            <li>Select Run speed test in the header to collect a new measurement.  If a test is already running, one request waits behind it.</li>
+            <li>Select Run speed test in the header to request one new measurement.  Repeated clicks coalesce into one pending request, and the existing collector consumes it once without creating another schedule.</li>
             <li>Select Refresh dashboard in the header to reload measurements already recorded in the CSV.</li>
             <li>Open Display settings to change timezone, theme, and chart colours.</li>
           </ol>
@@ -808,7 +808,7 @@ def render_help_panel() -> None:
             <li><strong>Wrong test region:</strong> Open Test server selection, choose Preferred city or region, enter a city plus state, province, or country, and save.  The next collection cycle calibrates regional candidates and retains automatic fallback.</li>
             <li><strong>Automatic fallback row:</strong> All saved regional candidates were unavailable for that cycle, so the provider selected an unrestricted server.</li>
             <li><strong>Browser tab was closed:</strong> {browser_guidance}</li>
-            <li><strong>Application opened twice:</strong> The second controller displays an already-running message and exits.  A separate collector lock also prevents orphaned or alternate service processes from recording overlapping tests.</li>
+            <li><strong>Application opened twice:</strong> The second controller displays an already-running message and exits.  Hidden services monitor their owning controller, and macOS also removes a reparented legacy service for the same results folder during launch.</li>
             <li><strong>Need to restart:</strong> {restart_guidance}</li>
           </ul>
           <p class="remember"><strong>Remember:</strong> {keep_running_guidance}</p>

@@ -6,12 +6,15 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [Unreleased]
+## [Unreleased] - current QA build 1.1.0
+
+Version 1.0.0 remains the latest published production release.  The application
+metadata on `main` reports 1.1.0 while this combined QA candidate is tested.
 
 ### Added
-- A header **Run speed test** action that requests one immediate measurement
-  without launching overlapping collectors.  Repeated requests coalesce while
-  one request is pending.
+- A header **Run speed test** action that atomically requests one immediate
+  measurement without launching another timer or collector.  Repeated requests
+  coalesce while one request is pending.
 - A sortable table of the latest 150 measurements in the selected dashboard
   window.
 - A two-step data reset that clears the main CSV and monthly archives, preserves
@@ -36,11 +39,18 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Cross-platform controller and collector singleton locks prevent repeated
-  application launches or orphaned services from running overlapping speed
-  tests against the same results folder.
+  current application launches from running overlapping speed tests against
+  the same results folder.
+- Hidden macOS and Windows services now monitor their owning controller and
+  exit if that controller stops unexpectedly.
+- A new macOS controller removes a reparented legacy service for the same
+  results folder before starting its owned replacement.
+- Manual measurement requests are created atomically, so repeated clicks
+  remain one pending request and never establish another schedule.
 
-## [1.1.0] - 2026-09-21
-### Added
+### Included from the earlier 1.1.0 QA baseline
+
+#### Added
 - Production engine controls and official Ookla CLI discovery for Windows x64,
   macOS Intel, and macOS Apple silicon.
 - Verified executable detection that rejects the unrelated Python command with
@@ -49,7 +59,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   measurement cycles.
 - A dedicated Measurement Engine Wiki page and aligned installation guidance.
 
-### Changed
+#### Changed
 - The official Ookla CLI is now required by default for production
   measurements.  Python fallback requires an explicit Compatibility mode
   selection.
@@ -60,13 +70,14 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - All Windows x64, macOS Intel, and macOS Apple silicon artifacts now use
   version 1.1.0.
 
-### Security
+#### Security
 - Ookla's executable is not redistributed because an explicit redistribution
   grant was not confirmed.  Users obtain it directly from Ookla and its terms
   continue to apply.
 
-## [1.0.1] - 2026-09-21
-### Added
+### Included from the earlier 1.0.1 internal milestone
+
+#### Added
 - Both macOS disk images now include a plain-text first-launch security guide
   that remains readable when Gatekeeper blocks executable files.
 - All platforms now provide optional preferred city-or-region server
@@ -76,11 +87,11 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Windows runs each measurement in a disposable child process with a
   three-minute safety timeout and automatic continuation on the next cycle.
 
-### Changed
+#### Changed
 - macOS installation guidance now explains that the optional unsigned approval
   helper may require its own **Open Anyway** approval before it can run.
-- README, packaged Help, packaging guides, and Wiki pages now use the same
-  macOS Gatekeeper sequence and identify version 1.0.1 as the current release.
+- At this internal milestone, README, packaged Help, packaging guides, and Wiki
+  pages used the same macOS Gatekeeper sequence and version number.
 - Windows and both macOS packages now share patch version 1.0.1.
 - Preferred server settings are stored locally in the existing results folder.
 - Windows schedules measurement starts at the configured interval instead of
@@ -90,7 +101,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Latest Result now identifies the measurement engine so official Ookla CLI
   samples can be distinguished from Python fallback samples.
 
-### Fixed
+#### Fixed
 - Corrected first-launch instructions that previously implied the unsigned
   macOS approval helper could always execute before Gatekeeper approval.
 - macOS release builds now rerun when installer guidance files change.
@@ -223,9 +234,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/RamrattanN/speedtest-dashboard/compare/v1.1.0...HEAD
-[1.1.0]: https://github.com/RamrattanN/speedtest-dashboard/compare/v1.0.1...v1.1.0
-[1.0.1]: https://github.com/RamrattanN/speedtest-dashboard/compare/v1.0.0...v1.0.1
+[Unreleased]: https://github.com/RamrattanN/speedtest-dashboard/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/RamrattanN/speedtest-dashboard/compare/v0.1.1...v1.0.0
 [0.1.1]: https://github.com/RamrattanN/speedtest-dashboard/compare/v0.1.0...v0.1.1  
 [0.1.0]: https://github.com/RamrattanN/speedtest-dashboard/releases/tag/v0.1.0  

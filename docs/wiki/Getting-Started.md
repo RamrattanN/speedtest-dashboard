@@ -18,7 +18,7 @@ silicon Mac.  Python, Git, VS Code, and a repository checkout are not required.
    **Allow and Open Speedtest Monitor.command** helper in the disk image.  If
    macOS blocks the helper itself, select **Done**, approve the helper with
    **Open Anyway** in Privacy & Security, and run it again.
-6. See the [macOS Desktop Packaging guide](../Mac-Desktop-Packaging.md) for the
+6. See the [macOS Desktop Packaging guide](https://github.com/RamrattanN/speedtest-dashboard/blob/main/docs/Mac-Desktop-Packaging.md) for the
    Terminal fallback and complete security explanation.
 7. Open **Speedtest Monitor** and keep the controller open.
 8. Download the official Speedtest CLI directly from
@@ -58,7 +58,7 @@ repository checkout are not required.
 Running the installer again offers **Repair** and **Uninstall completely**.
 Uninstall removes the application, shortcuts, and logs but preserves measurement
 history in `%USERPROFILE%\SpeedtestDashboard`.  See the
-[Windows Desktop Packaging guide](../Windows-Desktop-Packaging.md) for details.
+[Windows Desktop Packaging guide](https://github.com/RamrattanN/speedtest-dashboard/blob/main/docs/Windows-Desktop-Packaging.md) for details.
 
 Every installation starts with location-neutral **Automatic** server
 selection.  If the first results use an unexpectedly distant region, open

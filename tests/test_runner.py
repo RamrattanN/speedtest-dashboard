@@ -89,6 +89,37 @@ def test_macos_service_command_uses_module_in_source_mode(tmp_path, monkeypatch)
     ]
 
 
+def test_macos_service_command_identifies_owning_controller(tmp_path, monkeypatch):
+    monkeypatch.setattr(macos_app, "is_frozen", lambda: False)
+
+    command = macos_app.service_command(8600, 300, tmp_path, controller_pid=43299)
+
+    assert command[-2:] == ["--controller-pid", "43299"]
+
+
+def test_macos_finds_only_reparented_legacy_service_for_same_data_dir(tmp_path):
+    data_dir = tmp_path / "SpeedtestDashboard"
+    other_dir = tmp_path / "OtherDashboard"
+    process_table = f"""
+43299 1 /Applications/Speedtest Monitor.app/Contents/MacOS/Speedtest Monitor
+43356 43299 /Applications/Speedtest Monitor.app/Contents/MacOS/Speedtest Monitor --service --port 8501 --interval 300 --data-dir {data_dir}
+38042 1 /Applications/Speedtest Monitor.app/Contents/MacOS/Speedtest Monitor --service --port 8501 --interval 300 --data-dir {data_dir}
+38043 1 /Applications/Speedtest Monitor.app/Contents/MacOS/Speedtest Monitor --service --port 8502 --interval 300 --data-dir {other_dir}
+"""
+
+    assert macos_app.legacy_orphan_service_pids(data_dir, process_table) == [38042]
+
+
+def test_macos_service_exits_when_owning_controller_is_gone(monkeypatch):
+    exits = []
+    monkeypatch.setattr(macos_app.os, "getppid", lambda: 1)
+    monkeypatch.setattr(macos_app.os, "_exit", lambda code: exits.append(code))
+
+    macos_app._exit_when_controller_stops(43299, poll_seconds=0)
+
+    assert exits == [0]
+
+
 def test_macos_dashboard_path_uses_pyinstaller_bundle(tmp_path, monkeypatch):
     monkeypatch.setattr(macos_app.sys, "_MEIPASS", str(tmp_path), raising=False)
 
@@ -163,6 +194,24 @@ def test_windows_service_command_uses_module_in_source_mode(tmp_path, monkeypatc
     ]
 
 
+def test_windows_service_command_identifies_owning_controller(tmp_path, monkeypatch):
+    monkeypatch.setattr(windows_app, "is_frozen", lambda: False)
+
+    command = windows_app.service_command(8600, 300, tmp_path, controller_pid=41856)
+
+    assert command[-2:] == ["--controller-pid", "41856"]
+
+
+def test_windows_service_exits_when_owning_controller_is_gone(monkeypatch):
+    exits = []
+    monkeypatch.setattr(windows_app.os, "getppid", lambda: 1)
+    monkeypatch.setattr(windows_app.os, "_exit", lambda code: exits.append(code))
+
+    windows_app._exit_when_controller_stops(41856, poll_seconds=0)
+
+    assert exits == [0]
+
+
 def test_windows_collector_command_uses_isolated_one_shot_process(tmp_path, monkeypatch):
     monkeypatch.setattr(windows_app, "is_frozen", lambda: False)
 
@@ -210,7 +259,7 @@ def test_windows_collector_cycle_recovers_after_child_failure(tmp_path, monkeypa
     assert not windows_app.run_collector_cycle(tmp_path)
 
 
-def test_windows_supervisor_restarts_immediately_after_data_reset(
+def test_windows_supervisor_consumes_one_request_as_one_additional_cycle(
     tmp_path,
     monkeypatch,
 ):

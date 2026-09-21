@@ -39,11 +39,11 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo === Upgrading pip and installing Speedtest Dashboard ===
+echo === Upgrading pip and installing Speedtest Monitor ===
 ".venv\Scripts\python.exe" -m pip install --upgrade pip
 ".venv\Scripts\python.exe" -m pip install -e .
 if %ERRORLEVEL% NEQ 0 (
-  echo ERROR: Failed to install Speedtest Dashboard.
+  echo ERROR: Failed to install Speedtest Monitor.
   exit /b 1
 )
 

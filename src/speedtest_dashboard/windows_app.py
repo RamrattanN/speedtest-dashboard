@@ -77,7 +77,12 @@ def available_port(preferred: int = DEFAULT_PORT) -> int:
             return int(probe.getsockname()[1])
 
 
-def service_command(port: int, interval: int, data_dir: Path) -> list[str]:
+def service_command(
+    port: int,
+    interval: int,
+    data_dir: Path,
+    controller_pid: int | None = None,
+) -> list[str]:
     """Build the hidden child-service command."""
     args = [
         "--service",
@@ -88,6 +93,8 @@ def service_command(port: int, interval: int, data_dir: Path) -> list[str]:
         "--data-dir",
         str(data_dir),
     ]
+    if controller_pid:
+        args.extend(["--controller-pid", str(controller_pid)])
     if is_frozen():
         return [sys.executable, *args]
     return [sys.executable, "-m", "speedtest_dashboard.windows_app", *args]
@@ -126,6 +133,28 @@ def terminate_process_tree(process: subprocess.Popen) -> None:
         process.wait(timeout=5)
     except subprocess.TimeoutExpired:
         process.kill()
+
+
+def _pid_is_running(pid: int) -> bool:
+    """Return whether a process still exists without changing it."""
+
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _exit_when_controller_stops(controller_pid: int, poll_seconds: float = 2.0) -> None:
+    """Prevent a hidden service from surviving its owning controller."""
+
+    if controller_pid <= 0:
+        return
+    while os.getppid() == controller_pid and _pid_is_running(controller_pid):
+        time.sleep(poll_seconds)
+    os._exit(0)
 
 
 def run_collector_cycle(
@@ -192,7 +221,8 @@ def _supervise_collector(
             stop_event=stop_event,
         ):
             print(
-                "[INFO] Data reset acknowledged.  Starting a fresh measurement cycle.",
+                "[INFO] One-shot measurement request acknowledged.  "
+                "Starting one measurement cycle.",
                 flush=True,
             )
 
@@ -224,6 +254,7 @@ def run_services(
     data_dir: Path,
     *,
     start_collector: bool = True,
+    controller_pid: int = 0,
 ) -> None:
     """Run the collector and Streamlit server inside the hidden child process."""
     ensure_service_output_streams()
@@ -236,6 +267,14 @@ def run_services(
 
     if os.name == "nt" and hasattr(asyncio, "WindowsSelectorEventLoopPolicy"):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+    if controller_pid:
+        threading.Thread(
+            target=_exit_when_controller_stops,
+            args=(controller_pid,),
+            name="controller-lifecycle-monitor",
+            daemon=True,
+        ).start()
 
     if start_collector:
         threading.Thread(
@@ -329,7 +368,7 @@ def _run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
     if os.name == "nt":
         popen_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
     child = subprocess.Popen(
-        service_command(port, interval, data_dir),
+        service_command(port, interval, data_dir, os.getpid()),
         env=child_env,
         stdout=log_handle,
         stderr=subprocess.STDOUT,
@@ -456,6 +495,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--dashboard-only", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--interval", type=int, default=DEFAULT_INTERVAL)
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
+    parser.add_argument("--controller-pid", type=int, default=0, help=argparse.SUPPRESS)
     parser.add_argument("--data-dir")
     args = parser.parse_args(argv)
 
@@ -472,6 +512,7 @@ def main(argv: list[str] | None = None) -> None:
             args.interval,
             data_dir,
             start_collector=not args.dashboard_only,
+            controller_pid=args.controller_pid,
         )
     else:
         run_controller(args.interval, args.port, data_dir)

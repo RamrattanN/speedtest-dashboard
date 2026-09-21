@@ -136,7 +136,7 @@ def test_repeated_restart_requests_coalesce(tmp_path):
 
     assert first == second
     assert collection_restart_pending(tmp_path)
-    assert second.read_text(encoding="utf-8") != ""
+    assert second.read_text(encoding="utf-8") == first_contents
     assert first_contents != ""
     assert consume_collection_restart(tmp_path)
     assert not consume_collection_restart(tmp_path)
