@@ -226,8 +226,11 @@ def test_chart_type_redraws_chart_and_header_refresh_is_always_available(
         "scatter",
     ]
     assert line_spec["data"][0]["marker"]["symbol"] == "circle"
+    assert line_spec["data"][0]["line"]["shape"] == "linear"
     assert line_spec["data"][1]["marker"]["symbol"] == "square"
+    assert line_spec["data"][1]["line"]["shape"] == "linear"
     assert line_spec["data"][2]["line"]["dash"] == "dash"
+    assert line_spec["data"][2]["line"]["shape"] == "linear"
     assert line_spec["data"][2]["marker"]["symbol"] == "diamond"
 
     refresh_button.click().run(timeout=20)
@@ -518,6 +521,7 @@ def test_help_navigation_is_specific_to_speedtest(tmp_path, monkeypatch):
     )
     assert any("Run speed test" in block.value for block in app.markdown)
     assert any("Refresh dashboard" in block.value for block in app.markdown)
+    assert any("Application opened twice" in block.value for block in app.markdown)
     assert app.code[0].value == "./RunSpeedTest.command --interval 300"
 
     close_button = next(button for button in app.button if button.label == "Close X")

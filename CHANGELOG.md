@@ -18,6 +18,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   application settings, and requests a fresh measurement cycle.
 
 ### Changed
+- Line charts now use straight segments instead of splines so closely spaced
+  samples cannot create loops or imply values that were never measured.
 - Ping now uses a dashed line and diamond markers, while download and upload
   use distinct marker shapes.  Both Y-axes include zero so independently
   scaled two-sample series do not completely conceal one another.
@@ -31,6 +33,11 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   in the header provides an immediate reload.
 - Implausible or corrupt latency values are rejected before collection and
   excluded from existing dashboard history so they cannot distort the chart.
+
+### Fixed
+- Cross-platform controller and collector singleton locks prevent repeated
+  application launches or orphaned services from running overlapping speed
+  tests against the same results folder.
 
 ## [1.1.0] - 2026-09-21
 ### Added

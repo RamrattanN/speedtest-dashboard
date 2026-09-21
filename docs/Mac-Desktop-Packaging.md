@@ -73,6 +73,8 @@ obtained from the official project release.
 - The header refresh icon immediately reloads dashboard data.
 - The header **Run speed test** action requests and records one new
   measurement without overlapping an active test.
+- A repeated application launch reports that the monitor is already running
+  and does not create another service or collector.
 - The chart-type selector appears directly below the chart.
 - **Quit Monitor** stops the local server.
 - Automatic server selection remains the default.  A preferred city or region

@@ -77,6 +77,19 @@ Import-Csv "$env:USERPROFILE\SpeedtestDashboard\speedtest_results.csv" |
 If the CSV has new rows but the page does not, the collector is healthy and the
 problem is limited to display refresh.
 
+## Measurements appear in closely spaced pairs
+
+Older builds allowed multiple application instances to start independent
+collectors against the same results folder.  Those tests competed for bandwidth
+and could produce misleading results several seconds apart.  Current builds
+allow one controller and one collector per results folder.  A repeated launch
+shows an already-running message, while the collector lock also protects
+against orphaned service processes.
+
+Existing paired rows remain in the CSV because the application does not delete
+measurements without confirmation.  After installing the corrected build, use
+the two-step reset under **Data management** if a clean baseline is required.
+
 ## Ping is implausibly high or nearly static
 
 Values such as `1800000 ms` are invalid measurements, not normal connection

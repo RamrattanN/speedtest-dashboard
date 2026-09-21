@@ -808,6 +808,7 @@ def render_help_panel() -> None:
             <li><strong>Wrong test region:</strong> Open Test server selection, choose Preferred city or region, enter a city plus state, province, or country, and save.  The next collection cycle calibrates regional candidates and retains automatic fallback.</li>
             <li><strong>Automatic fallback row:</strong> All saved regional candidates were unavailable for that cycle, so the provider selected an unrestricted server.</li>
             <li><strong>Browser tab was closed:</strong> {browser_guidance}</li>
+            <li><strong>Application opened twice:</strong> The second controller displays an already-running message and exits.  A separate collector lock also prevents orphaned or alternate service processes from recording overlapping tests.</li>
             <li><strong>Need to restart:</strong> {restart_guidance}</li>
           </ul>
           <p class="remember"><strong>Remember:</strong> {keep_running_guidance}</p>
@@ -1207,7 +1208,7 @@ def render_dashboard() -> None:
                     x=x,
                     y=current_window[column],
                     mode="lines+markers",
-                    line=dict(color=color, width=2.5, shape="spline", dash=dash),
+                    line=dict(color=color, width=2.5, shape="linear", dash=dash),
                     marker=dict(size=7, symbol=marker_symbol),
                     yaxis=axis,
                 )

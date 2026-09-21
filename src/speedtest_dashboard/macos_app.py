@@ -13,7 +13,13 @@ import urllib.request
 import webbrowser
 
 from speedtest_dashboard import __version__
-from speedtest_dashboard.app_config import DATA_DIR_ENV, get_data_dir, load_collector_status
+from speedtest_dashboard.app_config import (
+    DATA_DIR_ENV,
+    InstanceAlreadyRunningError,
+    get_data_dir,
+    instance_lock,
+    load_collector_status,
+)
 
 
 APP_NAME = "Speedtest Monitor"
@@ -133,7 +139,7 @@ def service_is_ready(url: str) -> bool:
         return False
 
 
-def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
+def _run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
     """Show the macOS controller and supervise the hidden service process."""
     import tkinter as tk
     from tkinter import messagebox
@@ -260,6 +266,26 @@ def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
     root.protocol("WM_DELETE_WINDOW", quit_app)
     root.after(250, poll_service)
     root.mainloop()
+
+
+def run_controller(interval: int, requested_port: int, data_dir: Path) -> None:
+    """Run one controller per results folder and reject duplicate launches."""
+
+    try:
+        with instance_lock("controller", data_dir):
+            _run_controller(interval, requested_port, data_dir)
+    except InstanceAlreadyRunningError:
+        import tkinter as tk
+        from tkinter import messagebox
+
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showinfo(
+            APP_NAME,
+            "Speedtest Monitor is already running.  Use the existing controller "
+            "window to open the dashboard or quit the monitor.",
+        )
+        root.destroy()
 
 
 def main(argv: list[str] | None = None) -> None:

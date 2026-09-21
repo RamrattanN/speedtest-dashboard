@@ -17,6 +17,8 @@
 - Automatic 60-second display refresh with an always-available manual reload.
 - Safe on-demand measurement requests that coalesce and never launch
   overlapping collectors.
+- Cross-platform singleton protection for controllers and collectors sharing a
+  results folder.
 - Plain-text macOS Gatekeeper instructions covering both the application and
   the optional approval helper.
 - Official-only production measurements with verified native CLI discovery,

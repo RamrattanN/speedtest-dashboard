@@ -47,6 +47,8 @@ The dashboard provides:
 - A header **Run speed test** action that safely requests one new measurement.
   Repeated clicks coalesce while a request is pending, and a requested test
   waits behind any measurement already in progress.
+- Controller and collector singleton protection.  Opening the application
+  twice cannot create competing measurements in the same results folder.
 - A chart-type selector directly below the chart it controls.
 - **Test server selection** to keep measurements in a preferred city or region
   when public-IP geolocation selects a distant server.

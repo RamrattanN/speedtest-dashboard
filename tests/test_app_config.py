@@ -1,12 +1,18 @@
 from pathlib import Path
+import subprocess
+import sys
+
+import pytest
 
 from speedtest_dashboard.app_config import (
+    InstanceAlreadyRunningError,
     collection_restart_pending,
     DATA_DIR_ENV,
     MEASUREMENT_COLUMNS,
     configure_data_paths,
     consume_collection_restart,
     get_data_dir,
+    instance_lock,
     load_settings,
     request_collection_restart,
     reset_measurement_history,
@@ -33,6 +39,61 @@ def test_environment_data_directory_is_used(tmp_path, monkeypatch):
     assert csv_path == configured.resolve() / "speedtest_results.csv"
     assert archive_dir == configured.resolve() / "archive"
     assert archive_dir.is_dir()
+
+
+def test_instance_lock_rejects_duplicate_role_and_releases_cleanly(tmp_path):
+    with instance_lock("collector", tmp_path):
+        try:
+            with instance_lock("collector", tmp_path):
+                raise AssertionError("duplicate collector lock unexpectedly succeeded")
+        except InstanceAlreadyRunningError:
+            pass
+
+        with instance_lock("controller", tmp_path):
+            pass
+
+    with instance_lock("collector", tmp_path):
+        pass
+
+
+def test_instance_lock_excludes_a_second_process(tmp_path):
+    script = """
+import sys
+import time
+from speedtest_dashboard.app_config import instance_lock
+
+with instance_lock("collector", sys.argv[1]):
+    print("locked", flush=True)
+    time.sleep(30)
+"""
+    process = subprocess.Popen(
+        [sys.executable, "-c", script, str(tmp_path)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        assert process.stdout is not None
+        assert process.stdout.readline().strip() == "locked"
+        with pytest.raises(InstanceAlreadyRunningError):
+            with instance_lock("collector", tmp_path):
+                pass
+    finally:
+        process.terminate()
+        process.wait(timeout=5)
+
+    with instance_lock("collector", tmp_path):
+        pass
+
+
+def test_instance_lock_rejects_unknown_role(tmp_path):
+    try:
+        with instance_lock("unknown", tmp_path):
+            pass
+    except ValueError as exc:
+        assert "Unsupported instance-lock role" in str(exc)
+    else:
+        raise AssertionError("unknown instance-lock role unexpectedly succeeded")
 
 
 def test_reset_measurement_history_clears_csv_and_archives_but_keeps_settings(
