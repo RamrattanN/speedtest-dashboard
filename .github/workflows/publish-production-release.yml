@@ -13,6 +13,11 @@ on:
       windows_run_id:
         description: Successful Build Windows x64 release workflow run ID
         required: true
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/releases/*.json"
 
 permissions:
   actions: read
@@ -24,12 +29,62 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Resolve release inputs
+        id: release
+        env:
+          DISPATCH_VERSION: ${{ inputs.version }}
+          DISPATCH_MACOS_RUN_ID: ${{ inputs.macos_run_id }}
+          DISPATCH_WINDOWS_RUN_ID: ${{ inputs.windows_run_id }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_BEFORE: ${{ github.event.before }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            version="$DISPATCH_VERSION"
+            macos_run_id="$DISPATCH_MACOS_RUN_ID"
+            windows_run_id="$DISPATCH_WINDOWS_RUN_ID"
+            source_sha=""
+          else
+            manifest=$(git diff --name-only "$EVENT_BEFORE" "$GITHUB_SHA" -- \
+              '.github/releases/*.json' | tail -n 1)
+            test -n "$manifest"
+            version=$(jq -r '.version' "$manifest")
+            macos_run_id=$(jq -r '.macos_run_id' "$manifest")
+            windows_run_id=$(jq -r '.windows_run_id' "$manifest")
+            source_sha=$(jq -r '.source_sha' "$manifest")
+          fi
+
+          test -n "$version"
+          test -n "$macos_run_id"
+          test -n "$windows_run_id"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "macos_run_id=$macos_run_id" >> "$GITHUB_OUTPUT"
+          echo "windows_run_id=$windows_run_id" >> "$GITHUB_OUTPUT"
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Verify referenced workflow runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MACOS_RUN_ID: ${{ steps.release.outputs.macos_run_id }}
+          WINDOWS_RUN_ID: ${{ steps.release.outputs.windows_run_id }}
+          SOURCE_SHA: ${{ steps.release.outputs.source_sha }}
+        run: |
+          for run_id in "$MACOS_RUN_ID" "$WINDOWS_RUN_ID"; do
+            conclusion=$(gh run view "$run_id" --json conclusion --jq '.conclusion')
+            test "$conclusion" = "success"
+            if [[ -n "$SOURCE_SHA" ]]; then
+              head_sha=$(gh run view "$run_id" --json headSha --jq '.headSha')
+              test "$head_sha" = "$SOURCE_SHA"
+            fi
+          done
 
       - name: Download verified macOS installers
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ inputs.version }}
-          RUN_ID: ${{ inputs.macos_run_id }}
+          VERSION: ${{ steps.release.outputs.version }}
+          RUN_ID: ${{ steps.release.outputs.macos_run_id }}
         run: |
           gh run download "$RUN_ID" \
             --name "Speedtest-Monitor-macOS-Intel-$VERSION" \
@@ -41,8 +96,8 @@ jobs:
       - name: Download verified Windows installer
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ inputs.version }}
-          RUN_ID: ${{ inputs.windows_run_id }}
+          VERSION: ${{ steps.release.outputs.version }}
+          RUN_ID: ${{ steps.release.outputs.windows_run_id }}
         run: |
           gh run download "$RUN_ID" \
             --name "Speedtest-Monitor-Windows-x64-$VERSION" \
@@ -50,7 +105,7 @@ jobs:
 
       - name: Verify release payload
         env:
-          VERSION: ${{ inputs.version }}
+          VERSION: ${{ steps.release.outputs.version }}
         run: |
           test -f "release/Speedtest-Monitor-macOS-Intel-$VERSION.dmg"
           test -f "release/Speedtest-Monitor-macOS-Apple-Silicon-$VERSION.dmg"
@@ -61,7 +116,7 @@ jobs:
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ inputs.version }}
+          VERSION: ${{ steps.release.outputs.version }}
         run: |
           gh release create "v$VERSION" release/* \
             --repo "$GITHUB_REPOSITORY" \
