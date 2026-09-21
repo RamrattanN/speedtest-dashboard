@@ -1,22 +1,22 @@
 # macOS Desktop Packaging
 
-Version 0.2.0 packages Speedtest Monitor as double-clickable Intel and Apple
+Version 1.0.0 packages Speedtest Monitor as double-clickable Intel and Apple
 silicon macOS applications.  Users do not need Python, Git, VS Code, Terminal,
 or a repository copy for everyday operation.
 
 ## Current artifact
 
-- Intel artifact: `Speedtest-Monitor-macOS-Intel-0.2.0`
-- Intel disk image: `Speedtest-Monitor-macOS-Intel-0.2.0.dmg`
-- Apple silicon artifact: `Speedtest-Monitor-macOS-Apple-Silicon-0.2.0`
-- Apple silicon disk image: `Speedtest-Monitor-macOS-Apple-Silicon-0.2.0.dmg`
-- Application version: `0.2.0`
+- Intel artifact: `Speedtest-Monitor-macOS-Intel-1.0.0`
+- Intel disk image: `Speedtest-Monitor-macOS-Intel-1.0.0.dmg`
+- Apple silicon artifact: `Speedtest-Monitor-macOS-Apple-Silicon-1.0.0`
+- Apple silicon disk image: `Speedtest-Monitor-macOS-Apple-Silicon-1.0.0.dmg`
+- Application version: `1.0.0`
 - Architectures: Intel x86_64 and Apple silicon ARM64
 - Signing status: unsigned and not notarized
 
-The Intel build has been manually validated.  The Apple silicon build runs its
-automated package and dashboard smoke tests on an ARM64 runner but remains a
-candidate until it is tested on a physical Apple silicon Mac.
+The Intel build has been manually validated.  The Apple silicon release runs
+its automated package and dashboard smoke tests on an ARM64 runner and still
+awaits testing on a physical Apple silicon Mac.
 
 ## Build locally
 
@@ -51,7 +51,7 @@ Only use the security override for an artifact obtained from the project.
 
 ## Acceptance checks
 
-- The controller footer reports version 0.2.0.
+- The controller footer reports version 1.0.0.
 - **Open Dashboard** opens the controller-selected address.
 - A completed test appears in `~/SpeedtestDashboard/speedtest_results.csv`.
 - The dashboard displays the latest recorded result.

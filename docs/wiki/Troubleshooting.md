@@ -2,7 +2,7 @@
 
 ## macOS blocks the application
 
-Version 0.2.0 is unsigned and not notarized.  First try **System Settings >
+Version 1.0.0 is unsigned and not notarized.  First try **System Settings >
 Privacy & Security > Open Anyway**.  If the application remains blocked, run:
 
 ```bash
@@ -14,7 +14,7 @@ password while it is typed.
 
 ## Windows SmartScreen blocks the installer
 
-Version 0.2.0 is unsigned.  If the installer came from the project download,
+Version 1.0.0 is unsigned.  If the installer came from the project download,
 select **More info**, verify the filename, then select **Run anyway**.  Do not
 bypass SmartScreen for an installer received from another source.
 
@@ -70,7 +70,7 @@ On Windows:
 Get-Content "$env:LOCALAPPDATA\Ramrattan Speedtest Monitor\Logs\monitor.log" -Tail 100
 ```
 
-Version 0.2.0 configures Windows log output as UTF-8 and line-buffered so each
+Version 1.0.0 configures Windows log output as UTF-8 and line-buffered so each
 completed result is visible promptly.  Repeated browser connection-reset lines
 do not by themselves indicate a collector failure.
 

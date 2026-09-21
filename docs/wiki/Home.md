@@ -5,9 +5,9 @@ them in a local Streamlit dashboard.  Results stay on the computer in CSV files.
 
 ## Current release
 
-Version 0.2.0 is available as unsigned **macOS Intel** and **Windows x64**
-desktop applications.  An automated **macOS Apple silicon** build candidate is
-also produced but still requires physical-device validation.  The applications
+Version 1.0.0 is available as unsigned **macOS Intel**, **macOS Apple silicon**,
+and **Windows x64** desktop applications.  The Apple silicon release passes
+automated ARM64 validation but still awaits physical-device testing.  The applications
 include their own Python runtime and do not require the repository, VS Code, or
 a command line for everyday use.
 

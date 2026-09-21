@@ -1,14 +1,14 @@
 # Windows x64 Desktop Packaging
 
-Version 0.2.0 packages Speedtest Monitor as a normal per-user Windows installer.
+Version 1.0.0 packages Speedtest Monitor as a normal per-user Windows installer.
 Users do not need Python, Git, VS Code, a command line, or a repository copy for
 everyday operation.
 
 ## Current artifact
 
-- GitHub Actions artifact: `Speedtest-Monitor-Windows-x64-0.2.0`
-- Installer: `Speedtest-Monitor-Windows-x64-0.2.0.exe`
-- Application version: `0.2.0`
+- GitHub Actions artifact: `Speedtest-Monitor-Windows-x64-1.0.0`
+- Installer: `Speedtest-Monitor-Windows-x64-1.0.0.exe`
+- Application version: `1.0.0`
 - Architecture: Windows x64
 - Signing status: unsigned
 
@@ -23,7 +23,7 @@ py -m venv .venv
 .\scripts\build_windows_release.ps1
 ```
 
-The installer is written to `dist\Speedtest-Monitor-Windows-x64-0.2.0.exe`.
+The installer is written to `dist\Speedtest-Monitor-Windows-x64-1.0.0.exe`.
 The **Build Windows x64 release** workflow builds, installs, repairs, uninstalls,
 and smoke-tests the packaged application before uploading the artifact for 14
 days.
@@ -43,7 +43,7 @@ uninstall.  It can be removed separately only when the user no longer wants it.
 
 ## Acceptance checks
 
-- The controller footer reports version 0.2.0.
+- The controller footer reports version 1.0.0.
 - **Open Dashboard** opens the controller-selected address.
 - At least two completed tests appear in
   `%USERPROFILE%\SpeedtestDashboard\speedtest_results.csv`.
@@ -60,5 +60,5 @@ The application log is stored at:
 %LOCALAPPDATA%\Ramrattan Speedtest Monitor\Logs\monitor.log
 ```
 
-Version 0.2.0 uses UTF-8, line-buffered output.  An Ookla CLI warning is not
+Version 1.0.0 uses UTF-8, line-buffered output.  An Ookla CLI warning is not
 necessarily fatal because the Python speed-test fallback can record results.

@@ -22,7 +22,7 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 - Bar and line charts with previous-period comparison.
 - Automatic 60-second display refresh plus an independent manual refresh.
 - Timezone, theme, color, server, and date-window controls.
-- Unsigned macOS Intel application and an Apple silicon build candidate for
+- Unsigned macOS Intel and Apple silicon applications for
   users who do not use Terminal in everyday use.
 - Unsigned Windows x64 installer with a native controller and Start menu entry.
 - macOS developer launcher using an isolated local Python environment.
@@ -33,8 +33,8 @@ Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 
 ### Desktop application
 
-The unsigned macOS Intel 0.2.0 application is distributed as
-`Speedtest-Monitor-macOS-Intel-0.2.0.dmg`.  Open the disk image, drag
+The unsigned macOS Intel 1.0.0 application is distributed as
+`Speedtest-Monitor-macOS-Intel-1.0.0.dmg`.  Open the disk image, drag
 **Speedtest Monitor** to **Applications**, then open the application.  It
 includes Python and the required dependencies and does not require the
 repository or VS Code.
@@ -49,8 +49,8 @@ window to reopen the dashboard or quit the monitor safely.
 See [macOS Desktop Packaging](docs/Mac-Desktop-Packaging.md) for build, test, and
 distribution instructions.
 
-An unsigned Apple silicon build candidate is also produced as
-`Speedtest-Monitor-macOS-Apple-Silicon-0.2.0.dmg`.  Its automated package and
+An unsigned Apple silicon release is also produced as
+`Speedtest-Monitor-macOS-Apple-Silicon-1.0.0.dmg`.  Its automated package and
 dashboard smoke tests run on an ARM64 GitHub Actions runner, but it remains
 unvalidated on a physical Apple silicon Mac.
 
@@ -74,8 +74,8 @@ how to work on the project without memorizing Terminal commands.
 
 ### Desktop application
 
-Download and unzip the `Speedtest-Monitor-Windows-x64-0.2.0` GitHub Actions
-artifact, then run `Speedtest-Monitor-Windows-x64-0.2.0.exe`.  The per-user
+Download and unzip the `Speedtest-Monitor-Windows-x64-1.0.0` GitHub Actions
+artifact, then run `Speedtest-Monitor-Windows-x64-1.0.0.exe`.  The per-user
 installer adds **Speedtest Monitor** to the Start menu and does not require
 Python or the repository.
 

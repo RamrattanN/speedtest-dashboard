@@ -7,6 +7,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ---
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-09-21
 ### Added
 - macOS launcher and step-by-step Mac acceptance guide.
 - Ready-made VS Code workspace, tasks, debugging profiles, and setup guide.
@@ -15,11 +17,11 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Ramrattan-styled application header, latest-result cards, and compact content panels.
 - Non-modal Rentals-style right sidebar Help for setup, controls, result interpretation, and troubleshooting.
 - Packaged Ramrattan logo reused from the Rentals application.
-- Unsigned macOS Intel 0.2.0 packaging with a native controller, bundled
+- Unsigned macOS Intel 1.0.0 packaging with a native controller, bundled
   Python runtime, disk-image build script, and GitHub Actions artifact workflow.
-- Native Apple silicon ARM64 build candidate with architecture-specific disk
+- Native Apple silicon ARM64 release with architecture-specific disk
   image naming and a packaged dashboard smoke test.
-- Unsigned Windows x64 0.2.0 packaging with a native controller, per-user
+- Unsigned Windows x64 1.0.0 packaging with a native controller, per-user
   installer, Start menu shortcut, embedded version metadata, and GitHub Actions
   installed-app smoke test.
 - Windows installer maintenance choices for Repair and Uninstall completely.
@@ -33,11 +35,14 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   with Applications-folder, controller, browser, and safe-quit guidance.
 - Packaged Help now covers installation and replacement, unsigned-app
   security handling, local data privacy, and controller-based operation.
-- README and Wiki documentation identify unsigned macOS Intel and Windows x64
-  0.2.0 as the current downloadable applications and distinguish them from
+- README and Wiki documentation identify unsigned macOS Intel, macOS Apple
+  silicon, and Windows x64 1.0.0 as the current downloadable applications and distinguish them from
   source-based developer use.
 - Packaged Help now selects macOS or Windows installation, security, launch,
   and restart guidance at runtime.
+- Connection Overview now follows Latest Result on every platform.
+- All desktop packages, controllers, artifacts, and user documentation use the
+  same production version number, 1.0.0.
 
 ### Removed
 - Retired the legacy `RunSpeedTest.ps1` and `RunSpeedTest.bat` launchers.  The
@@ -59,13 +64,15 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The header Help control now renders as a compact, visible icon button across
   packaged macOS and Windows apps.
 - Latest Result now appears between Performance Trend and Window Summary.
+- Packaged Help now renders installation steps as a proper ordered list instead
+  of exposing raw HTML list tags.
 - Packaged macOS builds now force Streamlit production mode so the dashboard
   and its static frontend are both served on the selected local port instead
   of incorrectly expecting a development frontend on port 3000.
 - The macOS packaging workflow now launches the finished application and
   verifies the dashboard root route before publishing its disk image.
 - Production artifacts, application metadata, controller text, and startup
-  logs now carry version 0.2.0 consistently.
+  logs now carry version 1.0.0 consistently.
 - Installed console commands no longer depend on missing repository-root files.
 - Removed the hardcoded personal Dropbox path from the application.
 - Collector startup now creates the configured data directory without referencing
@@ -120,7 +127,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/RamrattanN/speedtest-dashboard/compare/v0.1.1...HEAD  
+[Unreleased]: https://github.com/RamrattanN/speedtest-dashboard/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/RamrattanN/speedtest-dashboard/compare/v0.1.1...v1.0.0
 [0.1.1]: https://github.com/RamrattanN/speedtest-dashboard/compare/v0.1.0...v0.1.1  
 [0.1.0]: https://github.com/RamrattanN/speedtest-dashboard/releases/tag/v0.1.0  
 [0.0.1]: https://github.com/RamrattanN/speedtest-dashboard/releases/tag/v0.0.1  

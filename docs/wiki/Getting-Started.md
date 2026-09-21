@@ -2,10 +2,10 @@
 
 ## macOS application
 
-Intel users need `Speedtest-Monitor-macOS-Intel-0.2.0.dmg`.  Apple silicon
-users can use the `Speedtest-Monitor-macOS-Apple-Silicon-0.2.0.dmg` candidate
-after confirming that it came from the project workflow.  The ARM64 candidate
-still requires validation on a physical Apple silicon Mac.  Python, Git, VS
+Intel users need `Speedtest-Monitor-macOS-Intel-1.0.0.dmg`.  Apple silicon
+users can use the `Speedtest-Monitor-macOS-Apple-Silicon-1.0.0.dmg` release
+after confirming that it came from the project workflow.  The ARM64 release
+still awaits validation on a physical Apple silicon Mac.  Python, Git, VS
 Code, and a repository checkout are not required.
 
 1. Quit any older copy of Speedtest Monitor.
@@ -20,7 +20,7 @@ stored in `~/SpeedtestDashboard`.
 
 ## Windows x64 application
 
-Users need `Speedtest-Monitor-Windows-x64-0.2.0.exe`.  Python, Git, VS Code,
+Users need `Speedtest-Monitor-Windows-x64-1.0.0.exe`.  Python, Git, VS Code,
 and a repository checkout are not required.
 
 1. Download and unzip the GitHub Actions artifact.

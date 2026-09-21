@@ -61,7 +61,7 @@ jobs:
             if curl --fail --silent --show-error http://127.0.0.1:8765/ \
               --output "$RUNNER_TEMP/dashboard.html"; then
               grep -qi '<!doctype html' "$RUNNER_TEMP/dashboard.html"
-              grep -q 'Speedtest Monitor build 0.2.0 starting' "$LOG"
+              grep -q 'Speedtest Monitor build 1.0.0 starting' "$LOG"
               exit 0
             fi
             if ! kill -0 "$PID" 2>/dev/null; then
@@ -75,7 +75,7 @@ jobs:
       - name: Upload production disk image
         uses: actions/upload-artifact@v4
         with:
-          name: Speedtest-Monitor-macOS-${{ matrix.package_arch }}-0.2.0
-          path: dist/Speedtest-Monitor-macOS-${{ matrix.package_arch }}-0.2.0.dmg
+          name: Speedtest-Monitor-macOS-${{ matrix.package_arch }}-1.0.0
+          path: dist/Speedtest-Monitor-macOS-${{ matrix.package_arch }}-1.0.0.dmg
           if-no-files-found: error
           retention-days: 14

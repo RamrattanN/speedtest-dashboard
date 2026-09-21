@@ -25,6 +25,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from zoneinfo import ZoneInfo, available_timezones  # pip install tzdata on Windows
 
+from speedtest_dashboard import __version__
 from speedtest_dashboard.app_config import configure_data_paths
 
 # -------- PATHS / CONFIG --------
@@ -606,27 +607,31 @@ def render_help_panel() -> None:
     if DESKTOP_MODE:
         if DESKTOP_PLATFORM == "windows":
             launch_location = "the Windows Start menu"
-            install_steps = """
-                <li>Quit any running copy of Speedtest Monitor.</li>
-                <li>Run the current Windows x64 installer.</li>
-                <li>If an existing installation is detected, choose Repair to install the current application files.</li>
-                <li>If Microsoft Defender SmartScreen appears, select More info, then Run anyway.</li>
-                <li>Open Speedtest Monitor from the Start menu after installation.</li>
-                <li>Confirm that the controller shows the expected version.</li>
-            """
+            install_steps = "".join(
+                [
+                    "<li>Quit any running copy of Speedtest Monitor.</li>",
+                    "<li>Run the current Windows x64 installer.</li>",
+                    "<li>If an existing installation is detected, choose Repair to install the current application files.</li>",
+                    "<li>If Microsoft Defender SmartScreen appears, select More info, then Run anyway.</li>",
+                    "<li>Open Speedtest Monitor from the Start menu after installation.</li>",
+                    f"<li>Confirm that the controller shows version {__version__}.</li>",
+                ]
+            )
             security_note = (
                 "The Windows release is not code-signed.  The first installer launch "
                 "may require explicit SmartScreen approval."
             )
         else:
             launch_location = "the Applications folder"
-            install_steps = """
-                <li>Quit any running copy of Speedtest Monitor.</li>
-                <li>Open the current disk image and drag Speedtest Monitor to Applications.</li>
-                <li>Choose Replace if macOS reports that an older copy is installed.</li>
-                <li>If macOS blocks the unsigned application, use Privacy &amp; Security in System Settings to allow it, or follow the documented quarantine-removal command.</li>
-                <li>Confirm that the controller shows the expected version.</li>
-            """
+            install_steps = "".join(
+                [
+                    "<li>Quit any running copy of Speedtest Monitor.</li>",
+                    "<li>Open the current disk image and drag Speedtest Monitor to Applications.</li>",
+                    "<li>Choose Replace if macOS reports that an older copy is installed.</li>",
+                    "<li>If macOS blocks the unsigned application, use Privacy &amp; Security in System Settings to allow it, or follow the documented quarantine-removal command.</li>",
+                    f"<li>Confirm that the controller shows version {__version__}.</li>",
+                ]
+            )
             security_note = (
                 "The macOS release is not code-signed or notarized.  The first launch may "
                 "require explicit approval in macOS security settings."
@@ -644,16 +649,17 @@ def render_help_panel() -> None:
               </ol>
               <p class="remember"><strong>Remember:</strong> Keep the Speedtest Monitor controller open while you want results collected.  A new test normally runs every five minutes, while this dashboard checks for new results every 60 seconds.</p>
             </section>
-            <section class="rr-help-card">
-              <h3>Install or update the application</h3>
-              <ol>
-                {install_steps}
-              </ol>
-              <p class="remember"><strong>Unsigned release:</strong> {security_note}</p>
-            </section>
             """,
             unsafe_allow_html=True,
         )
+        install_card = (
+            '<section class="rr-help-card">'
+            "<h3>Install or update the application</h3>"
+            f"<ol>{install_steps}</ol>"
+            f'<p class="remember"><strong>Unsigned release:</strong> {security_note}</p>'
+            "</section>"
+        )
+        st.markdown(install_card, unsafe_allow_html=True)
     else:
         st.markdown(
             """
@@ -678,9 +684,9 @@ def render_help_panel() -> None:
         <section class="rr-help-card">
           <h3>Use the dashboard</h3>
           <ol>
-            <li>Review the latest-result cards for a quick status check.</li>
-            <li>Choose Bar or Line / Curve for the chart style.</li>
-            <li>Use View options to select servers, the time window, and comparison overlay.</li>
+            <li>Review Performance Trend for changes across the selected reporting window.</li>
+            <li>Review Latest Result for the most recent connection check.</li>
+            <li>Use Connection Overview to choose the chart style, servers, reporting window, and comparison overlay.</li>
             <li>Leave Refresh display every 60s enabled to see new CSV results automatically.</li>
             <li>Select Refresh now for an immediate reload.  It works whether automatic refresh is on or off.</li>
             <li>Open Display settings to change timezone, theme, and chart colours.</li>
@@ -692,7 +698,7 @@ def render_help_panel() -> None:
     )
 
     st.markdown(
-        """
+        f"""
         <section class="rr-help-card">
           <h3>Understand the measurements</h3>
           <ul>
@@ -809,83 +815,12 @@ if st.session_state["help_panel_open"]:
         render_help_panel()
 
 
-st.markdown(
-    """
-    <div class="rr-section-heading">
-      <p class="eyebrow">CONNECTION OVERVIEW</p>
-      <h2>Internet performance at a glance</h2>
-      <p>View controls, detailed trends, and the latest measurement in one place.</p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+def rerun_for_refresh_schedule() -> None:
+    """Rebuild the app when the fragment refresh schedule changes."""
+    st.rerun()
 
-with st.container(border=True):
-    control_chart, control_refresh, control_manual = st.columns([1.8, 1.35, 1], gap="large")
-    with control_chart:
-        chart_mode = st.radio(
-            "Chart type",
-            ["Bar", "Line / Curve"],
-            index=0,
-            horizontal=True,
-        )
-    with control_refresh:
-        autorefresh = st.toggle("Refresh display every 60s", value=True)
-    with control_manual:
-        st.write("")
-        st.button(
-            "Refresh now",
-            type="primary",
-            key="refresh_now_btn",
-            width="stretch",
-        )
 
-with st.expander("Display settings", expanded=False):
-    setting_timezone, setting_theme = st.columns(2, gap="large")
-    with setting_timezone:
-        tz_name = st.selectbox(
-            "Timezone",
-            ALL_TZS,
-            index=(
-                ALL_TZS.index(DEFAULT_TZ)
-                if DEFAULT_TZ in ALL_TZS
-                else ALL_TZS.index("UTC")
-            ),
-        )
-    with setting_theme:
-        theme_choice = st.selectbox(
-            "Theme",
-            ["Auto (Windows)", "Light", "Dark"],
-            index=0,
-        )
-
-    theme = (
-        detect_windows_theme()
-        if theme_choice.startswith("Auto")
-        else ("dark" if theme_choice.lower().startswith("dark") else "light")
-    )
-    plotly_template = apply_theme_css(theme)
-
-    st.markdown("**Chart colours**")
-    colc1, colc2, colc3 = st.columns(3)
-    with colc1:
-        color_down = st.color_picker(
-            "Download",
-            DEFAULT_COLOR_DOWNLOAD,
-            key="color_down",
-        )
-    with colc2:
-        color_up = st.color_picker(
-            "Upload",
-            DEFAULT_COLOR_UPLOAD,
-            key="color_up",
-        )
-    with colc3:
-        color_ping = st.color_picker(
-            "Ping",
-            DEFAULT_COLOR_PING,
-            key="color_ping",
-        )
+autorefresh = bool(st.session_state.get("dashboard_auto_refresh", True))
 
 
 @st.fragment(
@@ -894,6 +829,24 @@ with st.expander("Display settings", expanded=False):
 )
 def render_dashboard() -> None:
     """Read and redraw the recorded measurements."""
+    chart_mode = st.session_state.get("dashboard_chart_mode", "Bar")
+    tz_name = st.session_state.get("dashboard_timezone", DEFAULT_TZ)
+    if tz_name not in ALL_TZS:
+        tz_name = "UTC"
+    theme_options = ["Auto (Windows)", "Light", "Dark"]
+    theme_choice = st.session_state.get("dashboard_theme", "Auto (Windows)")
+    if theme_choice not in theme_options:
+        theme_choice = "Auto (Windows)"
+    theme = (
+        detect_windows_theme()
+        if theme_choice.startswith("Auto")
+        else ("dark" if theme_choice.lower().startswith("dark") else "light")
+    )
+    plotly_template = apply_theme_css(theme)
+    color_down = st.session_state.get("color_down", DEFAULT_COLOR_DOWNLOAD)
+    color_up = st.session_state.get("color_up", DEFAULT_COLOR_UPLOAD)
+    color_ping = st.session_state.get("color_ping", DEFAULT_COLOR_PING)
+
     df = load_data(DEFAULT_CSV)
     if df.empty:
         with st.container(border=True):
@@ -940,42 +893,19 @@ def render_dashboard() -> None:
         ]
         st.session_state[selected_key] = still_available + sorted(new_labels)
     st.session_state[known_key] = server_labels
-
-    with st.expander("View options", expanded=True):
-        filter_servers, filter_window = st.columns([2.25, 1], gap="large")
-        with filter_servers:
-            selected_labels = st.multiselect(
-                "Servers",
-                server_labels,
-                key=selected_key,
-            )
-        with filter_window:
-            range_choice = st.selectbox(
-                "Show window",
-                [
-                    "Last Hour",
-                    "Last 24 hours",
-                    "Last 7 days",
-                    "Last 30 days",
-                    "Last 12 months",
-                ],
-                index=2,
-            )
-
-        option_blank, option_overlay = st.columns(2)
-        with option_blank:
-            include_blank = st.checkbox(
-                "Include results without a server ID",
-                value=True,
-                help="Include rows with no server ID or server name.",
-            )
-        with option_overlay:
-            show_prev_overlay = st.checkbox(
-                "Show previous period",
-                value=False,
-                help="Compare against the immediately preceding period of the same length.",
-            )
-        st.caption(f"{sample_caption}  Data retained for 30 days in the main CSV.")
+    window_choices = [
+        "Last Hour",
+        "Last 24 hours",
+        "Last 7 days",
+        "Last 30 days",
+        "Last 12 months",
+    ]
+    selected_labels = st.session_state[selected_key]
+    range_choice = st.session_state.get("dashboard_window", "Last 7 days")
+    if range_choice not in window_choices:
+        range_choice = "Last 7 days"
+    include_blank = bool(st.session_state.get("dashboard_include_blank", True))
+    show_prev_overlay = bool(st.session_state.get("dashboard_previous_period", False))
 
     if selected_labels:
         selected_ids = {label.split(" · ", 1)[0] for label in selected_labels}
@@ -1128,6 +1058,117 @@ def render_dashboard() -> None:
         f"{latest_date_text} · {latest_server} · "
         f'Display timezone: {tz_name}'
     )
+
+    st.markdown(
+        """
+        <div class="rr-section-heading">
+          <p class="eyebrow">CONNECTION OVERVIEW</p>
+          <h2>Internet performance controls</h2>
+          <p>Adjust the chart, refresh schedule, display, servers, and reporting window.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    with st.container(border=True):
+        control_chart, control_refresh, control_manual = st.columns(
+            [1.8, 1.35, 1],
+            gap="large",
+        )
+        with control_chart:
+            st.radio(
+                "Chart type",
+                ["Bar", "Line / Curve"],
+                index=0,
+                horizontal=True,
+                key="dashboard_chart_mode",
+            )
+        with control_refresh:
+            st.toggle(
+                "Refresh display every 60s",
+                value=True,
+                key="dashboard_auto_refresh",
+                on_change=rerun_for_refresh_schedule,
+            )
+        with control_manual:
+            st.write("")
+            st.button(
+                "Refresh now",
+                type="primary",
+                key="refresh_now_btn",
+                width="stretch",
+            )
+
+    with st.expander("Display settings", expanded=False):
+        setting_timezone, setting_theme = st.columns(2, gap="large")
+        with setting_timezone:
+            st.selectbox(
+                "Timezone",
+                ALL_TZS,
+                index=ALL_TZS.index(tz_name),
+                key="dashboard_timezone",
+            )
+        with setting_theme:
+            st.selectbox(
+                "Theme",
+                theme_options,
+                index=theme_options.index(theme_choice),
+                key="dashboard_theme",
+            )
+
+        st.markdown("**Chart colours**")
+        colc1, colc2, colc3 = st.columns(3)
+        with colc1:
+            st.color_picker(
+                "Download",
+                DEFAULT_COLOR_DOWNLOAD,
+                key="color_down",
+            )
+        with colc2:
+            st.color_picker(
+                "Upload",
+                DEFAULT_COLOR_UPLOAD,
+                key="color_up",
+            )
+        with colc3:
+            st.color_picker(
+                "Ping",
+                DEFAULT_COLOR_PING,
+                key="color_ping",
+            )
+
+    with st.expander("View options", expanded=True):
+        filter_servers, filter_window = st.columns([2.25, 1], gap="large")
+        with filter_servers:
+            st.multiselect(
+                "Servers",
+                server_labels,
+                key=selected_key,
+            )
+        with filter_window:
+            st.selectbox(
+                "Show window",
+                window_choices,
+                index=window_choices.index(range_choice),
+                key="dashboard_window",
+            )
+
+        option_blank, option_overlay = st.columns(2)
+        with option_blank:
+            st.checkbox(
+                "Include results without a server ID",
+                value=True,
+                help="Include rows with no server ID or server name.",
+                key="dashboard_include_blank",
+            )
+        with option_overlay:
+            st.checkbox(
+                "Show previous period",
+                value=False,
+                help="Compare against the immediately preceding period of the same length.",
+                key="dashboard_previous_period",
+            )
+        st.caption(f"{sample_caption}  Data retained for 30 days in the main CSV.")
 
     stats = (
         current_window[["download_mbps", "upload_mbps", "ping_ms"]]

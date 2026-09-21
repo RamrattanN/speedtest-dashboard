@@ -104,7 +104,7 @@ def test_macos_streamlit_options_disable_packaged_development_mode():
     assert options["server.port"] == 8600
     assert options["browser.serverAddress"] == "127.0.0.1"
     assert options["browser.serverPort"] == 8600
-    assert macos_app.APP_BUILD == "0.2.0"
+    assert macos_app.APP_BUILD == "1.0.0"
 
 
 def test_macos_service_loads_options_before_starting_server(tmp_path, monkeypatch):
@@ -178,7 +178,7 @@ def test_windows_streamlit_options_disable_packaged_development_mode():
     assert options["server.port"] == 8600
     assert options["browser.serverAddress"] == "127.0.0.1"
     assert options["browser.serverPort"] == 8600
-    assert windows_app.APP_BUILD == "0.2.0"
+    assert windows_app.APP_BUILD == "1.0.0"
 
 
 def test_windows_log_directory_uses_local_app_data(tmp_path, monkeypatch):

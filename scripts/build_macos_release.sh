@@ -39,7 +39,7 @@ SPEEDTEST_MACOS_TARGET_ARCH="$MACOS_ARCH" \
   python -m PyInstaller --clean --noconfirm SpeedtestMonitor.spec
 
 RELEASE_DIR="$ROOT/dist/release"
-DMG_PATH="$ROOT/dist/Speedtest-Monitor-macOS-${PACKAGE_ARCH}-0.2.0.dmg"
+DMG_PATH="$ROOT/dist/Speedtest-Monitor-macOS-${PACKAGE_ARCH}-1.0.0.dmg"
 rm -rf "$RELEASE_DIR" "$DMG_PATH"
 mkdir -p "$RELEASE_DIR"
 cp -R "$ROOT/dist/Speedtest Monitor.app" "$RELEASE_DIR/"

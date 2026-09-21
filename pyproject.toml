@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "speedtest-dashboard-nr"
-version = "0.2.0"
+version = "1.0.0"
 description = "Self-hosted internet speed monitoring with Streamlit dashboard and CSV storage."
 readme = "README.md"
 authors = [{ name = "Nilesh Ramrattan" }]

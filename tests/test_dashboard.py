@@ -58,12 +58,17 @@ def test_dashboard_renders_recorded_measurement(tmp_path, monkeypatch):
         for index, value in enumerate(rendered_markdown)
         if "LATEST RESULT" in value
     )
+    overview_index = next(
+        index
+        for index, value in enumerate(rendered_markdown)
+        if "CONNECTION OVERVIEW" in value
+    )
     summary_index = next(
         index
         for index, value in enumerate(rendered_markdown)
         if "WINDOW SUMMARY" in value
     )
-    assert trend_index < latest_index < summary_index
+    assert trend_index < latest_index < overview_index < summary_index
     assert len(app.dataframe) == 1
 
 
@@ -90,6 +95,14 @@ def test_dashboard_redraw_includes_new_server(tmp_path, monkeypatch):
     )
     assert not refresh_button.disabled
     assert app.multiselect[0].value == ["1 · First Server"]
+
+    app.toggle[0].set_value(False).run(timeout=20)
+    assert not app.exception
+    assert app.toggle[0].value is False
+    refresh_button = next(
+        button for button in app.button if button.label == "Refresh now"
+    )
+    assert not refresh_button.disabled
 
     second = {
         **first,
@@ -168,6 +181,14 @@ def test_packaged_help_uses_desktop_controller_instructions(tmp_path, monkeypatc
     assert "not code-signed or notarized" in help_text
     assert "Data and privacy" in help_text
     assert "Measurements are stored locally" in help_text
+    install_card = next(
+        block.value
+        for block in app.markdown
+        if "Install or update the application" in block.value
+    )
+    assert install_card.startswith('<section class="rr-help-card">')
+    assert "<ol><li>" in install_card
+    assert "version 1.0.0" in install_card
     assert not app.code
 
 
@@ -187,6 +208,14 @@ def test_windows_packaged_help_uses_installer_and_start_menu(tmp_path, monkeypat
     assert "Run the current Windows x64 installer" in help_text
     assert "Microsoft Defender SmartScreen" in help_text
     assert "not code-signed" in help_text
+    install_card = next(
+        block.value
+        for block in app.markdown
+        if "Install or update the application" in block.value
+    )
+    assert install_card.startswith('<section class="rr-help-card">')
+    assert "<ol><li>" in install_card
+    assert "version 1.0.0" in install_card
     assert "Applications folder" not in help_text
     assert "disk image" not in help_text
 
