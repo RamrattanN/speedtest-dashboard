@@ -27,8 +27,10 @@ from zoneinfo import ZoneInfo, available_timezones  # pip install tzdata on Wind
 
 from speedtest_dashboard import __version__
 from speedtest_dashboard.app_config import (
+    collection_restart_pending,
     configure_data_paths,
     load_settings,
+    request_collection_restart,
     reset_measurement_history,
     set_measurement_engine,
     set_server_preference,
@@ -146,12 +148,14 @@ def apply_theme_css(theme: str) -> str:
         }}
 
         .st-key-open_help_panel,
+        .st-key-run_speed_test_header,
         .st-key-refresh_dashboard_header {{
             display: flex;
             justify-content: flex-end;
         }}
 
         .st-key-open_help_panel .stButton > button,
+        .st-key-run_speed_test_header .stButton > button,
         .st-key-refresh_dashboard_header .stButton > button {{
             width: 46px !important;
             min-width: 46px !important;
@@ -165,6 +169,8 @@ def apply_theme_css(theme: str) -> str:
 
         .st-key-open_help_panel .stButton > button:hover,
         .st-key-open_help_panel .stButton > button:focus-visible,
+        .st-key-run_speed_test_header .stButton > button:hover,
+        .st-key-run_speed_test_header .stButton > button:focus-visible,
         .st-key-refresh_dashboard_header .stButton > button:hover,
         .st-key-refresh_dashboard_header .stButton > button:focus-visible {{
             border-color: #ffffff !important;
@@ -172,6 +178,7 @@ def apply_theme_css(theme: str) -> str:
         }}
 
         .st-key-open_help_panel .stButton > button p,
+        .st-key-run_speed_test_header .stButton > button p,
         .st-key-refresh_dashboard_header .stButton > button p {{
             display: none;
         }}
@@ -427,6 +434,7 @@ def apply_theme_css(theme: str) -> str:
         /* Keyed controls need final, high-specificity rules because the key class
            and Streamlit button wrapper are the same element in current releases. */
         .st-key-open_help_panel button,
+        .st-key-run_speed_test_header button,
         .st-key-refresh_dashboard_header button {{
             width: 46px !important;
             min-width: 46px !important;
@@ -440,6 +448,8 @@ def apply_theme_css(theme: str) -> str:
 
         .st-key-open_help_panel button:hover,
         .st-key-open_help_panel button:focus-visible,
+        .st-key-run_speed_test_header button:hover,
+        .st-key-run_speed_test_header button:focus-visible,
         .st-key-refresh_dashboard_header button:hover,
         .st-key-refresh_dashboard_header button:focus-visible {{
             border-color: #ffffff !important;
@@ -449,12 +459,15 @@ def apply_theme_css(theme: str) -> str:
 
         .st-key-open_help_panel button [data-testid="stMarkdownContainer"],
         .st-key-open_help_panel button p,
+        .st-key-run_speed_test_header button [data-testid="stMarkdownContainer"],
+        .st-key-run_speed_test_header button p,
         .st-key-refresh_dashboard_header button [data-testid="stMarkdownContainer"],
         .st-key-refresh_dashboard_header button p {{
             display: none !important;
         }}
 
         .st-key-open_help_panel button [data-testid="stIconMaterial"],
+        .st-key-run_speed_test_header button [data-testid="stIconMaterial"],
         .st-key-refresh_dashboard_header button [data-testid="stIconMaterial"] {{
             display: inline-flex !important;
             color: #ffffff !important;
@@ -726,7 +739,8 @@ def render_help_panel() -> None:
             <li>Use Test server selection to keep tests in a preferred city or region when automatic selection chooses a distant location.</li>
             <li>Use Measurement engine to confirm that the official Ookla CLI is active.  Production collection pauses rather than silently substituting another engine.</li>
             <li>The open dashboard checks for new CSV results automatically every 60 seconds.</li>
-            <li>Select the refresh icon beside Help for an immediate dashboard reload.</li>
+            <li>Select Run speed test in the header to collect a new measurement.  If a test is already running, one request waits behind it.</li>
+            <li>Select Refresh dashboard in the header to reload measurements already recorded in the CSV.</li>
             <li>Open Display settings to change timezone, theme, and chart colours.</li>
           </ol>
           <p class="remember"><strong>Data location:</strong> {DEFAULT_CSV}</p>
@@ -788,7 +802,7 @@ def render_help_panel() -> None:
           <h3>Resolve common issues</h3>
           <ul>
             <li><strong>No data yet:</strong> Confirm the collector is running and wait for its first completed test.</li>
-            <li><strong>Dashboard does not update:</strong> Select the refresh icon beside Help for an immediate reload.  If needed, reopen the dashboard from the controller.</li>
+            <li><strong>Dashboard does not update:</strong> Select Refresh dashboard in the header for an immediate reload.  If needed, reopen the dashboard from the controller.</li>
             <li><strong>Official engine required:</strong> Production mode pauses measurements when the official Ookla CLI is unavailable.  Open Measurement engine in Connection Overview to install it or set its executable path.</li>
             <li><strong>Compatibility mode:</strong> This explicit option permits the Python engine, but its results can differ materially from Ookla and should not be mixed into a like-for-like baseline.</li>
             <li><strong>Wrong test region:</strong> Open Test server selection, choose Preferred city or region, enter a city plus state, province, or country, and save.  The next collection cycle calibrates regional candidates and retains automatic fallback.</li>
@@ -820,12 +834,28 @@ def rerun_for_dashboard_control() -> None:
     st.rerun(scope="app")
 
 
+def request_manual_speed_test() -> None:
+    """Queue one immediate measurement without starting a competing collector."""
+
+    engine_settings = load_settings(DEFAULT_CSV.parent)["measurement_engine"]
+    official_available = find_ookla_cli(engine_settings["ookla_path"]) is not None
+    compatibility_enabled = engine_settings["mode"] == "compatibility"
+    if not official_available and not compatibility_enabled:
+        st.session_state["manual_test_notice"] = "engine_required"
+        return
+    if collection_restart_pending(DEFAULT_CSV.parent):
+        st.session_state["manual_test_notice"] = "already_pending"
+        return
+    request_collection_restart(DEFAULT_CSV.parent)
+    st.session_state["manual_test_notice"] = "requested"
+
+
 if "help_panel_open" not in st.session_state:
     st.session_state["help_panel_open"] = False
 
 with st.container(key="hero"):
-    hero_copy, hero_refresh, hero_help = st.columns(
-        [8, 0.6, 0.6],
+    hero_copy, hero_measure, hero_refresh, hero_help = st.columns(
+        [8, 0.6, 0.6, 0.6],
         gap="small",
         vertical_alignment="center",
     )
@@ -842,6 +872,14 @@ with st.container(key="hero"):
             </div>
             """,
             unsafe_allow_html=True,
+        )
+    with hero_measure:
+        st.button(
+            "Run speed test",
+            icon=":material/speed:",
+            help="Run a speed test now and record a new measurement",
+            key="run_speed_test_header",
+            on_click=request_manual_speed_test,
         )
     with hero_refresh:
         st.button(
@@ -982,6 +1020,19 @@ def render_dashboard() -> None:
     color_down = st.session_state.get("color_down", DEFAULT_COLOR_DOWNLOAD)
     color_up = st.session_state.get("color_up", DEFAULT_COLOR_UPLOAD)
     color_ping = st.session_state.get("color_ping", DEFAULT_COLOR_PING)
+
+    manual_test_notice = st.session_state.pop("manual_test_notice", "")
+    if manual_test_notice == "requested":
+        st.success(
+            "Speed test requested.  It will begin after any measurement already in progress."
+        )
+    elif manual_test_notice == "already_pending":
+        st.info("A speed test is already queued.  No additional test was added.")
+    elif manual_test_notice == "engine_required":
+        st.warning(
+            "A speed test cannot start until the official Ookla CLI is available, "
+            "or Compatibility mode is explicitly enabled."
+        )
 
     if st.session_state.pop("dashboard_reset_complete", False):
         st.success(
@@ -1138,17 +1189,17 @@ def render_dashboard() -> None:
                 x=x,
                 y=current_window["ping_ms"],
                 mode="lines+markers",
-                line=dict(color=color_ping, width=2.5),
-                marker=dict(size=6),
+                line=dict(color=color_ping, width=2.5, dash="dash"),
+                marker=dict(size=7, symbol="diamond"),
                 yaxis="y2",
                 legendgroup="primary_ping",
             )
         )
     else:
-        for name, column, color, axis in [
-            ("Download (Mbps)", "download_mbps", color_down, "y"),
-            ("Upload (Mbps)", "upload_mbps", color_up, "y"),
-            ("Ping (ms)", "ping_ms", color_ping, "y2"),
+        for name, column, color, axis, dash, marker_symbol in [
+            ("Download (Mbps)", "download_mbps", color_down, "y", "solid", "circle"),
+            ("Upload (Mbps)", "upload_mbps", color_up, "y", "solid", "square"),
+            ("Ping (ms)", "ping_ms", color_ping, "y2", "dash", "diamond"),
         ]:
             fig.add_trace(
                 go.Scatter(
@@ -1156,8 +1207,8 @@ def render_dashboard() -> None:
                     x=x,
                     y=current_window[column],
                     mode="lines+markers",
-                    line=dict(color=color, width=2.5, shape="spline"),
-                    marker=dict(size=6),
+                    line=dict(color=color, width=2.5, shape="spline", dash=dash),
+                    marker=dict(size=7, symbol=marker_symbol),
                     yaxis=axis,
                 )
             )
@@ -1199,6 +1250,7 @@ def render_dashboard() -> None:
         ),
         yaxis=dict(
             title="Speed (Mbps)",
+            rangemode="tozero",
             fixedrange=True,
         ),
         yaxis2=dict(
@@ -1206,6 +1258,7 @@ def render_dashboard() -> None:
             overlaying="y",
             side="right",
             showgrid=False,
+            rangemode="tozero",
             fixedrange=True,
         ),
         margin=dict(l=40, r=40, t=70, b=45),

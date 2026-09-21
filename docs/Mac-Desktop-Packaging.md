@@ -71,6 +71,8 @@ obtained from the official project release.
 - A completed test appears in `~/SpeedtestDashboard/speedtest_results.csv`.
 - The dashboard displays the latest recorded result.
 - The header refresh icon immediately reloads dashboard data.
+- The header **Run speed test** action requests and records one new
+  measurement without overlapping an active test.
 - The chart-type selector appears directly below the chart.
 - **Quit Monitor** stops the local server.
 - Automatic server selection remains the default.  A preferred city or region

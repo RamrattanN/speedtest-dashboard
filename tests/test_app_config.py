@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from speedtest_dashboard.app_config import (
+    collection_restart_pending,
     DATA_DIR_ENV,
     MEASUREMENT_COLUMNS,
     configure_data_paths,
@@ -61,7 +62,22 @@ def test_reset_measurement_history_clears_csv_and_archives_but_keeps_settings(
 def test_restart_request_wakes_collection_wait_immediately(tmp_path):
     request_collection_restart(tmp_path)
 
+    assert collection_restart_pending(tmp_path)
     assert wait_for_collection_restart(60, tmp_path)
+    assert not collection_restart_pending(tmp_path)
+    assert not consume_collection_restart(tmp_path)
+
+
+def test_repeated_restart_requests_coalesce(tmp_path):
+    first = request_collection_restart(tmp_path)
+    first_contents = first.read_text(encoding="utf-8")
+    second = request_collection_restart(tmp_path)
+
+    assert first == second
+    assert collection_restart_pending(tmp_path)
+    assert second.read_text(encoding="utf-8") != ""
+    assert first_contents != ""
+    assert consume_collection_restart(tmp_path)
     assert not consume_collection_restart(tmp_path)
 
 

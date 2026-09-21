@@ -14,8 +14,9 @@
 - Timeout-protected Windows measurements with process-tree cleanup and
   automatic recovery.
 - Automated package builds and installed-application smoke tests.
-- Automatic 60-second display refresh, with manual refresh available when
-  automatic refresh is off.
+- Automatic 60-second display refresh with an always-available manual reload.
+- Safe on-demand measurement requests that coalesce and never launch
+  overlapping collectors.
 - Plain-text macOS Gatekeeper instructions covering both the application and
   the optional approval helper.
 - Official-only production measurements with verified native CLI discovery,

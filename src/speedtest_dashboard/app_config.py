@@ -124,7 +124,11 @@ def measurement_data_lock(
 
 
 def request_collection_restart(override: str | Path | None = None) -> Path:
-    """Request an immediate collector cycle after its current work completes."""
+    """Request one immediate collector cycle after any current work completes.
+
+    Repeated requests coalesce into the same file, so the dashboard cannot
+    queue multiple overlapping measurements.
+    """
 
     path = restart_request_path(override)
     path.write_text(
@@ -132,6 +136,12 @@ def request_collection_restart(override: str | Path | None = None) -> Path:
         encoding="utf-8",
     )
     return path
+
+
+def collection_restart_pending(override: str | Path | None = None) -> bool:
+    """Return whether an immediate collector cycle is already queued."""
+
+    return restart_request_path(override).is_file()
 
 
 def consume_collection_restart(override: str | Path | None = None) -> bool:

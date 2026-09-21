@@ -57,9 +57,14 @@ finishes about every five minutes, while the open dashboard checks the CSV every
 60 seconds.
 
 1. Compare the **Recorded** card with the last CSV row.
-2. Select the refresh icon beside Help for an immediate reload.
+2. Select **Refresh dashboard** in the header for an immediate reload of
+   measurements already present in the CSV.
 3. If needed, press **F5** once to confirm that the browser still has a live
    connection to the local dashboard.
+
+Select **Run speed test** only when you want to collect a new measurement.  It
+does not merely redraw the dashboard.  Repeated requests coalesce, and a
+requested test waits until any current measurement finishes.
 
 On Windows, inspect recent rows with PowerShell:
 

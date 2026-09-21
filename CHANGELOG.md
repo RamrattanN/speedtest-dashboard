@@ -9,12 +9,18 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- A header **Run speed test** action that requests one immediate measurement
+  without launching overlapping collectors.  Repeated requests coalesce while
+  one request is pending.
 - A sortable table of the latest 150 measurements in the selected dashboard
   window.
 - A two-step data reset that clears the main CSV and monthly archives, preserves
   application settings, and requests a fresh measurement cycle.
 
 ### Changed
+- Ping now uses a dashed line and diamond markers, while download and upload
+  use distinct marker shapes.  Both Y-axes include zero so independently
+  scaled two-sample series do not completely conceal one another.
 - Measurement retention now uses a rolling 365-day boundary across the main
   CSV and monthly archives.
 - Chart zoom gestures are limited to the time axis so speed and ping scales
