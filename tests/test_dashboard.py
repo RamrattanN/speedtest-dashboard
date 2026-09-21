@@ -1,5 +1,6 @@
 import base64
 from datetime import datetime, timezone
+import json
 from pathlib import Path
 import tomllib
 
@@ -93,7 +94,7 @@ def test_dashboard_redraw_includes_new_server(tmp_path, monkeypatch):
     refresh_button = next(
         button for button in app.button if button.label == "Refresh now"
     )
-    assert not refresh_button.disabled
+    assert refresh_button.disabled
     assert app.multiselect[0].value == ["1 · First Server"]
 
     app.toggle[0].set_value(False).run(timeout=20)
@@ -118,6 +119,56 @@ def test_dashboard_redraw_includes_new_server(tmp_path, monkeypatch):
     }
 
 
+def test_chart_type_redraws_chart_and_manual_refresh_tracks_auto_refresh(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("SPEEDTEST_DASHBOARD_DATA_DIR", str(tmp_path))
+    now = datetime.now(timezone.utc)
+    pd.DataFrame(
+        [
+            {
+                "timestamp": now.isoformat().replace("+00:00", "Z"),
+                "ping_ms": 50.0,
+                "download_mbps": 100.0,
+                "upload_mbps": 40.0,
+                "server_id": "1",
+                "server_name": "First Server",
+                "engine": "python-lib",
+            }
+        ]
+    ).to_csv(tmp_path / "speedtest_results.csv", index=False)
+    dashboard_path = Path(__file__).parents[1] / "src" / "speedtest_dashboard" / "dashboard.py"
+    app = AppTest.from_file(dashboard_path)
+
+    app.run(timeout=20)
+    bar_spec = json.loads(app.get("plotly_chart")[0].proto.spec)
+    assert [trace["type"] for trace in bar_spec["data"]] == [
+        "bar",
+        "bar",
+        "scatter",
+    ]
+    assert next(
+        button for button in app.button if button.label == "Refresh now"
+    ).disabled
+
+    app.radio[0].set_value("Line / Curve").run(timeout=20)
+    line_spec = json.loads(app.get("plotly_chart")[0].proto.spec)
+    assert app.radio[0].value == "Line / Curve"
+    assert [trace["type"] for trace in line_spec["data"]] == [
+        "scatter",
+        "scatter",
+        "scatter",
+    ]
+
+    app.toggle[0].set_value(False).run(timeout=20)
+    refresh_button = next(
+        button for button in app.button if button.label == "Refresh now"
+    )
+    assert not refresh_button.disabled
+    refresh_button.click().run(timeout=20)
+    assert not app.exception
+
+
 def test_help_navigation_is_specific_to_speedtest(tmp_path, monkeypatch):
     monkeypatch.setenv("SPEEDTEST_DASHBOARD_DATA_DIR", str(tmp_path))
     dashboard_path = Path(__file__).parents[1] / "src" / "speedtest_dashboard" / "dashboard.py"
@@ -136,7 +187,7 @@ def test_help_navigation_is_specific_to_speedtest(tmp_path, monkeypatch):
         for block in app.markdown
     )
     assert any(
-        "works whether automatic refresh is on or off" in block.value
+        "Turn off Refresh display every 60s" in block.value
         for block in app.markdown
     )
     assert app.code[0].value == "./RunSpeedTest.command --interval 300"

@@ -18,8 +18,8 @@ a command line for everyday use.
 4. Use **Quit Monitor** to stop both collection and the dashboard safely.
 
 The collector normally records a measurement every five minutes.  The open
-dashboard checks for new results every 60 seconds.  **Refresh now** is also
-available at any time, including while automatic refresh is enabled.
+dashboard checks for new results every 60 seconds.  Turn off automatic refresh
+to enable **Refresh now** for an immediate reload.
 
 Source-based developer operation remains available through the macOS launcher
 or the installed `speedtest-dashboard` command.  The legacy PowerShell and

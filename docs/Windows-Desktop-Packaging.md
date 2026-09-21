@@ -48,7 +48,7 @@ uninstall.  It can be removed separately only when the user no longer wants it.
 - At least two completed tests appear in
   `%USERPROFILE%\SpeedtestDashboard\speedtest_results.csv`.
 - The Windows log shows each completed result promptly.
-- **Refresh now** works with automatic refresh either on or off.
+- **Refresh now** becomes available after automatic refresh is turned off.
 - Repair preserves the application and measurement history.
 - Uninstall removes the application but preserves measurement history.
 
