@@ -2,8 +2,9 @@
 
 ## Production policy
 
-Speedtest Monitor 1.1.0 uses the official Ookla Speedtest CLI for production
-measurements.  It does not silently replace it with the Python
+The current `main` branch and version 1.1.0 QA builds use the official Ookla
+Speedtest CLI for production measurements.  They do not silently replace it
+with the Python
 `speedtest-cli` implementation.  The two engines use different test methods
 and can report materially different throughput, latency, and server choices.
 

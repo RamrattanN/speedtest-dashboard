@@ -2,10 +2,10 @@
 
 ## macOS blocks the application
 
-Version 1.1.0 is unsigned and not notarized.  When macOS blocks Speedtest
-Monitor, select **Done**, open **System Settings > Privacy & Security**, scroll
-to **Security**, and select **Open Anyway** beside the Speedtest Monitor
-message.  Authenticate and confirm **Open**.
+Current macOS packages are unsigned and not notarized.  When macOS blocks
+Speedtest Monitor, select **Done**, open **System Settings > Privacy &
+Security**, scroll to **Security**, and select **Open Anyway** beside the
+Speedtest Monitor message.  Authenticate and confirm **Open**.
 
 The disk image includes **Read Me First - macOS Security.txt** and the optional
 **Allow and Open Speedtest Monitor.command** helper.  The helper requests
@@ -30,9 +30,9 @@ password while it is typed.
 
 ## Windows SmartScreen blocks the installer
 
-Version 1.1.0 is unsigned.  If the installer came from the project download,
-select **More info**, verify the filename, then select **Run anyway**.  Do not
-bypass SmartScreen for an installer received from another source.
+Current Windows packages are unsigned.  If the installer came from the project
+download, select **More info**, verify the filename, then select **Run anyway**.
+Do not bypass SmartScreen for an installer received from another source.
 
 ## Dashboard does not open
 
@@ -113,11 +113,11 @@ On Windows:
 Get-Content "$env:LOCALAPPDATA\Ramrattan Speedtest Monitor\Logs\monitor.log" -Tail 100
 ```
 
-Version 1.1.0 configures Windows log output as UTF-8 and line-buffered so each
-completed result is visible promptly.  Repeated browser connection-reset lines
-do not by themselves indicate a collector failure.
+Current QA builds configure Windows log output as UTF-8 and line-buffered so
+each completed result is visible promptly.  Repeated browser connection-reset
+lines do not by themselves indicate a collector failure.
 
-Version 1.1.0 also runs each Windows measurement in a separate child process.
+Current QA builds also run each Windows measurement in a separate child process.
 The log records the cycle start, completion, failure, timeout, and next retry.
 If a backend call exceeds three minutes, the monitor terminates that process
 tree and continues on schedule instead of leaving the controller locked.

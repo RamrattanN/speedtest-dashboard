@@ -1,10 +1,10 @@
 # Roadmap
 
-## Version 1.1.0
+## Version 1.1.0 QA candidate
 
 - Cross-platform Python collector and local CSV retention.
 - Ramrattan-branded dashboard with latest-result cards, trends, summaries, and
-  right-side Help.
+  header Help.
 - Unsigned macOS Intel and Apple silicon disk images, plus a Windows x64
   per-user installer.
 - Automated Apple silicon ARM64 release.
@@ -26,10 +26,11 @@
 
 ## Next
 
-- Complete post-release soak testing on representative macOS Intel and Windows
+- Complete pre-release soak testing on representative macOS Intel and Windows
   x64 systems.
 - Validate the ARM64 build on a physical Apple silicon Mac.
-- Continue publishing verified installers with checksums and release notes.
+- Publish version 1.1.0 installers with checksums and release notes after QA
+  approval.
 
 ## Later releases
 

@@ -1,5 +1,5 @@
 # Credits
 
-- **Concept & Direction** — Nilesh Ramrattan  
-- **Development** — with assistance from ChatGPT (OpenAI)  
-- **Stack** — Ookla Speedtest CLI, Streamlit, pandas, numpy, plotly  
+- **Concept and direction** - Nilesh Ramrattan
+- **Development** - With assistance from ChatGPT by OpenAI
+- **Stack** - Ookla Speedtest CLI, Streamlit, pandas, NumPy, and Plotly

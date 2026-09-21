@@ -2,13 +2,12 @@
 
 ## macOS application
 
-Intel users need
-[`Speedtest-Monitor-macOS-Intel-1.1.0.dmg`](https://github.com/RamrattanN/speedtest-dashboard/releases/download/v1.1.0/Speedtest-Monitor-macOS-Intel-1.1.0.dmg).
-Apple silicon users can use
-[`Speedtest-Monitor-macOS-Apple-Silicon-1.1.0.dmg`](https://github.com/RamrattanN/speedtest-dashboard/releases/download/v1.1.0/Speedtest-Monitor-macOS-Apple-Silicon-1.1.0.dmg)
-after confirming that it came from the project workflow.  The ARM64 release
-still awaits validation on a physical Apple silicon Mac.  Python, Git, VS
-Code, and a repository checkout are not required.
+Open the
+[latest production release](https://github.com/RamrattanN/speedtest-dashboard/releases/latest)
+and download the disk image matching the Mac processor: **macOS Intel** for an
+Intel Mac or **macOS Apple Silicon** for an M-series Mac.  The ARM64 package
+passes automated validation but still awaits testing on a physical Apple
+silicon Mac.  Python, Git, VS Code, and a repository checkout are not required.
 
 1. Quit any older copy of Speedtest Monitor.
 2. Open the disk image and drag **Speedtest Monitor** to **Applications**.
@@ -29,11 +28,22 @@ Code, and a repository checkout are not required.
 The dashboard opens automatically when the service is ready.  Results are
 stored in `~/SpeedtestDashboard`.
 
+The manual Terminal fallback is:
+
+```bash
+sudo xattr -dr com.apple.quarantine "/Applications/Speedtest Monitor.app"
+open "/Applications/Speedtest Monitor.app"
+```
+
+The first command may request the Mac administrator password.  Terminal does
+not display password characters while they are typed.
+
 ## Windows x64 application
 
-Users need
-[`Speedtest-Monitor-Windows-x64-1.1.0.exe`](https://github.com/RamrattanN/speedtest-dashboard/releases/download/v1.1.0/Speedtest-Monitor-Windows-x64-1.1.0.exe).
-Python, Git, VS Code, and a repository checkout are not required.
+Open the
+[latest production release](https://github.com/RamrattanN/speedtest-dashboard/releases/latest)
+and download the **Windows x64** installer.  Python, Git, VS Code, and a
+repository checkout are not required.
 
 1. Download the installer from the project Releases page.
 2. Run the installer.

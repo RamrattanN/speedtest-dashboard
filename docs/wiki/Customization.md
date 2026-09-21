@@ -18,7 +18,7 @@ option to compare the selected window with the preceding period.
 
 ## Theme and timezone
 
-Choose Light, Dark, or automatic Windows theme detection.  The default display
+Choose Light, Dark, or automatic system theme detection.  The default display
 timezone is `America/Chicago`; any available IANA timezone can be selected.
 
 ## Servers
