@@ -1,0 +1,134 @@
+name: Build Windows x64 release
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/windows-release.yml"
+      - "SpeedtestMonitorWindows.spec"
+      - "installer/windows/**"
+      - "scripts/build_windows_icon.py"
+      - "scripts/build_windows_release.ps1"
+      - "pyproject.toml"
+      - "src/speedtest_dashboard/**"
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows-release:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install project, tests, and release builder
+        run: python -m pip install -e ".[test,windows-release]"
+      - name: Run automated tests
+        run: pytest -q
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+      - name: Build unsigned Windows application and installer
+        shell: pwsh
+        run: ./scripts/build_windows_release.ps1
+      - name: Install and smoke-test packaged dashboard
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installer = Join-Path $PWD "dist\Speedtest-Monitor-Windows-x64-1.0.0.exe"
+          $installDir = Join-Path $env:RUNNER_TEMP "SpeedtestMonitor"
+          $dataDir = Join-Path $env:RUNNER_TEMP "speedtest-monitor-data"
+          $installerLog = Join-Path $env:RUNNER_TEMP "speedtest-monitor-install.log"
+          $dashboardHtml = Join-Path $env:RUNNER_TEMP "dashboard.html"
+
+          $install = Start-Process $installer -Wait -PassThru -ArgumentList @(
+            "/VERYSILENT",
+            "/SUPPRESSMSGBOXES",
+            "/NORESTART",
+            "/DIR=$installDir",
+            "/LOG=$installerLog"
+          )
+          if ($install.ExitCode -ne 0) {
+            Get-Content $installerLog
+            throw "Installer exited with code $($install.ExitCode)."
+          }
+
+          $app = Join-Path $installDir "Speedtest Monitor.exe"
+          if (-not (Test-Path $app)) {
+            throw "Installed application was not found: $app"
+          }
+          $version = (Get-Item $app).VersionInfo.ProductVersion
+          if ($version -ne "1.0.0") {
+            throw "Unexpected installed product version: $version"
+          }
+
+          $service = Start-Process $app -PassThru -ArgumentList @(
+            "--service",
+            "--dashboard-only",
+            "--port", "8766",
+            "--interval", "86400",
+            "--data-dir", $dataDir
+          )
+          try {
+            $ready = $false
+            for ($attempt = 0; $attempt -lt 90; $attempt++) {
+              if ($service.HasExited) { break }
+              try {
+                Invoke-WebRequest "http://127.0.0.1:8766/" -OutFile $dashboardHtml
+                if ((Get-Content $dashboardHtml -Raw) -match "(?i)<!doctype html") {
+                  $ready = $true
+                  break
+                }
+              } catch {
+                Start-Sleep -Seconds 1
+              }
+            }
+            if (-not $ready) {
+              throw "The installed dashboard did not become ready."
+            }
+            $serviceLog = Join-Path $env:LOCALAPPDATA "Ramrattan Speedtest Monitor\Logs\monitor.log"
+            if ((-not (Test-Path $serviceLog)) -or
+                ((Get-Content $serviceLog -Raw) -notmatch "Speedtest Monitor build 1\.0\.0 starting")) {
+              throw "The packaged windowed service did not restore its output streams."
+            }
+          } finally {
+            if (-not $service.HasExited) {
+              Stop-Process -Id $service.Id -Force
+            }
+          }
+          $historyMarker = Join-Path $env:USERPROFILE "SpeedtestDashboard\uninstall-preserves-history.txt"
+          New-Item -ItemType Directory -Force (Split-Path $historyMarker) | Out-Null
+          Set-Content $historyMarker "preserve"
+
+          $repair = Start-Process $installer -Wait -PassThru -ArgumentList @(
+            "/VERYSILENT",
+            "/SUPPRESSMSGBOXES",
+            "/NORESTART",
+            "/MAINTENANCE=repair",
+            "/DIR=$installDir"
+          )
+          if (($repair.ExitCode -ne 0) -or (-not (Test-Path $app))) {
+            throw "Repair did not restore the installed application."
+          }
+
+          Start-Process $installer -Wait -ArgumentList @(
+            "/VERYSILENT",
+            "/SUPPRESSMSGBOXES",
+            "/NORESTART",
+            "/MAINTENANCE=uninstall"
+          )
+          if (Test-Path $app) {
+            throw "Maintenance uninstall did not remove the application."
+          }
+          if (-not (Test-Path $historyMarker)) {
+            throw "Maintenance uninstall removed user measurement history."
+          }
+      - name: Upload production installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Speedtest-Monitor-Windows-x64-1.0.0
+          path: dist/Speedtest-Monitor-Windows-x64-1.0.0.exe
+          if-no-files-found: error
+          retention-days: 14

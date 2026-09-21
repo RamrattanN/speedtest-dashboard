@@ -1,43 +1,27 @@
 # Customization
 
-You can tailor the dashboard to your needs.
+Dashboard preferences are available under **Display settings** and **View
+options**.
 
----
+## Colours
 
-## 🎨 Colors
-Default colors:
-- Upload: `#8BDCCD`
 - Download: `#1976D2`
+- Upload: `#8BDCCD`
 - Ping: `#20B9D8`
 
-Overlay colors are auto-selected to be distinct but similar.
+Previous-period overlay colours are derived automatically.
 
----
+## Time windows
 
-## 🕒 Time Windows
-- Hour  
-- Day  
-- Week  
-- Month  
-- Year  
+Choose an hour, day, week, month, or year window.  Enable the previous-period
+option to compare the selected window with the preceding period.
 
-Each shows the prior period as a faint overlay.
+## Theme and timezone
 
----
+Choose Light, Dark, or automatic Windows theme detection.  The default display
+timezone is `America/Chicago`; any available IANA timezone can be selected.
 
-## 🎛 Themes
-- Light  
-- Dark  
-- Auto (system-based)
+## Servers
 
----
-
-## 🌍 Timezone
-- Default: America/Chicago  
-- Select from dropdown for any IANA timezone
-
----
-
-## ⚡ Servers
-- Choose from detected servers
-- Results tagged with server ID and name
+Filter the view by detected server ID and name.  Results without a server ID
+can be included or excluded separately.

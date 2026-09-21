@@ -7,11 +7,87 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ---
 
 ## [Unreleased]
-### Planned
-- Additional overlay controls
-- Multi-host visualization
-- GitHub Actions for automated checks
-- Windows Task Scheduler helper
+
+## [1.0.0] - 2026-09-21
+### Added
+- macOS launcher and step-by-step Mac acceptance guide.
+- Ready-made VS Code workspace, tasks, debugging profiles, and setup guide.
+- Configurable cross-platform data directory with a visible home-folder default.
+- Offline automated tests and GitHub Actions CI.
+- Ramrattan-styled application header, latest-result cards, and compact content panels.
+- Non-modal Rentals-style right sidebar Help for setup, controls, result interpretation, and troubleshooting.
+- Packaged Ramrattan logo reused from the Rentals application.
+- Unsigned macOS Intel 1.0.0 packaging with a native controller, bundled
+  Python runtime, disk-image build script, and GitHub Actions artifact workflow.
+- Native Apple silicon ARM64 release with architecture-specific disk
+  image naming and a packaged dashboard smoke test.
+- Unsigned Windows x64 1.0.0 packaging with a native controller, per-user
+  installer, Start menu shortcut, embedded version metadata, and GitHub Actions
+  installed-app smoke test.
+- Windows installer maintenance choices for Repair and Uninstall completely.
+- Production packaging, acceptance, troubleshooting, and Wiki documentation.
+
+### Changed
+- Consolidated the collector and dashboard into the installable Python package.
+- Dashboard controls, filters, chart, and summary now use a tighter card-based layout.
+- Interactive controls now use the Ramrattan navy and blue palette instead of Streamlit red.
+- Help now detects desktop packaging and replaces developer Terminal commands
+  with Applications-folder, controller, browser, and safe-quit guidance.
+- Packaged Help now covers installation and replacement, unsigned-app
+  security handling, local data privacy, and controller-based operation.
+- README and Wiki documentation identify unsigned macOS Intel, macOS Apple
+  silicon, and Windows x64 1.0.0 as the current downloadable applications and distinguish them from
+  source-based developer use.
+- Packaged Help now selects macOS or Windows installation, security, launch,
+  and restart guidance at runtime.
+- Connection Overview now follows Latest Result on every platform.
+- All desktop packages, controllers, artifacts, and user documentation use the
+  same production version number, 1.0.0.
+- macOS disk images include an optional, confirmation-gated approval helper
+  that removes quarantine only from the installed application and opens it.
+
+### Removed
+- Retired the legacy `RunSpeedTest.ps1` and `RunSpeedTest.bat` launchers.  The
+  installable Python command remains available for Windows development.
+
+### Fixed
+- Windows service logging now forces UTF-8 before the collector starts, avoiding
+  a CP1252 encoding failure that stopped collection when status text contained
+  Unicode characters.
+- Windows service logging is line-buffered so completed measurements appear in
+  `monitor.log` immediately during soak testing.
+- The windowed Windows service now restores writable output streams before
+  starting the collector, preventing its background thread from stopping
+  silently before the first measurement.
+- **Refresh now** remains available while automatic 60-second refresh is
+  enabled, so users can request an immediate CSV reload at any time.
+- The browser tab now uses the Ramrattan logo, Help is an icon in the branded
+  header, and the manual refresh action uses a navy primary-button treatment.
+- The header Help control now renders as a compact, visible icon button across
+  packaged macOS and Windows apps.
+- Latest Result now appears between Performance Trend and Window Summary.
+- Packaged Help now renders installation steps as a proper ordered list instead
+  of exposing raw HTML list tags.
+- Packaged macOS builds now force Streamlit production mode so the dashboard
+  and its static frontend are both served on the selected local port instead
+  of incorrectly expecting a development frontend on port 3000.
+- The macOS packaging workflow now launches the finished application and
+  verifies the dashboard root route before publishing its disk image.
+- Production artifacts, application metadata, controller text, and startup
+  logs now carry version 1.0.0 consistently.
+- Installed console commands no longer depend on missing repository-root files.
+- Removed the hardcoded personal Dropbox path from the application.
+- Collector startup now creates the configured data directory without referencing
+  the removed legacy `ROOT` variable.
+- A detected but failing Ookla CLI now falls back to Python `speedtest-cli`
+  unless `--require-ookla` is specified.
+- Python collection now selects certifi's CA bundle when the interpreter has no
+  usable default certificate file, while preserving explicit overrides.
+- Replaced the third-party browser auto-refresh component with Streamlit's
+  native timed fragment to prevent blank pages after the 60-second refresh.
+- Updated chart and table width configuration for current Streamlit releases.
+- The dashboard now redraws its data directly every 60 seconds without a browser refresh.
+- Newly discovered speed-test servers remain visible during automatic redraws.
 
 ---
 
@@ -53,7 +129,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/RamrattanN/speedtest-dashboard/compare/v0.1.1...HEAD  
+[Unreleased]: https://github.com/RamrattanN/speedtest-dashboard/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/RamrattanN/speedtest-dashboard/compare/v0.1.1...v1.0.0
 [0.1.1]: https://github.com/RamrattanN/speedtest-dashboard/compare/v0.1.0...v0.1.1  
 [0.1.0]: https://github.com/RamrattanN/speedtest-dashboard/releases/tag/v0.1.0  
 [0.0.1]: https://github.com/RamrattanN/speedtest-dashboard/releases/tag/v0.0.1  

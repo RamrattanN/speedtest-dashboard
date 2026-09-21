@@ -1,33 +1,40 @@
 # Running the Dashboard
 
-The dashboard provides a visual interface for all collected speedtest results.
+## Installed desktop application
 
----
+Open **Speedtest Monitor** from Applications on macOS or the Start menu on
+Windows.  The controller starts the collector and local dashboard together,
+then opens the dashboard in the default browser.
 
-## ▶️ Starting
+- Keep the controller open while results should continue to be collected.
+- Closing the browser tab does not stop collection.
+- Select **Open Dashboard** to reopen the browser page.
+- Select **Quit Monitor** to stop the collector and dashboard safely.
 
-### Batch (independent)
-```bat
-RunSpeedTest.bat
+## Developer launchers
+
+On macOS:
+
+```bash
+./RunSpeedTest.command --interval 300
 ```
 
-### PowerShell (preferred)
-```powershell
-.\RunSpeedTest.ps1 -Interval 120 -Port 8501
+Stop the launcher with **Control-C**.  With an installed Python package on any
+supported system:
+
+```bash
+speedtest-dashboard --interval 300 --port 8501
 ```
 
----
+## Dashboard controls
 
-## 🌐 Access
-- Open: [http://localhost:8501](http://localhost:8501)  
-- Shows graphs with ping, download, and upload
+The dashboard provides:
 
----
-
-## 📊 Features
-- Bar or Line chart toggle
-- Time windows: Hour, Day, Week, Month, Year
-- Historical overlays (previous period comparisons)
-- Customizable colors
-- Auto-refresh or manual refresh
-- Timezone and theme selectors
+- Latest download, upload, ping, and recorded-time cards.
+- Bar or line charts.
+- Hour, day, week, month, and year windows.
+- Previous-period comparison overlays.
+- Server filtering, custom colours, timezone, and theme controls.
+- Automatic display refresh every 60 seconds.
+- **Refresh now** for an immediate data reload, whether automatic refresh is on
+  or off.

@@ -1,132 +1,174 @@
-# Speedtest Dashboard  
+# Speedtest Dashboard
 
-![License](https://img.shields.io/badge/License-MIT-blue.svg)  
-![Python](https://img.shields.io/badge/Python-3.11%2B-blue)  
-![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B)  
-![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-lightgrey)  
-[![Docs](https://img.shields.io/badge/Docs-Wiki-blue)](docs/wiki/SUMMARY.md)  
-[![Release](https://img.shields.io/github/v/release/RamrattanN/speedtest-dashboard?sort=semver)](https://github.com/RamrattanN/speedtest-dashboard/releases)  
-[![Changelog](https://img.shields.io/badge/Changelog-md-blue)](CHANGELOG.md)
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
+![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B)
+[![CI](https://github.com/RamrattanN/speedtest-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/RamrattanN/speedtest-dashboard/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/RamrattanN/speedtest-dashboard?sort=semver)](https://github.com/RamrattanN/speedtest-dashboard/releases)
 
-A self-hosted internet speed monitoring tool.  
-It collects ping, download, and upload speeds periodically using **Ookla’s Speedtest CLI** (preferred) or the **Python speedtest-cli library** (fallback).  
-Results are stored in CSV format and visualized via a Streamlit dashboard.
+A local internet speed monitor with packaged macOS and Windows desktop
+applications, plus a portable Python developer mode.  It periodically
+collects ping, download, and upload results using the official Ookla Speedtest
+CLI when available, with the Python `speedtest-cli` library as a fallback.
+Results are stored locally in CSV files and displayed in a Streamlit dashboard.
 
----
-
-## ✨ Features
-- Configurable test interval (default: 2 minutes).
-- Retains ~30 days of data in the main CSV; archives up to 12 months.
-- Dashboard options:
-  - Bar / Line chart toggle
-  - Timezone selector
-  - Auto-refresh or manual refresh
-  - Historical overlays (hourly, daily, weekly, monthly, yearly)
-  - Customizable colors (Download, Upload, Ping)
-  - Light/Dark/Auto theme
-- Multi-server support.
-- Launchers:
-  - `RunSpeedTest.ps1` (PowerShell, preferred)
-  - `RunSpeedTest.bat` (independent batch script)
-
----
-
-## 📸 Preview
 ![Speedtest Dashboard Screenshot](assets/dashboard_preview.png?v=2025-09-04-1)
 
----
+## Features
 
-## 📂 Repository Structure
+- Configurable test interval, dashboard port, and data folder.
+- Approximately 30 days of results in the main CSV.
+- Up to 12 monthly archive files.
+- Bar and line charts with previous-period comparison.
+- Automatic 60-second display refresh plus an independent manual refresh.
+- Timezone, theme, color, server, and date-window controls.
+- Unsigned macOS Intel and Apple silicon applications for
+  users who do not use Terminal in everyday use.
+- Unsigned Windows x64 installer with a native controller and Start menu entry.
+- macOS developer launcher using an isolated local Python environment.
+- Installable command-line package.
+- Automated tests that do not perform real internet speed tests.
+
+## Quick start on macOS
+
+### Desktop application
+
+The unsigned macOS Intel 1.0.0 application is distributed as
+`Speedtest-Monitor-macOS-Intel-1.0.0.dmg`.  Open the disk image, drag
+**Speedtest Monitor** to **Applications**, then open the application.  It
+includes Python and the required dependencies and does not require the
+repository or VS Code.
+
+Because the application is unsigned, macOS may block the first launch.  Use
+**System Settings > Privacy & Security > Open Anyway** when it is offered.  If
+macOS still blocks the application, use the optional **Allow and Open Speedtest
+Monitor.command** helper included in the disk image, or follow the manual
+commands in the [macOS Desktop Packaging](docs/Mac-Desktop-Packaging.md) guide.
+This is a one-time installation step.  Everyday operation uses the small
+controller window to reopen the dashboard or quit the monitor safely.
+
+See [macOS Desktop Packaging](docs/Mac-Desktop-Packaging.md) for build, test, and
+distribution instructions.
+
+An unsigned Apple silicon release is also produced as
+`Speedtest-Monitor-macOS-Apple-Silicon-1.0.0.dmg`.  Its automated package and
+dashboard smoke tests run on an ARM64 GitHub Actions runner, but it remains
+unvalidated on a physical Apple silicon Mac.
+
+### Developer launcher
+
+Install Python 3.11 or newer, then clone the repository and run:
+
+```bash
+chmod +x RunSpeedTest.command
+./RunSpeedTest.command
 ```
+
+The dashboard opens at <http://localhost:8501>.  Results are stored in
+`~/SpeedtestDashboard` by default.
+
+See the [Mac Testing Guide](docs/Mac-Testing.md) for complete installation and
+acceptance steps.  The [VS Code Setup Guide](docs/VS-Code-Setup-Mac.md) explains
+how to work on the project without memorizing Terminal commands.
+
+## Quick start on Windows
+
+### Desktop application
+
+Download and unzip the `Speedtest-Monitor-Windows-x64-1.0.0` GitHub Actions
+artifact, then run `Speedtest-Monitor-Windows-x64-1.0.0.exe`.  The per-user
+installer adds **Speedtest Monitor** to the Start menu and does not require
+Python or the repository.
+
+Running the installer again offers **Repair** and **Uninstall completely**.
+Uninstall removes the application, shortcuts, and logs while preserving the
+measurement history in `%USERPROFILE%\SpeedtestDashboard`.
+
+The application is unsigned.  If Microsoft Defender SmartScreen appears,
+select **More info**, confirm that the file came from the project download,
+then select **Run anyway**.  See
+[Windows Desktop Packaging](docs/Windows-Desktop-Packaging.md) for installation,
+testing, logs, and removal.
+
+### Developer setup
+
+Developers can install Python 3.11 or newer, clone the repository, run
+`setup_venv.bat`, and start the installed command:
+
+```bat
+setup_venv.bat
+.venv\Scripts\speedtest-dashboard.exe --interval 300 --port 8501
+```
+
+Results are stored in `%USERPROFILE%\SpeedtestDashboard` by default.
+
+## Command-line use
+
+Install the application into the current Python environment:
+
+```bash
+python3 -m pip install -e .
+```
+
+Available commands:
+
+```bash
+speedtest-dashboard --interval 120 --port 8501
+speedtest-collector --data-dir ~/SpeedtestDashboard
+speedtest-dashboard-ui --server.port 8501
+```
+
+Set `SPEEDTEST_DASHBOARD_DATA_DIR` to change the data directory for all
+commands.  The combined launcher also accepts `--data-dir`.
+
+## Repository structure
+
+```text
 speedtest-dashboard/
-├── collector.py         # Collector script (runs tests, writes results)
-├── dashboard.py         # Streamlit UI
-├── RunSpeedTest.ps1     # PowerShell launcher (preferred)
-├── RunSpeedTest.bat     # Batch launcher (independent)
-├── requirements.txt     # Python dependencies
-├── setup_venv.bat       # Local venv + deps
-├── assets/              # Images/screenshots
-├── docs/wiki/           # Project Wiki
-├── .github/             # Issue/PR templates
-├── LICENSE
-└── README.md
+├── src/speedtest_dashboard/  # Collector, dashboard, runner, and configuration
+├── tests/                    # Offline automated tests
+├── RunSpeedTest.command      # macOS launcher
+├── setup_venv.bat            # Optional Windows developer setup helper
+├── docs/                     # Guides and project documentation
+└── pyproject.toml            # Package and dependency configuration
 ```
 
----
+## Development checks
 
-## ⚡ Quick Start (Windows)
+```bash
+python3 -m pip install -e ".[test]"
+pytest -q
+python3 -m build
+```
 
-1. **Clone this repository**
-   ```powershell
-   git clone https://github.com/RamrattanN/speedtest-dashboard.git
-   cd speedtest-dashboard
-   ```
+CI verifies Python 3.11 and 3.12 on Linux, Python 3.12 on macOS, source
+compilation, tests, the Mac launcher, wheel creation, isolated installation,
+and installed command entry points.
 
-2. **Install dependencies** (one-time)
-   ```powershell
-   setup_venv.bat
-   ```
+Separate release workflows build and smoke-test the unsigned macOS Intel and
+Apple silicon disk images and the Windows x64 installer.  Each packaged
+application is built on its target operating system and architecture because
+PyInstaller builds for the system on which it runs.
 
-3. **Run the system**
+## Documentation
 
-   **PowerShell (preferred):**
-   ```powershell
-   .\RunSpeedTest.ps1 -Interval 120 -Port 8501
-   ```
-   Opens two windows:
-   - Collector (tests every 2 minutes)
-   - Dashboard (http://localhost:8501)
+- [Mac Testing Guide](docs/Mac-Testing.md)
+- [macOS Desktop Packaging](docs/Mac-Desktop-Packaging.md)
+- [Windows Desktop Packaging](docs/Windows-Desktop-Packaging.md)
+- [VS Code Setup on Mac](docs/VS-Code-Setup-Mac.md)
+- [Getting Started](docs/wiki/Getting-Started.md)
+- [Configuration](docs/wiki/Configuration.md)
+- [Running the Dashboard](docs/wiki/Running-the-Dashboard.md)
+- [Troubleshooting](docs/wiki/Troubleshooting.md)
+- [Roadmap](docs/wiki/Roadmap.md)
 
-   **Batch (independent):**
-   ```bat
-   RunSpeedTest.bat
-   ```
+## License
 
----
+Licensed under the MIT License.  Ookla's license applies when its Speedtest CLI
+is used.
 
-## ⚙️ Configuration
+## Credits
 
-- **Interval**: `-Interval` in PowerShell, or edit `.bat`  
-- **Dashboard port**: `-Port` in PowerShell  
-- **Headless mode**: `.\RunSpeedTest.ps1 -Headless`  
-- **Python exe**: `-Python` in PowerShell  
-- **Theme**: Light / Dark / Auto  
-- **Timezone**: user-selectable dropdown  
-- **Default colors**:
-  - Upload: `#8BDCCD`
-  - Download: `#1976D2`
-  - Ping: `#20B9D8`
-
----
-
-## 📚 Documentation
-See the [Wiki](docs/wiki/SUMMARY.md) for full guides:
-
-- [Getting Started](docs/wiki/Getting-Started.md)  
-- [Configuration](docs/wiki/Configuration.md)  
-- [Running the Dashboard](docs/wiki/Running-the-Dashboard.md)  
-- [Customization](docs/wiki/Customization.md)  
-- [Troubleshooting](docs/wiki/Troubleshooting.md)  
-- [Roadmap](docs/wiki/Roadmap.md)  
-- [Credits](docs/wiki/Credits.md)  
-
----
-
-## 🔧 Requirements
-- Windows 10/11  
-- Python 3.11+  
-- [Ookla Speedtest CLI](https://www.speedtest.net/apps/cli) (recommended)  
-- Dependencies from `requirements.txt`
-
----
-
-## 📝 License
-Licensed under MIT (see [LICENSE](LICENSE)).  
-Ookla’s license applies for Speedtest data usage.
-
----
-
-## 🙌 Credits
-- **Concept & Direction** — Nilesh Ramrattan  
-- **Development** — assisted by ChatGPT (OpenAI)  
-- **Stack** — Ookla Speedtest CLI, Streamlit, pandas, numpy, plotly
+- Concept and direction: Nilesh Ramrattan
+- Development assistance: ChatGPT by OpenAI
+- Stack: Ookla Speedtest CLI, Streamlit, pandas, NumPy, and Plotly

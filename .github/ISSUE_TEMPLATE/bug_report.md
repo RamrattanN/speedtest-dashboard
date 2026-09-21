@@ -21,10 +21,11 @@ What you expected to happen.
 **Screenshots / Logs**  
 If applicable, add screenshots or logs to help explain your problem.
 
-**Environment**  
-- OS: [e.g., Windows 10, macOS 13]  
-- Python version: [e.g., 3.12]  
-- Tool: [e.g., RunSpeedTest.bat / RunSpeedTest.ps1]
+**Environment**
+- OS: [e.g., Windows 10, macOS 13]
+- Application version: [e.g., 1.0.0]
+- Python version: [e.g., 3.12]
+- Launch method: [e.g., Windows installer, macOS application, developer command]
 
 **Additional context**  
 Add any other context about the problem here.

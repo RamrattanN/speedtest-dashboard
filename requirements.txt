@@ -1,11 +1,11 @@
 # Core data + charts
+certifi>=2024.7.4
 pandas>=2.2
 numpy>=1.26
 plotly>=5.22
 
 # Web UI
 streamlit>=1.37
-streamlit-autorefresh>=0.1.0
 
 # Speed tests
 speedtest-cli>=2.1.3

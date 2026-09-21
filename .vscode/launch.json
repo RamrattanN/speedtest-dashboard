@@ -1,0 +1,48 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Dashboard only",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": [
+        "run",
+        "${workspaceFolder}/src/speedtest_dashboard/dashboard.py",
+        "--server.port",
+        "8501"
+      ],
+      "env": {
+        "SPEEDTEST_DASHBOARD_DATA_DIR": "${env:HOME}/SpeedtestDashboard"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Collector single test",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "speedtest_dashboard.collector_app",
+      "args": [
+        "--data-dir",
+        "${env:HOME}/SpeedtestDashboard"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Full application",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "speedtest_dashboard",
+      "args": [
+        "--interval",
+        "300",
+        "--port",
+        "8501"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}

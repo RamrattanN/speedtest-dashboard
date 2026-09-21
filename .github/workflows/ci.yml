@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python-version: "3.11"
+          - os: ubuntu-latest
+            python-version: "3.12"
+          - os: macos-latest
+            python-version: "3.12"
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install project and test dependencies
+        run: python -m pip install -e ".[test]"
+      - name: Run tests
+        run: pytest -q
+      - name: Check source compilation
+        run: python -m compileall -q collector.py dashboard.py src
+      - name: Check macOS launcher syntax
+        run: bash -n RunSpeedTest.command
+
+  package-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Build wheel
+        run: |
+          python -m pip install build
+          python -m build
+      - name: Install wheel in isolation
+        run: |
+          python -m venv .smoke-venv
+          .smoke-venv/bin/python -m pip install dist/*.whl
+      - name: Verify installed commands
+        env:
+          SPEEDTEST_DASHBOARD_DATA_DIR: ${{ runner.temp }}/speedtest-dashboard
+        run: |
+          .smoke-venv/bin/speedtest-collector --help
+          .smoke-venv/bin/speedtest-dashboard --help
+          test -x .smoke-venv/bin/speedtest-dashboard-ui
+          .smoke-venv/bin/python -c "from speedtest_dashboard.dashboard_app import main"

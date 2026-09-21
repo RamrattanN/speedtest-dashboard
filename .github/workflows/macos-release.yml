@@ -1,0 +1,83 @@
+name: Build macOS releases
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/macos-release.yml"
+      - "SpeedtestMonitor.spec"
+      - "scripts/build_macos_icon.py"
+      - "scripts/build_macos_release.sh"
+      - "pyproject.toml"
+      - "src/speedtest_dashboard/**"
+
+permissions:
+  contents: read
+
+jobs:
+  build-macos-release:
+    name: Build macOS ${{ matrix.package_arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15-intel
+            machine_arch: x86_64
+            package_arch: Intel
+          - runner: macos-15
+            machine_arch: arm64
+            package_arch: Apple-Silicon
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install project, tests, and release builder
+        run: python -m pip install -e ".[test,macos-release]"
+      - name: Verify runner architecture
+        run: test "$(uname -m)" = "${{ matrix.machine_arch }}"
+      - name: Run automated tests
+        run: pytest -q
+      - name: Build unsigned Intel application and disk image
+        run: bash scripts/build_macos_release.sh
+      - name: Verify optional macOS approval helper
+        run: test -x "dist/release/Allow and Open Speedtest Monitor.command"
+      - name: Smoke-test packaged dashboard route
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="dist/Speedtest Monitor.app/Contents/MacOS/Speedtest Monitor"
+          LOG="$RUNNER_TEMP/speedtest-monitor-smoke.log"
+          DATA="$RUNNER_TEMP/speedtest-monitor-data"
+          "$APP" --service --port 8765 --interval 86400 --data-dir "$DATA" >"$LOG" 2>&1 &
+          PID=$!
+          cleanup() {
+            kill "$PID" 2>/dev/null || true
+            wait "$PID" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8765/ \
+              --output "$RUNNER_TEMP/dashboard.html"; then
+              grep -qi '<!doctype html' "$RUNNER_TEMP/dashboard.html"
+              grep -q 'Speedtest Monitor build 1.0.0 starting' "$LOG"
+              exit 0
+            fi
+            if ! kill -0 "$PID" 2>/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          cat "$LOG"
+          exit 1
+      - name: Upload production disk image
+        uses: actions/upload-artifact@v4
+        with:
+          name: Speedtest-Monitor-macOS-${{ matrix.package_arch }}-1.0.0
+          path: dist/Speedtest-Monitor-macOS-${{ matrix.package_arch }}-1.0.0.dmg
+          if-no-files-found: error
+          retention-days: 14
